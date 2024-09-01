@@ -31,7 +31,7 @@ void AZipline::OnConstruction(const FTransform& Transform)
 	FVector EndLocation = LeftRailMeshComponent->GetSocketLocation(FName("AttachPoint"));
 	float Delta = sqrt(pow(StartLocation.X - EndLocation.X, 2) + pow(StartLocation.Y - EndLocation.Y, 2) + pow(StartLocation.Z - EndLocation.Z, 2));
 	float Length = sqrt(pow(StartLocation.X - EndLocation.X, 2) + pow(StartLocation.Y - EndLocation.Y, 2) + pow(StartLocation.Z - EndLocation.Z, 2));
-	if (IsValid(ZiplineMeshComponent) && IsValid(ZiplineMeshComponent->GetStaticMesh())) {
+	if (IsValid(ZiplineMeshComponent) && IsValid(ZiplineMeshComponent->GetStaticMesh()) && IsValid(RightRailMeshComponent) && IsValid(LeftRailMeshComponent)) {
 		float MeshHeight = ZiplineMeshComponent->GetStaticMesh()->GetBoundingBox().GetSize().Z;
 		float X = (StartLocation.X + EndLocation.X) / 2;
 		float Y = (StartLocation.Y + EndLocation.Y) / 2;
@@ -39,7 +39,7 @@ void AZipline::OnConstruction(const FTransform& Transform)
 		float DeltaX = -StartLocation.X + EndLocation.X;
 		float DeltaY = -StartLocation.Y + EndLocation.Y;
 		float DeltaZ = -StartLocation.Z + EndLocation.Z;
-		FRotator CableRotation =ZiplineMeshComponent->GetRelativeRotation() ;
+		FRotator CableRotation = ZiplineMeshComponent->GetRelativeRotation() ;
 		CableRotation = (FVector(DeltaX, DeltaY, DeltaZ).ToOrientationRotator());
 		CableRotation.Pitch -= 90;
 		ZiplineMeshComponent->SetRelativeRotation(CableRotation);

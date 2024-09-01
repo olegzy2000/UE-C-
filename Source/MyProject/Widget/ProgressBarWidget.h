@@ -4,20 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "FatigueBar.generated.h"
+#include "ProgressBarWidget.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MYPROJECT_API UFatigueBar : public UUserWidget
+class MYPROJECT_API UProgressBarWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	virtual void NativeConstruct() override;
 protected:
 	UPROPERTY(meta = (BindWidget))
-	class UProgressBar* FatigueBar;
+	class UProgressBar* ProgressBar;
 public:
-	UProgressBar* GetFatigueBar();
+	class UProgressBar* GetProgressBar();
 private:
 };

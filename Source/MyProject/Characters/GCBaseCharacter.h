@@ -6,6 +6,7 @@
 #include "../Actors/Interactive/Environment/Zipline.h"
 #include "../Components/MovementComponents/GCBaseCharacterMovementComponent.h"
 #include "../Components/MovementComponents/LedgeDetectorComponent.h"
+#include "../Components/CharacterComponents/CharacterAttributeComponent.h"
 #include "math.h"
 #include "Animations/GCBaseCharacterAnimInstance.h"
 #include "Components/SphereComponent.h"
@@ -47,6 +48,10 @@ class MYPROJECT_API AGCBaseCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
+	virtual void Falling() override;
+	virtual void NotifyJumpApex() override;
+	virtual void Landed(const FHitResult& Hit) override;
+	virtual void BeginPlay() override;
 	virtual bool CanJumpInternal_Implementation() const override;
 	virtual void MoveForward(float Value) {};
 	virtual void MoveRight(float Value) {};
@@ -87,7 +92,6 @@ public:
 	void InitIkDebugDraw();
 	virtual void Mantle(bool bForce);
 	void TryToRunWall();
-	virtual void BeginPlay() override;
 	UGCBaseCharacterMovementComponent* GetBaseCharacterMovementComponent() const;
 	AGCBaseCharacter(const FObjectInitializer& ObjectInitializer);
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -183,7 +187,13 @@ protected:
 	FMantlingSettings LowMantleSettings;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement | Mantling" ,meta=(ClampMin=0.0f,UIMin=0.0f))
 	float LowMantleMaxHeight = 125.0f;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Components")
+	UCharacterAttributeComponent* CharacterAttributesComponent;
+	virtual void OnDeath();
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character | Animations")
+		class UAnimMontage* OnDeathAnimMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character | Attributes")
+		class UCurveFloat* FallDamageCurve;
 private:
 	void CalculateIkFootPosition();
 	void ChangeCapsuleParamFromIdleWalkStateToCrouch();
@@ -191,6 +201,7 @@ private:
 	void IKFootPositionUpdate(float Alpha);
 	void IKSkeletonPositionUpdate(float Alpha);
 	void ChangeSkeletalMeshPosition(FVector Position);
+	void EnableRagdoll();
 	void TryChangeSprintState();
 	const FMantlingSettings& GetMantlingSettings(float LedgeHeight) const;
 	bool CanCrouch();
@@ -207,4 +218,5 @@ private:
 	FVector StartSkeletonPosition;
 	FVector EndSkeletonPosition;
 	TArray<AInteractiveActor*>AvailableInteractiveActors;
+	FVector CurrentFallApex;
 };

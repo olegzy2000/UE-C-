@@ -62,6 +62,10 @@ protected:
 		FVector JoinTargetRight;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | IK", meta = (BlueprintProtected = true))
 		float RightFootAlpha;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character animation")
+		bool bIsStrafing = false;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character animation", meta=(UIMin=-180.0f,UIMax=180.0f))
+		float Direction = 0.0f;
 
 private:
 	UPROPERTY()

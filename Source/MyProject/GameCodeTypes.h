@@ -10,3 +10,5 @@ const FName CollisionProfileRunWall = FName("RunWall");
 const FName DebugCategoryLedgeDetection = FName("LedgeDetection");
 const FName DebugCategoryIkCalculation = FName("IkCalculation");
 const FName DebugCategoryRunWallDetector = FName("DebugCategoryRunWallDetector");
+const FName DebugCategoryCharacterAttributes = FName("CharacterAttribute");
+const FName CollisionProfileRagdoll = FName("Ragdoll");

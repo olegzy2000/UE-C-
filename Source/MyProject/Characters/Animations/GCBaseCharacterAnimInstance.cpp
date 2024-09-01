@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
+#include "GCBaseCharacterAnimInstance.h"
 #include "../GCBaseCharacter.h"
 #include "../../Components/MovementComponents/GCBaseCharacterMovementComponent.h"
-#include "GCBaseCharacterAnimInstance.h"
 void UGCBaseCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
@@ -24,6 +24,8 @@ void UGCBaseCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if(bIsOnLadder)
 	LadderSpeedRation = CharacterMovement->GetLadderSpeedRation();
 	bIsOnZipline = CharacterMovement->IsOnZipline();
+	bIsStrafing = !CharacterMovement->bOrientRotationToMovement;
+	Direction = CalculateDirection(CharacterMovement->Velocity,CachedBaseCharacter->GetActorRotation());//direction of moving character
 }
 void UGCBaseCharacterAnimInstance::setLeftEffectorLocation(FVector NewEffectorLocation)
 {

@@ -1,8 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
+#include "GCBaseCharacterMovementComponent.h"
 #include "../../Characters/GCBaseCharacter.h"
 #include "../../Utils/GCTraceUtils.h"
-#include "GCBaseCharacterMovementComponent.h"
 #include "GameFramework/Character.h"
 #include "Components/CapsuleComponent.h"
 

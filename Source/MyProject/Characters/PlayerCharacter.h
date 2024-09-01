@@ -3,8 +3,9 @@
 #pragma once
 #include "TimerManager.h"
 #include "../GameMode/PayerGameModeBaseSecondVersion.h"
+#include "GameFramework/PhysicsVolume.h"
 #include "Components/WidgetComponent.h"
-#include "../Widget/FatigueBar.h"
+#include "../Widget/ProgressBarWidget.h"
 #include "Components/TimelineComponent.h"
 #include "Engine/CollisionProfile.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -24,8 +25,8 @@ class MYPROJECT_API APlayerCharacter : public AGCBaseCharacter
 public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	void TickOxygen(float DeltaTime);
 	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
-	
 	virtual void MoveForward(float Value) override;
 	virtual void MoveRight(float Value) override;
 	virtual void Turn(float Value) override;
@@ -44,35 +45,45 @@ public:
 	virtual bool CanJumpInternal_Implementation() const override;
 	virtual void OnJumped_Implementation() override;
 	virtual void StartSprint() override;
+	float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void StopSprint() override;
 	virtual void Jump() override;
 	void Slide() override;
+	void UpdateHealthBar();
 private:
-	void FatigueProgressBarUpdate(float alpha);
+	float TimeStamina;
+	float TimeOxygen;
+	bool IsStartUseOxygen=false;
+	void InitStaminaParameters();
+	void InitHealthParameters();
+	void InitOxygenParameters();
+	void InitTimelineToOxygenProgressBar();
+	void InitTimelineCurveToOxygenProgressBar();
+	void StaminaProgressBarUpdate(float alpha);
+	void OxygenProgressBarUpdate(float alpha);
 	void InitTimelineToSprintCamera();
 	void ChangeSpeedParamAfterFatigue();
 	void ChangeColorOfProgressBar();
-	void InitTimelineToFatigureProgressBar();
+	void InitTimelineToStaminaProgressBar();
 	void InitTimelineCurveToSprintCamera();
-	void InitTimelineCurveToFatigureProgressBar();
+	void InitTimelineCurveToStaminaProgressBar();
 	void SpringArmTargetLengthUpdate(float Alpha);
 	void StartResizeSpringArmLength();
 	void ReverseResizeSpringArmLength();
 	void StartResizeProgressBarPercent();
 	void ReverseResizeProgressBarPercent();
-	const float MaxFatigue=1.f;
-	const float MinFatigue=0.f;
+	void StartProgressBarOxygenPercent();
+	void ReverseProgressBarOxygenPercent();
 	UPROPERTY()
 	APayerGameModeBaseSecondVersion* GameMode;
 	UPROPERTY()
-	FTimeline TimelineForFatigueProgressBar;
-	UPROPERTY(EditAnywhere, Category = "Character | Curve for progress bar timeline")
-	UCurveFloat* TimelineCurveForProgressBar;
+	FTimeline TimelineForStaminaProgressBar;
+	UCurveFloat* TimelineCurveForStaminaProgressBar;
+
+	UPROPERTY()
+	FTimeline TimelineForOxygenProgressBar;
+	UCurveFloat* TimelineCurveForOxygenProgressBar;
 protected:
-	UPROPERTY(EditAnywhere, category="Fatigue progress bar setting")
-	float SpeedFatigue = 1.f;
-	UPROPERTY(EditAnywhere, category = "Fatigue progress bar setting")
-	float TimeFatigue = 5.f;
 	UPROPERTY(VisibleAnywhere)
-	class UWidgetComponent* FatigueWidgetComponent;
+	class UWidgetComponent* StaminaWidgetComponent;
 };

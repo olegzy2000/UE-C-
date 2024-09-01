@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
+#include "GCBaseCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include <MyProject/Subsystems/DebugSubsystem.h>
 #include <MyProject/Utils/GCTraceUtils.h>
 #include <MyProject/GameCodeTypes.h>
-#include "GCBaseCharacter.h"
+#include "../Components/CharacterComponents/CharacterAttributeComponent.h"
 #include "DrawDebugHelpers.h"
 #include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
 void AGCBaseCharacter::ChangeCrouchState()
@@ -274,6 +274,20 @@ void AGCBaseCharacter::CalculateIkFootPosition()
 		}
 }
 
+void AGCBaseCharacter::OnDeath()
+{
+	GetBaseCharacterMovementComponent()->DisableMovement();
+	float Duration=PlayAnimMontage(OnDeathAnimMontage);
+	if (Duration == 0.0f) {
+		EnableRagdoll();
+	}
+}
+void AGCBaseCharacter::EnableRagdoll()
+{
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->SetCollisionProfileName(CollisionProfileRagdoll);
+}
+
 void AGCBaseCharacter::ChangeCapsuleParamFromIdleWalkStateToCrouch()
 {
 	GetCapsuleComponent()->SetCapsuleSize(GetDefaultCapsuleRadius(), GetCrouchCapsuleHeight());
@@ -339,6 +353,26 @@ void AGCBaseCharacter::ChangeSkeletalMeshPosition(FVector Position)
 	GetMesh()->SetRelativeLocation(Position);
 }
 
+void AGCBaseCharacter::Falling()
+{
+	GetBaseCharacterMovementComponent()->bNotifyApex = true;
+}
+
+void AGCBaseCharacter::NotifyJumpApex()
+{
+	Super::NotifyJumpApex();
+	CurrentFallApex = GetActorLocation();
+}
+
+void AGCBaseCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+	float FallHeight = (CurrentFallApex-GetActorLocation()).Z/100;
+	if (IsValid(FallDamageCurve)) {
+		float DamageAmount = FallDamageCurve->GetFloatValue(FallHeight);
+		TakeDamage(DamageAmount, FDamageEvent(), GetController(), Hit.Actor.Get());
+	}
+}
 
 void AGCBaseCharacter::BeginPlay()
 {
@@ -354,7 +388,7 @@ void AGCBaseCharacter::BeginPlay()
 		InitialMeshRalativeLocation = GetMesh()->GetRelativeTransform().GetLocation();
 	}
 	InitTimelineToIKFoot();
-
+	CharacterAttributesComponent->OnDeathEvent.AddUObject(this,&AGCBaseCharacter::OnDeath);
 }
 UGCBaseCharacterMovementComponent* AGCBaseCharacter::GetBaseCharacterMovementComponent() const
 {
@@ -367,6 +401,8 @@ AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
 	LegDetectorComponent = CreateDefaultSubobject<ULedgeDetectorComponent>(TEXT("LedgeDetector"));
 	GetMesh()->CastShadow = true;
 	GetMesh()->bCastDynamicShadow = true;
+	GetBaseCharacterMovementComponent()->bOrientRotationToMovement = true;
+	CharacterAttributesComponent= CreateDefaultSubobject<UCharacterAttributeComponent>(TEXT("CharacterAttributes"));
 }
 
 void AGCBaseCharacter::RegisterInteractiveActor(AInteractiveActor* InteractiveActor)

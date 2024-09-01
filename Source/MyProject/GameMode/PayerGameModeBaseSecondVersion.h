@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../Widget/FatigueBar.h"
+#include "../Widget/ProgressBarWidget.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/GameModeBase.h"
 #include "PayerGameModeBaseSecondVersion.generated.h"
@@ -18,10 +18,22 @@ class MYPROJECT_API APayerGameModeBaseSecondVersion : public AGameModeBase
 		virtual void BeginPlay() override;
 protected:
 		UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="User interface | setting")
-	    TSubclassOf<class UUserWidget> FatigueBar;
+	    TSubclassOf<class UUserWidget> StaminaBar;
 		UPROPERTY()
-		UFatigueBar* CurrentWidget;
+		UProgressBarWidget* CurrentStaminaWidget;
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "User interface | setting")
+		TSubclassOf<class UUserWidget> HealthBar;
+		UPROPERTY()
+		UProgressBarWidget* CurrentHealthWidget;
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "User interface | setting")
+			TSubclassOf<class UUserWidget> OxygenBar;
+		UPROPERTY()
+			UProgressBarWidget* CurrentOxygenWidget;
 public:
-	UFatigueBar* GetCurrentWidget();
+	UProgressBarWidget* GetCurrentStaminaWidget();
+	UProgressBarWidget* GetCurrentHealthWidget();
+	UProgressBarWidget* GetCurrentOxygenWidget();
 
 };

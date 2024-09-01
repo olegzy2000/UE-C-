@@ -5,16 +5,32 @@
 void APayerGameModeBaseSecondVersion::BeginPlay()
 {
 	Super::BeginPlay();
-	if (FatigueBar != nullptr) {
-		CurrentWidget = CreateWidget<UFatigueBar>(GetWorld(), FatigueBar);
-		//CurrentWidget = static_cast<UFatigueBar*>(CurrentWidget);
-		if (CurrentWidget != nullptr) {
-			CurrentWidget->AddToViewport();
-		}
+	if (IsValid(StaminaBar)) {
+		CurrentStaminaWidget = CreateWidget<UProgressBarWidget>(GetWorld(), StaminaBar);
+		CurrentStaminaWidget->AddToViewport();
 	}
+	if (IsValid(HealthBar)) {
+		CurrentHealthWidget = CreateWidget<UProgressBarWidget>(GetWorld(), HealthBar);
+		CurrentHealthWidget->AddToViewport();
+	}
+	if (IsValid(OxygenBar)) {
+		CurrentOxygenWidget = CreateWidget<UProgressBarWidget>(GetWorld(), OxygenBar);
+		CurrentOxygenWidget->AddToViewport();
+	}
+
 }
 
-UFatigueBar* APayerGameModeBaseSecondVersion::GetCurrentWidget()
+UProgressBarWidget* APayerGameModeBaseSecondVersion::GetCurrentStaminaWidget()
 {
-	return CurrentWidget;
+	return CurrentStaminaWidget;
+}
+
+UProgressBarWidget* APayerGameModeBaseSecondVersion::GetCurrentHealthWidget()
+{
+	return CurrentHealthWidget;
+}
+
+UProgressBarWidget* APayerGameModeBaseSecondVersion::GetCurrentOxygenWidget()
+{
+	return CurrentOxygenWidget;
 }
