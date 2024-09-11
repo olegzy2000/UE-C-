@@ -281,6 +281,11 @@ void AGCBaseCharacter::OnDeath()
 	if (Duration == 0.0f) {
 		EnableRagdoll();
 	}
+	GetWorld()->GetTimerManager().SetTimer(MyTimerHandle, this, &AGCBaseCharacter::restartCurrentLevel, 2.0f, false);
+}
+void AGCBaseCharacter::restartCurrentLevel()
+{
+	UGameplayStatics::OpenLevel(this, FName("LocamotionLevel"), true);
 }
 void AGCBaseCharacter::EnableRagdoll()
 {
@@ -401,7 +406,6 @@ AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
 	LegDetectorComponent = CreateDefaultSubobject<ULedgeDetectorComponent>(TEXT("LedgeDetector"));
 	GetMesh()->CastShadow = true;
 	GetMesh()->bCastDynamicShadow = true;
-	GetBaseCharacterMovementComponent()->bOrientRotationToMovement = true;
 	CharacterAttributesComponent= CreateDefaultSubobject<UCharacterAttributeComponent>(TEXT("CharacterAttributes"));
 }
 

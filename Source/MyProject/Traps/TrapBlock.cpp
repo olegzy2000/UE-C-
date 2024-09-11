@@ -42,16 +42,26 @@ void ATrapBlock::Tick(float DeltaTime)
 
 void ATrapBlock::OnInterationVolumeBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	BlockMesh->SetSimulatePhysics(true);
 	GetWorld()->GetTimerManager().SetTimer(
-		FuzeTimerHandle, 
-		this, 
-		&ATrapBlock::SetDefaultMeshLocation,
-		5.0f, 
-		false); 
+		FuzeTimerHandle,
+		this,
+		&ATrapBlock::SetSimulatePhysics,
+		2.0f,
+		false);
 }
 void ATrapBlock::SetDefaultMeshLocation() {
 	BlockMesh->SetSimulatePhysics(false);
 	BlockMesh->SetRelativeLocation(StartLocation);
 	BlockMesh->SetRelativeRotation(StartRotator);
+}
+
+void ATrapBlock::SetSimulatePhysics()
+{
+	BlockMesh->SetSimulatePhysics(true);
+	GetWorld()->GetTimerManager().SetTimer(
+		FuzeTimerHandle,
+		this,
+		&ATrapBlock::SetDefaultMeshLocation,
+		5.0f,
+		false);
 }

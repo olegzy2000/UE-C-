@@ -7,4 +7,3 @@ void UAnimNotify_EnableRogdoll::Notify(USkeletalMeshComponent* MeshComponent, UA
 	MeshComponent->SetCollisionProfileName(CollisionProfileRagdoll);
 	MeshComponent->SetSimulatePhysics(true);
 }
-

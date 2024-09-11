@@ -40,4 +40,5 @@ private:
 	FTimerHandle FuzeTimerHandle;
 	FVector StartLocation;
 	FRotator StartRotator;
+	void SetSimulatePhysics();
 };

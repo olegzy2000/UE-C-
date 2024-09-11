@@ -4,43 +4,54 @@
 #include "CrossWind.h"
 #include <MyProject/Characters/GCBaseCharacter.h>
 
-// Sets default values
 ACrossWind::ACrossWind()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	InteractionVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionVolume"));
 	InteractionVolume->SetupAttachment(RootComponent);
 	InteractionVolume->SetGenerateOverlapEvents(true);
 }
 
-// Called when the game starts or when spawned
 void ACrossWind::BeginPlay()
 {
 	Super::BeginPlay();
 	InteractionVolume->OnComponentBeginOverlap.AddDynamic(this, &ACrossWind::OnInterationVolumeOverlapBegin);
 	InteractionVolume->OnComponentEndOverlap.AddDynamic(this, &ACrossWind::OnInterationVolumeOverlapEnd);
+	generateWindForce();
 }
 
-// Called every frame
 void ACrossWind::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	if (bCanMove) {
+		FVector newLocation=CurrentBaseCharacter->GetActorLocation();
+		newLocation.X += CurrentWindForceX;
+		newLocation.Y += CurrentWindForceY;
+		CurrentBaseCharacter->SetActorLocation(newLocation);
+	}
 }
 
 void ACrossWind::OnInterationVolumeOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	AGCBaseCharacter* BaseCharacter = Cast<AGCBaseCharacter>(OtherActor);
-	if (!IsValid(BaseCharacter))
+	CurrentBaseCharacter = Cast<AGCBaseCharacter>(OtherActor);
+	if (!IsValid(CurrentBaseCharacter))
 	{
 		return;
 	}
-	BaseCharacter->GetMovementComponent()->Velocity += BaseCharacter->GetActorRightVector() * 600;
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Some debug message!"));
+	generateWindForce();
+	bCanMove = true;
 }
 
 void ACrossWind::OnInterationVolumeOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	CurrentBaseCharacter = NULL;
+	bCanMove = false;
+}
+
+void ACrossWind::generateWindForce()
+{
+	CurrentWindForceX= FMath::RandRange(0.0f, MaxWindForce);
+	CurrentWindForceY= FMath::RandRange(0.0f, MaxWindForce);
+	GetWorld()->GetTimerManager().SetTimer(MyTimerHandle, this, &ACrossWind::generateWindForce, 120.0f, false);
 }
 

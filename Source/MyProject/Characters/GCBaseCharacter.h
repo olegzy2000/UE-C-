@@ -195,6 +195,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character | Attributes")
 		class UCurveFloat* FallDamageCurve;
 private:
+	FTimerHandle MyTimerHandle;
 	void CalculateIkFootPosition();
 	void ChangeCapsuleParamFromIdleWalkStateToCrouch();
 	void InitTimelineToIKFoot();
@@ -219,4 +220,5 @@ private:
 	FVector EndSkeletonPosition;
 	TArray<AInteractiveActor*>AvailableInteractiveActors;
 	FVector CurrentFallApex;
+	void restartCurrentLevel();
 };

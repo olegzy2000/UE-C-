@@ -105,14 +105,14 @@ void APlayerCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeigh
 
 void APlayerCharacter::OnSprintEnd_Implementation()
 {
-	GetBaseCharacterMovementComponent()->bOrientRotationToMovement = false;
+	//GetBaseCharacterMovementComponent()->bOrientRotationToMovement = false;
 	ReverseResizeSpringArmLength();
 	ReverseResizeProgressBarPercent();
 }
 
 void APlayerCharacter::OnSprintStart_Implementation()
 {
-	GetBaseCharacterMovementComponent()->bOrientRotationToMovement = true;
+	//GetBaseCharacterMovementComponent()->bOrientRotationToMovement = true;
 	StartResizeSpringArmLength();
 	StartResizeProgressBarPercent();
 }
@@ -136,7 +136,6 @@ void APlayerCharacter::ChangeProneState()
 }
 void APlayerCharacter::StartSprint()
 {
-
 	Super::StartSprint();
 	OnSprintStart_Implementation();
 }

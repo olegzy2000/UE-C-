@@ -232,7 +232,7 @@ void UGCBaseCharacterMovementComponent::DetachFromZipline(EDetachFromLadderMetho
 	switch (DetachFromLadderMethod)
 	{
 	case EDetachFromLadderMethod::JumpOff: {
-		FVector JumpDirection = GetOwner()->GetActorRotation().Vector();
+		FVector JumpDirection = CharacterOwner->GetActorRotation().Vector();
 		SetMovementMode(EMovementMode::MOVE_Falling);
 		FVector JumpVelocity = JumpDirection * JumpOffFromLadderSpeed;
 		ForceTargetRotation = JumpDirection.ToOrientationRotator();
@@ -247,7 +247,9 @@ void UGCBaseCharacterMovementComponent::DetachFromZipline(EDetachFromLadderMetho
 	}
 		break;
 	}
-
+	FRotator finalRotator=CharacterOwner->GetActorRotation();
+	CharacterOwner->SetActorRotation(FRotator(0.0f,finalRotator.Yaw,finalRotator.Roll));
+	bForceRotation = false;
 }
 void UGCBaseCharacterMovementComponent::EndRunningOnWall(EDetachFromRunWallMethod DetachType = EDetachFromRunWallMethod::Fall)
 {
