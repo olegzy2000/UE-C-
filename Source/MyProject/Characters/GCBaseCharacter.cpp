@@ -5,6 +5,7 @@
 #include <MyProject/Utils/GCTraceUtils.h>
 #include <MyProject/GameCodeTypes.h>
 #include "../Components/CharacterComponents/CharacterAttributeComponent.h"
+#include "Runtime/Engine/Classes/Components/TextRenderComponent.h"
 #include "DrawDebugHelpers.h"
 #include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
 void AGCBaseCharacter::ChangeCrouchState()
@@ -281,7 +282,14 @@ void AGCBaseCharacter::OnDeath()
 	if (Duration == 0.0f) {
 		EnableRagdoll();
 	}
+	ShowLoseText();
 	GetWorld()->GetTimerManager().SetTimer(MyTimerHandle, this, &AGCBaseCharacter::restartCurrentLevel, 2.0f, false);
+}
+void AGCBaseCharacter::ShowLoseText()
+{
+	if (GEngine) {
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("You lose((("), true,FVector2D(10,10));
+	}
 }
 void AGCBaseCharacter::restartCurrentLevel()
 {

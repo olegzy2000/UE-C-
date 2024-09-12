@@ -195,6 +195,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character | Attributes")
 		class UCurveFloat* FallDamageCurve;
 private:
+	void ShowLoseText();
 	FTimerHandle MyTimerHandle;
 	void CalculateIkFootPosition();
 	void ChangeCapsuleParamFromIdleWalkStateToCrouch();

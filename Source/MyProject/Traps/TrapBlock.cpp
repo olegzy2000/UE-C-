@@ -3,10 +3,8 @@
 
 #include "TrapBlock.h"
 #include <MyProject/GameCodeTypes.h>
-// Sets default values
 ATrapBlock::ATrapBlock()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Block root"));
 	BlockMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Platform"));
@@ -16,15 +14,19 @@ ATrapBlock::ATrapBlock()
 	InteractionVolume->SetCollisionProfileName(CollisionProfilePawnInterationVolume);
 	InteractionVolume->SetGenerateOverlapEvents(true);
 }
-
-// Called when the game starts or when spawned
 void ATrapBlock::BeginPlay()
 {
 	Super::BeginPlay();
-	InteractionVolume->OnComponentBeginOverlap.AddDynamic(this, &ATrapBlock::OnInterationVolumeBeginOverlap);
-	BlockMesh->SetSimulatePhysics(false);
-	StartLocation = BlockMesh->GetComponentLocation();
-	StartRotator = BlockMesh->GetComponentRotation();
+	if (TrapType == ETrapType::Fall) {
+		InteractionVolume->OnComponentBeginOverlap.AddDynamic(this, &ATrapBlock::OnInterationVolumeBeginOverlapForFallType);
+		BlockMesh->SetSimulatePhysics(false);
+		StartLocation = BlockMesh->GetComponentLocation();
+		StartRotator = BlockMesh->GetComponentRotation();
+	}
+	else if(TrapType == ETrapType::Hit) {
+		InteractionVolume->OnComponentBeginOverlap.AddDynamic(this, &ATrapBlock::OnInterationVolumeBeginOverlapForHitType);
+		InteractionVolume->OnComponentEndOverlap.AddDynamic(this, &ATrapBlock::OnInterationVolumeEndOverlapForHitType);
+	}
 }
 void ATrapBlock::OnConstruction(const FTransform& Transform)
 {
@@ -40,7 +42,7 @@ void ATrapBlock::Tick(float DeltaTime)
 
 
 
-void ATrapBlock::OnInterationVolumeBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ATrapBlock::OnInterationVolumeBeginOverlapForFallType(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	GetWorld()->GetTimerManager().SetTimer(
 		FuzeTimerHandle,
@@ -48,11 +50,33 @@ void ATrapBlock::OnInterationVolumeBeginOverlap(UPrimitiveComponent* OverlappedC
 		&ATrapBlock::SetSimulatePhysics,
 		2.0f,
 		false);
+	BlockMesh->SetMaterial(0, ActiveFallMaterial);
+}
+void ATrapBlock::OnInterationVolumeBeginOverlapForHitType(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	BlockMesh->SetMaterial(0, ActiveHitMaterial);
+	CurrentBaseCharacter = Cast<AGCBaseCharacter>(OtherActor);
+	if (!IsValid(CurrentBaseCharacter))
+	{
+		return;
+	}
+	GetWorld()->GetTimerManager().SetTimer(
+		FuzeTimerHandle,
+		this,
+		&ATrapBlock::TakeDamageToCharacter,
+		1.0f,
+		false);
+}
+void ATrapBlock::OnInterationVolumeEndOverlapForHitType(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	CurrentBaseCharacter = NULL;
+	BlockMesh->SetMaterial(0, DefaultMaterial);
 }
 void ATrapBlock::SetDefaultMeshLocation() {
 	BlockMesh->SetSimulatePhysics(false);
 	BlockMesh->SetRelativeLocation(StartLocation);
 	BlockMesh->SetRelativeRotation(StartRotator);
+	BlockMesh->SetMaterial(0, DefaultMaterial);
 }
 
 void ATrapBlock::SetSimulatePhysics()
@@ -64,4 +88,17 @@ void ATrapBlock::SetSimulatePhysics()
 		&ATrapBlock::SetDefaultMeshLocation,
 		5.0f,
 		false);
+}
+
+void ATrapBlock::TakeDamageToCharacter()
+{
+	if (IsValid(CurrentBaseCharacter)) {
+		CurrentBaseCharacter->TakeDamage(20.0f, FDamageEvent(), CurrentBaseCharacter->GetController(), this);
+		GetWorld()->GetTimerManager().SetTimer(
+			FuzeTimerHandle,
+			this,
+			&ATrapBlock::TakeDamageToCharacter,
+			5.0f,
+			false);
+	}
 }
