@@ -27,7 +27,9 @@ void ATeleport::BeginPlay()
 void ATeleport::ShowWinText()
 {
 	if (GEngine) {
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, TEXT("You Win)))"), true, FVector2D(10, 10));
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("You Win)))"), true, FVector2D(10, 10));
+		float realtimeSeconds = GetWorld()->GetTimeSeconds();
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Time in game %f seconds"), realtimeSeconds));
 	}
 }
 

@@ -288,11 +288,13 @@ void AGCBaseCharacter::OnDeath()
 void AGCBaseCharacter::ShowLoseText()
 {
 	if (GEngine) {
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("You lose((("), true,FVector2D(10,10));
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("You lose((("), true,FVector2D(10,10));
 	}
 }
 void AGCBaseCharacter::restartCurrentLevel()
 {
+	float realtimeSeconds = GetWorld()->GetTimeSeconds();
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Time in game %f seconds"),realtimeSeconds));
 	UGameplayStatics::OpenLevel(this, FName("LocamotionLevel"), true);
 }
 void AGCBaseCharacter::EnableRagdoll()
