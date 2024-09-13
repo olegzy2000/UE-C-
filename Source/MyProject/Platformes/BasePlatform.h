@@ -48,6 +48,7 @@ protected:
 	UCurveFloat* TimelineCurve;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float TimeToStop=5.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EPlatformBehavior PlatformBehavior = EPlatformBehavior::OnDemand;
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
@@ -58,7 +59,7 @@ public:
 	FVector GetDeltaMoving();
 private:
 	FTimerHandle FuzeTimerHandle;
-
+	void InitCurveTimeLine();
 	void InitTimeline();
 	FVector DeltaMoving=FVector(0,0,0);
 };

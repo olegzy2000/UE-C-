@@ -16,6 +16,7 @@ void APayerGameModeBaseSecondVersion::BeginPlay()
 	if (IsValid(OxygenBar)) {
 		CurrentOxygenWidget = CreateWidget<UProgressBarWidget>(GetWorld(), OxygenBar);
 		CurrentOxygenWidget->AddToViewport();
+		CurrentOxygenWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
 
 }

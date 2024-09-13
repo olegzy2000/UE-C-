@@ -21,9 +21,7 @@ void ABasePlatform::BeginPlay()
 	if (IsValid(PlatormInvocator)) {
 		//PlatormInvocator.AddUObject(this, &ABasePlatform::StartMovingPlatform);
 	}
-	if (IsValid(TimelineCurve)) {
-		GetWorldTimerManager().SetTimer(FuzeTimerHandle,this, &ABasePlatform::InitTimeline, TimeToStop, false);
-	}
+		InitTimeline();
 	if (PlatformBehavior == EPlatformBehavior::Loop) {
 		StartMovingPlatform();
 	}
@@ -65,13 +63,22 @@ FVector ABasePlatform::GetDeltaMoving()
 
 void ABasePlatform::InitTimeline()
 {
+	InitCurveTimeLine();
 	FOnTimelineFloatStatic PlatformMovementTimeLineUpdate;
 	PlatformMovementTimeLineUpdate.BindUObject(this, &ABasePlatform::PlatformTimeluneUpdate);
 	PlatformTimeline.AddInterpFloat(TimelineCurve, PlatformMovementTimeLineUpdate);
 	if(PlatformBehavior == EPlatformBehavior::OnDemand)
 	PlatformTimeline.SetLooping(false);
 	else
-		PlatformTimeline.SetLooping(true);
+	PlatformTimeline.SetLooping(true);
 	//PlatformTimeline.Play();
+}
+void ABasePlatform::InitCurveTimeLine()
+{
+	TimelineCurve = NewObject<UCurveFloat>();
+	FKeyHandle KeyHandleForProgressBar = TimelineCurve->FloatCurve.AddKey(0.f, 0.f);
+	TimelineCurve->FloatCurve.AddKey(TimeToStop, 1.0f);
+	TimelineCurve->FloatCurve.AddKey(TimeToStop*2, 0.0f);
+	TimelineCurve->FloatCurve.SetKeyInterpMode(KeyHandleForProgressBar, ERichCurveInterpMode::RCIM_Linear, true);
 }
 

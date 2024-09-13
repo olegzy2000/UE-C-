@@ -394,6 +394,7 @@ void AGCBaseCharacter::BeginPlay()
 	Super::BeginPlay();
 	if (GCBaseCharacterMovementComponent==nullptr) {
 		GCBaseCharacterMovementComponent = StaticCast<UGCBaseCharacterMovementComponent*>(GetCharacterMovement());
+		GCBaseCharacterMovementComponent->RotationRate.Pitch = 540.0f;
 	}
 	if (GetMesh()->SkeletalMesh) {
 		const FVector LeftFootBoneWorldLocation = GetMesh()->GetBoneLocation(LeftFootBoneName);
