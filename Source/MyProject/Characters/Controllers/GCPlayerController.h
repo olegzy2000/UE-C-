@@ -29,6 +29,7 @@ private:
 	void Mantle();
 	void Jump();
 	void Slide();
+	void Fire();
 	void ChangeCrouchState();
 	void ChangeProneState();
 	void StartSprint();

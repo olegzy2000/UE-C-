@@ -61,6 +61,12 @@ void AGCPlayerController::Slide()
 		CachedBaseCharacter->Slide();
 	}
 }
+void AGCPlayerController::Fire()
+{
+	if (CachedBaseCharacter.IsValid()) {
+		CachedBaseCharacter->Fire();
+	}
+}
 void AGCPlayerController::ChangeCrouchState()
 {
 	if (CachedBaseCharacter.IsValid()) {
@@ -168,7 +174,7 @@ void AGCPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Sprint", IE_Released, this, &AGCPlayerController::StopSprint);
 	InputComponent->BindAction("SwitchCameraPosition", IE_Released, this, &AGCPlayerController::SwitchCameraPosition);
 	InputComponent->BindAction("Prone", IE_Released, this, &AGCPlayerController::ChangeProneState);
-
+	InputComponent->BindAction("Fire", IE_Released, this, &AGCPlayerController::Fire);
 	InputComponent->BindAxis("SwimForward", this, &AGCPlayerController::SwimForward);
 	InputComponent->BindAxis("SwimRight", this, &AGCPlayerController::SwimRight);
 	InputComponent->BindAxis("SwimUp", this, &AGCPlayerController::SwimUp);

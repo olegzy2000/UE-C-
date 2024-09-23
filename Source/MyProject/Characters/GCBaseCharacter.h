@@ -20,7 +20,7 @@
 #include "GameFramework/Character.h"
 #include "CoreMinimal.h"
 #include "GCBaseCharacter.generated.h"
-
+class UCharacterEquipmentComponent;
 USTRUCT(BlueprintType)
 struct FMantlingSettings
 {
@@ -64,12 +64,14 @@ public:
 	virtual void StartSprint();
 	virtual void StopSprint();
 	virtual void Slide();
+	virtual void Fire();
 	virtual void ChangeProneState();
 	virtual void SwimRight(float Value) {};
 	virtual void SwimForward(float Value) {};
 	virtual void SwimUp(float Value) {};
 	void ChangeCapsuleParamOnProneStateFromCrouch(float Radius,float Height);
 	void ChangeCapsuleParamFromProneStateToCrouch(float Radius, float Height);
+	const UCharacterEquipmentComponent* GetCharacterEquipmentComponent() const;
 	float GetProneCapsuleHeight() {
 		return ProneCapsuleHeight;
 	}
@@ -194,6 +196,9 @@ protected:
 		class UAnimMontage* OnDeathAnimMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character | Attributes")
 		class UCurveFloat* FallDamageCurve;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
+		UCharacterEquipmentComponent* CharacterEquipmentComponent;
+
 private:
 	void ShowLoseText();
 	FTimerHandle MyTimerHandle;

@@ -4,7 +4,8 @@
 #include <MyProject/Subsystems/DebugSubsystem.h>
 #include <MyProject/Utils/GCTraceUtils.h>
 #include <MyProject/GameCodeTypes.h>
-#include "../Components/CharacterComponents/CharacterAttributeComponent.h"
+#include "Components/CharacterComponents/CharacterEquipmentComponent.h"
+#include "Components/CharacterComponents/CharacterAttributeComponent.h"
 #include "Runtime/Engine/Classes/Components/TextRenderComponent.h"
 #include "DrawDebugHelpers.h"
 #include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
@@ -50,6 +51,13 @@ void AGCBaseCharacter::StopSprint()
 void AGCBaseCharacter::Slide()
 {
 	GetBaseCharacterMovementComponent()->TryToSlide();
+}
+
+void AGCBaseCharacter::Fire()
+{
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("AGCBaseCharacter::Fire()"));
+	CharacterEquipmentComponent->Fire();
 }
 
 
@@ -122,6 +130,11 @@ void AGCBaseCharacter::ChangeCapsuleParamFromProneStateToCrouch(float Radius, fl
 	ChangeSkeletalMeshPosition(InitialMeshRalativeLocation + FVector(0.f, 0.f, fabs(ProneCapsuleHalfHeight)));
 	SpringArmComponent->MoveComponent(FVector(0.f, 0.f, GetBaseCharacterMovementComponent()->CrouchedHalfHeight - ProneCapsuleHalfHeight), GetCapsuleComponent()->GetComponentQuat()
 		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
+}
+
+const UCharacterEquipmentComponent* AGCBaseCharacter::GetCharacterEquipmentComponent() const
+{
+	return CharacterEquipmentComponent;
 }
 
 void AGCBaseCharacter::Tick(float DeltaTime)
@@ -418,6 +431,7 @@ AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
 	GetMesh()->CastShadow = true;
 	GetMesh()->bCastDynamicShadow = true;
 	CharacterAttributesComponent= CreateDefaultSubobject<UCharacterAttributeComponent>(TEXT("CharacterAttributes"));
+	CharacterEquipmentComponent = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("CharacterEquipment"));
 }
 
 void AGCBaseCharacter::RegisterInteractiveActor(AInteractiveActor* InteractiveActor)

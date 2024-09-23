@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "GCBaseCharacterAnimInstance.h"
 #include "../GCBaseCharacter.h"
+#include "Components/CharacterComponents/CharacterEquipmentComponent.h"
 #include "../../Components/MovementComponents/GCBaseCharacterMovementComponent.h"
 void UGCBaseCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
@@ -26,6 +27,9 @@ void UGCBaseCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bIsOnZipline = CharacterMovement->IsOnZipline();
 	bIsStrafing = !CharacterMovement->bOrientRotationToMovement;
 	Direction = CalculateDirection(CharacterMovement->Velocity,CachedBaseCharacter->GetActorRotation());//direction of moving character
+	AimRotation = CachedBaseCharacter->GetBaseAimRotation();
+	const UCharacterEquipmentComponent* CharacterEquipment = CachedBaseCharacter->GetCharacterEquipmentComponent();
+	CurrentEquippedItem = CharacterEquipment->GetCurrentEquippedWeaponType();
 }
 void UGCBaseCharacterAnimInstance::setLeftEffectorLocation(FVector NewEffectorLocation)
 {
