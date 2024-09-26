@@ -16,6 +16,7 @@ void UCharacterEquipmentComponent::CreateLoadout()
 	}
 	CurrentEquippedWeapon = GetWorld()->SpawnActor<ARangeWeaponItem>(SideArmClass);
 	CurrentEquippedWeapon->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, SocketCharacterWeapon);
+	CurrentEquippedWeapon->SetOwner(CachedBaseCharacter.Get());
 }
 void UCharacterEquipmentComponent::Fire()
 {

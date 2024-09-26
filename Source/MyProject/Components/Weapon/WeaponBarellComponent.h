@@ -13,8 +13,10 @@ class MYPROJECT_API UWeaponBarellComponent : public USceneComponent
 	GENERATED_BODY()
 
 public:	
-	void Shot();
+	void Shot(FVector ShotStart, FVector ShotDirection, AController* Controller);
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attrubutes")
 		float FiringRange = 5000.0f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attrubutes | Damage")
+		float DamageAmount = 20.0f;
 };

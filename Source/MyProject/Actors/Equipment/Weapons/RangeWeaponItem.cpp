@@ -3,6 +3,7 @@
 
 #include "Actors/Equipment/Weapons/RangeWeaponItem.h"
 #include "GameCodeTypes.h"
+#include "Characters/GCBaseCharacter.h"
 ARangeWeaponItem::ARangeWeaponItem() {
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("WeaponRoot"));
 
@@ -15,5 +16,15 @@ ARangeWeaponItem::ARangeWeaponItem() {
 
 void ARangeWeaponItem::Fire()
 {
-	WeaponBarell->Shot();
+	checkf(GetOwner()->IsA<AGCBaseCharacter>(), TEXT("ARangeWeaponItem::Fire() only character can be owner of range weapon"));
+	AGCBaseCharacter* CharacterOwner = StaticCast<AGCBaseCharacter*>(GetOwner());
+	APlayerController* Controller = CharacterOwner->GetController<APlayerController>();
+	if (!IsValid(Controller)) {
+		return;
+	}
+	FVector PlayerViewPoint;
+	FRotator PlayerViewRotation;
+	Controller->GetPlayerViewPoint(PlayerViewPoint,PlayerViewRotation);
+	FVector ViewDirection= PlayerViewRotation.RotateVector(FVector::ForwardVector);
+	WeaponBarell->Shot(PlayerViewPoint, ViewDirection, Controller);
 }
