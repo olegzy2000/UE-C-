@@ -295,8 +295,8 @@ void AGCBaseCharacter::OnDeath()
 	if (Duration == 0.0f) {
 		EnableRagdoll();
 	}
-	ShowLoseText();
-	GetWorld()->GetTimerManager().SetTimer(MyTimerHandle, this, &AGCBaseCharacter::restartCurrentLevel, 2.0f, false);
+	//ShowLoseText();
+	//GetWorld()->GetTimerManager().SetTimer(MyTimerHandle, this, &AGCBaseCharacter::restartCurrentLevel, 2.0f, false);
 }
 void AGCBaseCharacter::ShowLoseText()
 {

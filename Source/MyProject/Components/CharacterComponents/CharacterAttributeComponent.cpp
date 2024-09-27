@@ -83,9 +83,9 @@ void UCharacterAttributeComponent::OnTakeAnyDamage(AActor* DamagedActor, float D
 void UCharacterAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-/*#if UE_BUILD_DEBUG || UE_BUILD_DEVELOPMENT
+#if UE_BUILD_DEBUG || UE_BUILD_DEVELOPMENT
 	DebugDrawAttributes();
-#endif*/
+#endif
 }
 
 bool UCharacterAttributeComponent::IsAlive()

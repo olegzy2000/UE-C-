@@ -129,14 +129,6 @@ protected:
 	bool CanMantle() const;
 	UPROPERTY()
 	UGCBaseCharacterMovementComponent* GCBaseCharacterMovementComponent;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Camera")
-	bool bIsCameraOnRightPosition = true;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Camera")
-	float DefaultPositionOfCamera = 50.0f;
-	UPROPERTY(EditInstanceOnly)
-		float SpringArmLenghtInSprint = 175.0f;
-	UPROPERTY(EditInstanceOnly)
-		float DefaultSpringArmLenght = 280.0f;
 	bool bCanStartSrpint = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float TimeToSwitchPositionCameraInSprint = 0.5f;

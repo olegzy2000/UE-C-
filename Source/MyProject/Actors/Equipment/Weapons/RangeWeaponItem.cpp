@@ -18,6 +18,8 @@ void ARangeWeaponItem::Fire()
 {
 	checkf(GetOwner()->IsA<AGCBaseCharacter>(), TEXT("ARangeWeaponItem::Fire() only character can be owner of range weapon"));
 	AGCBaseCharacter* CharacterOwner = StaticCast<AGCBaseCharacter*>(GetOwner());
+	CharacterOwner->PlayAnimMontage(CharacterFireMontage);
+	PlayAnimMontage(WeaponFireMontage);
 	APlayerController* Controller = CharacterOwner->GetController<APlayerController>();
 	if (!IsValid(Controller)) {
 		return;
@@ -27,4 +29,10 @@ void ARangeWeaponItem::Fire()
 	Controller->GetPlayerViewPoint(PlayerViewPoint,PlayerViewRotation);
 	FVector ViewDirection= PlayerViewRotation.RotateVector(FVector::ForwardVector);
 	WeaponBarell->Shot(PlayerViewPoint, ViewDirection, Controller);
+}
+
+float ARangeWeaponItem::PlayAnimMontage(UAnimMontage* AnimMontage)
+{
+	UAnimInstance* WeaponAnimInstance = WeaponMesh->GetAnimInstance();
+	return WeaponAnimInstance->Montage_Play(AnimMontage);
 }

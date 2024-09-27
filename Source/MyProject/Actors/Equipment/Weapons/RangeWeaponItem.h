@@ -10,6 +10,7 @@
 /**
  * 
  */
+class UAnimMontage;
 UCLASS(Blueprintable)
 class MYPROJECT_API ARangeWeaponItem : public AEquipableItem
 {
@@ -22,5 +23,11 @@ protected:
 		USkeletalMeshComponent* WeaponMesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UWeaponBarellComponent* WeaponBarell;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animations | Weapon")
+		UAnimMontage* WeaponFireMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animations | Character")
+		UAnimMontage* CharacterFireMontage;
+private:
+	float PlayAnimMontage(UAnimMontage* AnimMontage);
 	
 };

@@ -79,11 +79,19 @@ private:
 	UPROPERTY()
 	FTimeline TimelineForStaminaProgressBar;
 	UCurveFloat* TimelineCurveForStaminaProgressBar;
-
 	UPROPERTY()
 	FTimeline TimelineForOxygenProgressBar;
 	UCurveFloat* TimelineCurveForOxygenProgressBar;
 protected:
 	UPROPERTY(VisibleAnywhere)
 	class UWidgetComponent* StaminaWidgetComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Camera")
+		bool bIsCameraOnRightPosition = true;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Camera")
+		float DefaultPositionOfCamera = 50.0f;
+	UPROPERTY(EditInstanceOnly)
+		float SpringArmLenghtInSprint = 100.0f;
+	UPROPERTY(EditInstanceOnly)
+		float DefaultSpringArmLenght = 350.0f;
 };
