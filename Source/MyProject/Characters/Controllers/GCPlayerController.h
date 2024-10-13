@@ -29,7 +29,8 @@ private:
 	void Mantle();
 	void Jump();
 	void Slide();
-	void Fire();
+	void StartFireCustom();
+	void StopFireCustom();
 	void ChangeCrouchState();
 	void ChangeProneState();
 	void StartSprint();
@@ -42,6 +43,8 @@ private:
 	void InteractionWithLadder();
 	void InteractionWithZipline();
 	void RunWall();
+	void StartAiming();
+	void StopAiming();
 public:
 	virtual void SetPawn(APawn* InPawn) override;
 };

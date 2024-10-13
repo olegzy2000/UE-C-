@@ -61,10 +61,16 @@ void AGCPlayerController::Slide()
 		CachedBaseCharacter->Slide();
 	}
 }
-void AGCPlayerController::Fire()
+void AGCPlayerController::StartFireCustom()
 {
 	if (CachedBaseCharacter.IsValid()) {
-		CachedBaseCharacter->Fire();
+		CachedBaseCharacter->StartFire();
+	}
+}
+void AGCPlayerController::StopFireCustom()
+{
+	if (CachedBaseCharacter.IsValid()) {
+		CachedBaseCharacter->StopFire();
 	}
 }
 void AGCPlayerController::ChangeCrouchState()
@@ -153,6 +159,20 @@ void AGCPlayerController::RunWall()
 	}
 }
 
+void AGCPlayerController::StartAiming()
+{
+	if (CachedBaseCharacter.IsValid()) {
+		CachedBaseCharacter->StartAiming();
+	}
+}
+
+void AGCPlayerController::StopAiming()
+{
+	if (CachedBaseCharacter.IsValid()) {
+		CachedBaseCharacter->StopAiming();
+	}
+}
+
 void AGCPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -174,7 +194,10 @@ void AGCPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Sprint", IE_Released, this, &AGCPlayerController::StopSprint);
 	InputComponent->BindAction("SwitchCameraPosition", IE_Released, this, &AGCPlayerController::SwitchCameraPosition);
 	InputComponent->BindAction("Prone", IE_Released, this, &AGCPlayerController::ChangeProneState);
-	InputComponent->BindAction("Fire", IE_Released, this, &AGCPlayerController::Fire);
+	InputComponent->BindAction("Fire", IE_Pressed, this, &AGCPlayerController::StartFireCustom);
+	InputComponent->BindAction("Fire", IE_Released, this, &AGCPlayerController::StopFireCustom);
+	InputComponent->BindAction("Aim", IE_Pressed,this, &AGCPlayerController::StartAiming);
+	InputComponent->BindAction("Aim", IE_Released,this, &AGCPlayerController::StopAiming);
 	InputComponent->BindAxis("SwimForward", this, &AGCPlayerController::SwimForward);
 	InputComponent->BindAxis("SwimRight", this, &AGCPlayerController::SwimRight);
 	InputComponent->BindAxis("SwimUp", this, &AGCPlayerController::SwimUp);

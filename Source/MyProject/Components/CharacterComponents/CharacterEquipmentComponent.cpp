@@ -18,19 +18,17 @@ void UCharacterEquipmentComponent::CreateLoadout()
 	CurrentEquippedWeapon->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, SocketCharacterWeapon);
 	CurrentEquippedWeapon->SetOwner(CachedBaseCharacter.Get());
 }
-void UCharacterEquipmentComponent::Fire()
-{
-	if (IsValid(CurrentEquippedWeapon)) {
-		if (GEngine)
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("UCharacterEquipmentComponent::Fire()"));
-		CurrentEquippedWeapon->Fire();
-	}
-}
+
 EEquipableItemType UCharacterEquipmentComponent::GetCurrentEquippedWeaponType() const {
 	EEquipableItemType Result = EEquipableItemType::None;
 	if (IsValid(CurrentEquippedWeapon)) {
 		Result = CurrentEquippedWeapon->GetItemType();
 	}
 	return Result;
+}
+
+ARangeWeaponItem* UCharacterEquipmentComponent::GetCurrentRangeWeaponItem() const
+{
+	return CurrentEquippedWeapon;
 }
 

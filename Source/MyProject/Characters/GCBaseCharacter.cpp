@@ -53,17 +53,57 @@ void AGCBaseCharacter::Slide()
 	GetBaseCharacterMovementComponent()->TryToSlide();
 }
 
-void AGCBaseCharacter::Fire()
+void AGCBaseCharacter::StartFire()
 {
-	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("AGCBaseCharacter::Fire()"));
-	CharacterEquipmentComponent->Fire();
+	ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
+	if (IsValid(CurrentRangeWeapon)) {
+		CurrentRangeWeapon->StartFire();
+	}
+	//CharacterEquipmentComponent->Fire();
 }
 
 
 void AGCBaseCharacter::ChangeMaxSpeedOfPlayer(float speed)
 {
 	GetBaseCharacterMovementComponent()->MaxWalkSpeed = speed;
+}
+void AGCBaseCharacter::StopFire()
+{
+	ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
+	if (IsValid(CurrentRangeWeapon)) {
+		CurrentRangeWeapon->StopFire();
+	}
+}
+void AGCBaseCharacter::StartAiming()
+{
+	ARangeWeaponItem* CurrentRangeWeapon = GetCharacterEquipmentComponent()->GetCurrentRangeWeaponItem();
+	if (!IsValid(CurrentRangeWeapon)) {
+		return;
+	}
+	bIsAiming = true;
+	CurrentAimingMovementSpeed = CurrentRangeWeapon->GetAimMovementMaxSpeed();
+	CurrentRangeWeapon->StartAim();
+	OnStartAiming();
+}
+void AGCBaseCharacter::StopAiming()
+{
+	if (!bIsAiming) {
+		return;
+	}
+
+	ARangeWeaponItem* CurrentRangeWeapon = GetCharacterEquipmentComponent()->GetCurrentRangeWeaponItem();
+	if (IsValid(CurrentRangeWeapon)) {
+		CurrentRangeWeapon->StopAim();
+	}
+
+
+	bIsAiming = false;
+	CurrentAimingMovementSpeed = 0.0f;
+	OnStopAiming();
+}
+float AGCBaseCharacter::GetAimingMovementSpeed() const
+{
+	return CurrentAimingMovementSpeed;
 }
 void AGCBaseCharacter::ChangeProneState()
 {
@@ -135,6 +175,11 @@ void AGCBaseCharacter::ChangeCapsuleParamFromProneStateToCrouch(float Radius, fl
 const UCharacterEquipmentComponent* AGCBaseCharacter::GetCharacterEquipmentComponent() const
 {
 	return CharacterEquipmentComponent;
+}
+
+bool AGCBaseCharacter::IsAming()
+{
+	return bIsAiming;
 }
 
 void AGCBaseCharacter::Tick(float DeltaTime)
@@ -501,6 +546,21 @@ AZipline* AGCBaseCharacter::GetAvailableZipline()
 		}
 	}
 	return Result;
+}
+void AGCBaseCharacter::OnStartAiming_Implementation()
+{
+	OnStartAimingInternal();
+}
+void AGCBaseCharacter::OnStopAiming_Implementation()
+{
+	OnStopAimingInternal();
+}
+
+void AGCBaseCharacter::OnStartAimingInternal()
+{
+}
+void AGCBaseCharacter::OnStopAimingInternal()
+{
 }
 bool AGCBaseCharacter::CanSprint()
 {

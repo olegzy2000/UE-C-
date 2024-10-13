@@ -64,7 +64,11 @@ public:
 	virtual void StartSprint();
 	virtual void StopSprint();
 	virtual void Slide();
-	virtual void Fire();
+	virtual void StartFire();
+	virtual void StopFire();
+	virtual void StartAiming();
+	virtual void StopAiming();
+	float GetAimingMovementSpeed() const;
 	virtual void ChangeProneState();
 	virtual void SwimRight(float Value) {};
 	virtual void SwimForward(float Value) {};
@@ -87,6 +91,7 @@ public:
 	float GetDefaultCapsuleHeight() {
 		return DefaultCapsuleHeight;
 	}
+	bool IsAming();
 	FTimerHandle getTimeHandler() {
 		return FuzeTimerHandle;
 	}
@@ -111,6 +116,12 @@ public:
 	void InteractionWithZipline();
 	const ALadder* GetAvailableLadder();
 	AZipline* GetAvailableZipline();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Character")
+		void OnStartAiming();
+	UFUNCTION(BlueprintNativeEvent,BlueprintCallable, Category = "Character")
+		void OnStopAiming();
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Controls")
 		float BaseTurnRate = 45.0f;
@@ -190,8 +201,10 @@ protected:
 		class UCurveFloat* FallDamageCurve;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
 		UCharacterEquipmentComponent* CharacterEquipmentComponent;
-
+	virtual void OnStartAimingInternal();
+	virtual void OnStopAimingInternal();
 private:
+	float CurrentAimingMovementSpeed;
 	void ShowLoseText();
 	FTimerHandle MyTimerHandle;
 	void CalculateIkFootPosition();
@@ -212,6 +225,7 @@ private:
 	bool bChangeRightEffector=false;
 	bool bChangeLeftEffector=false;
 	bool bIsDebugLkCalculationEnable = false;
+	bool bIsAiming = false;
 	FVector FinalEffectorPosition;
 	FVector StartEffectorPosition;
 	FVector StartSkeletonPosition;

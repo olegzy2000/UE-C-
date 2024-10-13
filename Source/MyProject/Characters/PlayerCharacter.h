@@ -94,4 +94,6 @@ protected:
 		float SpringArmLenghtInSprint = 100.0f;
 	UPROPERTY(EditInstanceOnly)
 		float DefaultSpringArmLenght = 350.0f;
+	virtual void OnStartAimingInternal() override;
+	virtual void OnStopAimingInternal() override;
 };

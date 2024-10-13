@@ -14,7 +14,13 @@ ARangeWeaponItem::ARangeWeaponItem() {
 	WeaponBarell->SetupAttachment(WeaponMesh, SocketWeaponMuzzleSocket);
 }
 
-void ARangeWeaponItem::Fire()
+float ARangeWeaponItem::GetCurrentBulletSpreadAngle() const
+{
+	float AngleInDegress = bIsAiming ? AimSpreadAngle : SpreadAngle;
+	return FMath::DegreesToRadians(AngleInDegress);
+}
+
+void ARangeWeaponItem::MakeShot()
 {
 	checkf(GetOwner()->IsA<AGCBaseCharacter>(), TEXT("ARangeWeaponItem::Fire() only character can be owner of range weapon"));
 	AGCBaseCharacter* CharacterOwner = StaticCast<AGCBaseCharacter*>(GetOwner());
@@ -28,11 +34,64 @@ void ARangeWeaponItem::Fire()
 	FRotator PlayerViewRotation;
 	Controller->GetPlayerViewPoint(PlayerViewPoint,PlayerViewRotation);
 	FVector ViewDirection= PlayerViewRotation.RotateVector(FVector::ForwardVector);
+	ViewDirection += GetBulletSpreadOffset(FMath::RandRange(0.0f,GetCurrentBulletSpreadAngle()),PlayerViewRotation);
 	WeaponBarell->Shot(PlayerViewPoint, ViewDirection, Controller);
+}
+
+void ARangeWeaponItem::StartFire()
+{
+	GetWorld()->GetTimerManager().ClearTimer(ShotTimer);
+	MakeShot();
+	if(FireMode == EWeaponFireMode::FullAuto)
+	GetWorld()->GetTimerManager().SetTimer(ShotTimer,this, &ARangeWeaponItem::MakeShot, TimeBeetwenFire,true);
+}
+
+void ARangeWeaponItem::StopFire()
+{
+	GetWorld()->GetTimerManager().ClearTimer(ShotTimer);
+}
+
+void ARangeWeaponItem::StartAim()
+{
+	bIsAiming = true;
+}
+
+void ARangeWeaponItem::StopAim()
+{
+	bIsAiming = false;
+}
+
+float ARangeWeaponItem::GetAimFOV() const
+{
+	return AimFOV;
+}
+
+float ARangeWeaponItem::GetAimMovementMaxSpeed() const
+{
+	return AimMovementMaxSpeed;
+}
+
+FTransform ARangeWeaponItem::GetForGribTransform() const
+{
+	return WeaponMesh->GetSocketTransform(WeaponForGribSocket);
 }
 
 float ARangeWeaponItem::PlayAnimMontage(UAnimMontage* AnimMontage)
 {
 	UAnimInstance* WeaponAnimInstance = WeaponMesh->GetAnimInstance();
-	return WeaponAnimInstance->Montage_Play(AnimMontage);
+	float Result = 0.0f;
+	if (IsValid(WeaponAnimInstance)) {
+		Result = WeaponAnimInstance->Montage_Play(AnimMontage);
+	}
+	return Result;
+}
+
+FVector ARangeWeaponItem::GetBulletSpreadOffset(float Angle, FRotator ShotRotation) const
+{
+	float SpreadSize = FMath::Tan(Angle);
+	float RotationAngle = FMath::RandRange(0.0f, 2 * PI);
+	float SpreadY = FMath::Cos(RotationAngle);
+	float SpreadZ= FMath::Sin(RotationAngle);
+	FVector Result = (ShotRotation.RotateVector(FVector::UpVector) * SpreadZ + ShotRotation.RotateVector(FVector::RightVector) * SpreadY)*SpreadSize;
+	return Result;
 }

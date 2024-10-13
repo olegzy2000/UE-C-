@@ -30,6 +30,11 @@ void UGCBaseCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	AimRotation = CachedBaseCharacter->GetBaseAimRotation();
 	const UCharacterEquipmentComponent* CharacterEquipment = CachedBaseCharacter->GetCharacterEquipmentComponent();
 	CurrentEquippedItem = CharacterEquipment->GetCurrentEquippedWeaponType();
+	ARangeWeaponItem* CurrentRangeWeaponItem = CharacterEquipment->GetCurrentRangeWeaponItem();
+	if (IsValid(CurrentRangeWeaponItem)) {
+		ForGribSocketTransform = CurrentRangeWeaponItem->GetForGribTransform();
+	}
+	bIsAming = CachedBaseCharacter->IsAming();
 }
 void UGCBaseCharacterAnimInstance::setLeftEffectorLocation(FVector NewEffectorLocation)
 {

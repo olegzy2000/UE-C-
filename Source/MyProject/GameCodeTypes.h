@@ -8,6 +8,7 @@ const FName CollisionProfilePawn = FName("Pawn");
 const FName SocketFPCamera = FName("CameraSocket");
 const FName SocketCharacterWeapon = FName("CharacterWeaponSocket");
 const FName SocketWeaponMuzzleSocket = FName("MuzzleSocket");
+const FName WeaponForGribSocket = FName("ForGribSocket");
 const FName CollisionProfilePawnInterationVolume = FName("PawnInteractionVolume");
 const FName CollisionProfileRunWall = FName("RunWall");
 const FName DebugCategoryLedgeDetection = FName("LedgeDetection");
@@ -19,5 +20,7 @@ const FName CollisionProfileRagdoll = FName("Ragdoll");
 UENUM(BlueprintType)
 enum class EEquipableItemType :uint8 {
 	None,
-	Pistol
+	Pistol,
+	Rifle
 };
+const FName FXParamTraceEnd = FName("TraceEnd");

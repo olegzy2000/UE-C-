@@ -5,6 +5,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include <string>
+#include "Components/CharacterComponents/CharacterEquipmentComponent.h"
+#include "Actors/Equipment/Weapons/RangeWeaponItem.h"
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -218,7 +220,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	CameraComponent->bUsePawnControlRotation = false;
 	FVector StartLocation = FVector(0.0f, DefaultPositionOfCamera, 0.0f);
 	CameraComponent->SetRelativeLocation(StartLocation);
-	GetBaseCharacterMovementComponent()->bOrientRotationToMovement=1;
+	//GetBaseCharacterMovementComponent()->bOrientRotationToMovement=1;
 	GetBaseCharacterMovementComponent()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
 	InitTimelineCurveToStaminaProgressBar();
 	InitTimelineCurveToSprintCamera();
@@ -382,4 +384,36 @@ void APlayerCharacter::ReverseProgressBarOxygenPercent()
 		TimelineForOxygenProgressBar.Stop();
 	}
 	TimelineForOxygenProgressBar.Reverse();
+}
+
+void APlayerCharacter::OnStartAimingInternal()
+{
+	Super::OnStartAimingInternal();
+	APlayerController* PlayerController = GetController<APlayerController>();
+	if (!IsValid(PlayerController)) {
+		return;
+	}
+	APlayerCameraManager* CameraManager = PlayerController->PlayerCameraManager;
+	if (IsValid(CameraManager)) {
+		ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
+		if (IsValid(CurrentRangeWeapon)) {
+			CameraManager->SetFOV(CurrentRangeWeapon->GetAimFOV());
+		}
+	}
+}
+
+void APlayerCharacter::OnStopAimingInternal()
+{
+	Super::OnStopAimingInternal();
+	APlayerController* PlayerController = GetController<APlayerController>();
+	if (!IsValid(PlayerController)) {
+		return;
+	}
+	APlayerCameraManager* CameraManager = PlayerController->PlayerCameraManager;
+	if (IsValid(CameraManager)) {
+		ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
+		if (IsValid(CurrentRangeWeapon)) {
+			CameraManager->UnlockFOV();
+		}
+	}
 }

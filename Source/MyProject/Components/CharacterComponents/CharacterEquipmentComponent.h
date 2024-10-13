@@ -14,8 +14,8 @@ class MYPROJECT_API UCharacterEquipmentComponent : public UActorComponent
 {
 	GENERATED_BODY()
 public:
-	void Fire();
 	EEquipableItemType GetCurrentEquippedWeaponType() const;
+	ARangeWeaponItem* GetCurrentRangeWeaponItem() const;
 protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Loadout")
