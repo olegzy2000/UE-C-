@@ -53,11 +53,14 @@ public:
 private:
 	float TimeStamina;
 	float TimeOxygen;
+	float DefaultFOV;
+	float CurrentFOV;
 	bool IsStartUseOxygen=false;
 	void InitStaminaParameters();
 	void InitHealthParameters();
 	void InitOxygenParameters();
 	void InitTimelineToOxygenProgressBar();
+	void InitTimelineToAimCamera();
 	void InitTimelineCurveToOxygenProgressBar();
 	void StaminaProgressBarUpdate(float alpha);
 	void OxygenProgressBarUpdate(float alpha);
@@ -67,6 +70,7 @@ private:
 	void InitTimelineToStaminaProgressBar();
 	void InitTimelineCurveToSprintCamera();
 	void InitTimelineCurveToStaminaProgressBar();
+	void FovToAimUpdate(float Alpha);
 	void SpringArmTargetLengthUpdate(float Alpha);
 	void StartResizeSpringArmLength();
 	void ReverseResizeSpringArmLength();
@@ -74,6 +78,7 @@ private:
 	void ReverseResizeProgressBarPercent();
 	void StartProgressBarOxygenPercent();
 	void ReverseProgressBarOxygenPercent();
+	void InitTimelineCurveForAimCamera();
 	UPROPERTY()
 	APayerGameModeBaseSecondVersion* GameMode;
 	UPROPERTY()
@@ -82,6 +87,9 @@ private:
 	UPROPERTY()
 	FTimeline TimelineForOxygenProgressBar;
 	UCurveFloat* TimelineCurveForOxygenProgressBar;
+	UPROPERTY()
+		FTimeline TimelineForAimCamera;
+	UCurveFloat* TimelineCurveForAimCamera;
 protected:
 	UPROPERTY(VisibleAnywhere)
 	class UWidgetComponent* StaminaWidgetComponent;
@@ -90,6 +98,8 @@ protected:
 		bool bIsCameraOnRightPosition = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Camera")
 		float DefaultPositionOfCamera = 50.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Camera")
+		float TimeToAim = 1.0f;
 	UPROPERTY(EditInstanceOnly)
 		float SpringArmLenghtInSprint = 100.0f;
 	UPROPERTY(EditInstanceOnly)

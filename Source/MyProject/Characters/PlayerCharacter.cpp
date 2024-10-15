@@ -12,6 +12,7 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 	GameMode = Cast<APayerGameModeBaseSecondVersion>(UGameplayStatics::GetGameMode(GetWorld()));
 	InitTimelineToSprintCamera();
+//	InitTimelineToAimCamera();
 	InitStaminaParameters();
 	InitHealthParameters();
 	InitOxygenParameters();
@@ -36,16 +37,38 @@ void APlayerCharacter::MoveRight(float Value)
 }
 void APlayerCharacter::Turn(float Value)
 {
-	AddControllerYawInput(Value);
+	if (IsAming()) {
+		ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
+		if (IsValid(CurrentRangeWeapon)) {
+			if (GEngine)
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("APlayerCharacter::Turn"));
+			AddControllerYawInput(Value * CurrentRangeWeapon->GetAimTurnModifier());
+		}
+	}
+	else {
+		if (GEngine)
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("APlayerCharacter::Turn"));
+		AddControllerYawInput(Value);
+	}
+	//AddControllerYawInput(Value);
 }
 void APlayerCharacter::LookUp(float Value)
 {
-	AddControllerPitchInput(Value);
+	if (IsAming()) {
+		ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
+		if (IsValid(CurrentRangeWeapon)) {
+			AddControllerPitchInput(Value*CurrentRangeWeapon->GetAimLookUpModifier());
+		}
+	}
+	else
+	{
+		AddControllerPitchInput(Value);
+	}
 }
 
 void APlayerCharacter::TurnAtRate(float Value)
 {
-	AddControllerYawInput(Value*BaseTurnRate*GetWorld()->GetDeltaSeconds());
+	    AddControllerYawInput(Value * BaseTurnRate * GetWorld()->GetDeltaSeconds());
 }
 
 void APlayerCharacter::LookUpAtRate(float Value)
@@ -183,6 +206,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	TimelineForCamera.TickTimeline(DeltaTime);
 	TimelineForStaminaProgressBar.TickTimeline(DeltaTime);
+	TimelineForAimCamera.TickTimeline(DeltaTime);
 	TickOxygen(DeltaTime);
 }
 
@@ -225,14 +249,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	InitTimelineCurveToStaminaProgressBar();
 	InitTimelineCurveToSprintCamera();
 }
-void APlayerCharacter::InitTimelineToSprintCamera()
-{
-	FOnTimelineFloatStatic SpringArmMovementTimeLineUpdate;
-	SpringArmMovementTimeLineUpdate.BindUObject(this, &APlayerCharacter::SpringArmTargetLengthUpdate);
-	TimelineForCamera.AddInterpFloat(TimelineCurveForCamera, SpringArmMovementTimeLineUpdate);
-	TimelineForCamera.SetTimelineLength(TimeToSwitchPositionCameraInSprint);
-	TimelineForCamera.SetLooping(false);
-}
+
 void APlayerCharacter::ChangeSpeedParamAfterFatigue()
 {
 	if (!GetBaseCharacterMovementComponent()->IsProning()) {
@@ -246,17 +263,25 @@ void APlayerCharacter::ChangeColorOfProgressBar()
 	FLinearColor linerColor = FLinearColor(0.066792f, 0.484279f, 1.0f, 1.0f);
 	GameMode->GetCurrentStaminaWidget()->GetProgressBar()->SetFillColorAndOpacity(linerColor);
 }
-void APlayerCharacter::InitTimelineCurveToSprintCamera()
-{
-	TimelineCurveForCamera = CreateDefaultSubobject<UCurveFloat>(TEXT("Timeline Curve for camera"));
-	FKeyHandle KeyHandleForCamera = TimelineCurveForCamera->FloatCurve.AddKey(0.f, 0.f);
-	TimelineCurveForCamera->FloatCurve.AddKey(TimeStamina, 100.0f);
-	TimelineCurveForCamera->FloatCurve.SetKeyInterpMode(KeyHandleForCamera, ERichCurveInterpMode::RCIM_Linear, true);
-}
+
 void APlayerCharacter::SpringArmTargetLengthUpdate(float Alpha)
 {
 	float SpringArmTagretLength = FMath::Lerp(DefaultSpringArmLenght, SpringArmLenghtInSprint, Alpha);
 	SpringArmComponent->TargetArmLength = SpringArmTagretLength;
+}
+void APlayerCharacter::FovToAimUpdate(float Alpha)
+{
+	float CurrentTickFOV = FMath::Lerp(DefaultFOV, CurrentFOV, Alpha);
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, FString::Printf(TEXT("Alpha: %f"), Alpha));
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, FString::Printf(TEXT("CurrentFOV: %f"), CurrentFOV));
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, FString::Printf(TEXT("DefaultFOV: %f"), DefaultFOV));
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, FString::Printf(TEXT("CurrentTickFOV: %f"), CurrentTickFOV));
+	APlayerController* PlayerController = GetController<APlayerController>();
+	APlayerCameraManager* CameraManager = PlayerController->PlayerCameraManager;
+	CameraManager->SetFOV(Alpha);
+	//if (CurrentTickFOV >= 90.0f) {
+	//	CameraManager->UnlockFOV();
+	//}
 }
 void APlayerCharacter::InitStaminaParameters()
 {
@@ -386,6 +411,37 @@ void APlayerCharacter::ReverseProgressBarOxygenPercent()
 	TimelineForOxygenProgressBar.Reverse();
 }
 
+void APlayerCharacter::InitTimelineCurveForAimCamera()
+{
+	TimelineCurveForAimCamera = NewObject<UCurveFloat>();;
+	FKeyHandle KeyHandleForCamera = TimelineCurveForAimCamera->FloatCurve.AddKey(0.f, 90.f);
+	TimelineCurveForAimCamera->FloatCurve.AddKey(TimeToAim, CurrentFOV);
+	TimelineCurveForAimCamera->FloatCurve.SetKeyInterpMode(KeyHandleForCamera, ERichCurveInterpMode::RCIM_Linear, true);
+}
+void APlayerCharacter::InitTimelineToSprintCamera()
+{
+	FOnTimelineFloatStatic SpringArmMovementTimeLineUpdate;
+	SpringArmMovementTimeLineUpdate.BindUObject(this, &APlayerCharacter::SpringArmTargetLengthUpdate);
+	TimelineForCamera.AddInterpFloat(TimelineCurveForCamera, SpringArmMovementTimeLineUpdate);
+	TimelineForCamera.SetTimelineLength(TimeToSwitchPositionCameraInSprint);
+	TimelineForCamera.SetLooping(false);
+}
+void APlayerCharacter::InitTimelineCurveToSprintCamera()
+{
+	TimelineCurveForCamera = CreateDefaultSubobject<UCurveFloat>(TEXT("Timeline Curve for camera"));
+	FKeyHandle KeyHandleForCamera = TimelineCurveForCamera->FloatCurve.AddKey(0.f, 0.f);
+	TimelineCurveForCamera->FloatCurve.AddKey(TimeStamina, 100.0f);
+	TimelineCurveForCamera->FloatCurve.SetKeyInterpMode(KeyHandleForCamera, ERichCurveInterpMode::RCIM_Linear, true);
+}
+void APlayerCharacter::InitTimelineToAimCamera()
+{
+	InitTimelineCurveForAimCamera();
+	FOnTimelineFloatStatic FOVMovementTimeLineUpdate;
+	FOVMovementTimeLineUpdate.BindUObject(this, &APlayerCharacter::FovToAimUpdate);
+	TimelineForAimCamera.AddInterpFloat(TimelineCurveForAimCamera, FOVMovementTimeLineUpdate);
+	TimelineForAimCamera.SetTimelineLength(TimeToAim);
+	TimelineForAimCamera.SetLooping(false);
+}
 void APlayerCharacter::OnStartAimingInternal()
 {
 	Super::OnStartAimingInternal();
@@ -397,7 +453,10 @@ void APlayerCharacter::OnStartAimingInternal()
 	if (IsValid(CameraManager)) {
 		ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
 		if (IsValid(CurrentRangeWeapon)) {
-			CameraManager->SetFOV(CurrentRangeWeapon->GetAimFOV());
+			DefaultFOV = 90.0f;
+			CurrentFOV = 50.0f;
+			InitTimelineToAimCamera();
+			TimelineForAimCamera.Play();
 		}
 	}
 }
@@ -413,7 +472,7 @@ void APlayerCharacter::OnStopAimingInternal()
 	if (IsValid(CameraManager)) {
 		ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
 		if (IsValid(CurrentRangeWeapon)) {
-			CameraManager->UnlockFOV();
+			TimelineForAimCamera.Reverse();
 		}
 	}
 }

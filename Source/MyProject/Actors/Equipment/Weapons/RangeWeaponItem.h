@@ -30,6 +30,8 @@ public:
 	void StartAim();
 	void StopAim();
 	float GetAimFOV() const;
+	float GetAimTurnModifier() const;
+	float GetAimLookUpModifier() const;
 	float GetAimMovementMaxSpeed() const;
 	FTransform GetForGribTransform() const;
 protected:
@@ -54,7 +56,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters | Aiming")
 		float AimMovementMaxSpeed = 200.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters | Aiming")
-		float AimFOV = 200.0f;
+		float AimFOV = 50.0f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters | Aiming", meta = (ClampMin = 0.0f, UIMin = 0.0f, ClampMax = 1.0f, UIMax = 1.0f))
+		float AimTurnModifier = 1.0f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters | Aiming", meta = (ClampMin = 0.0f, UIMin = 0.0f, ClampMax = 1.0f, UIMax = 1.0f))
+		float AimLookUpModifier = 1.0f;
 private:
 	float GetCurrentBulletSpreadAngle() const;
 	void MakeShot();

@@ -66,6 +66,16 @@ float ARangeWeaponItem::GetAimFOV() const
 	return AimFOV;
 }
 
+float ARangeWeaponItem::GetAimTurnModifier() const
+{
+	return AimTurnModifier;
+}
+
+float ARangeWeaponItem::GetAimLookUpModifier() const
+{
+	return AimLookUpModifier;
+}
+
 float ARangeWeaponItem::GetAimMovementMaxSpeed() const
 {
 	return AimMovementMaxSpeed;
