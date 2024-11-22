@@ -3,6 +3,7 @@
 #pragma once
 #include "TimerManager.h"
 #include "../GameMode/PayerGameModeBaseSecondVersion.h"
+#include "Controllers/GCPlayerController.h"
 #include "GameFramework/PhysicsVolume.h"
 #include "Components/WidgetComponent.h"
 #include "../Widget/ProgressBarWidget.h"
@@ -80,7 +81,7 @@ private:
 	void ReverseProgressBarOxygenPercent();
 	void InitTimelineCurveForAimCamera();
 	UPROPERTY()
-	APayerGameModeBaseSecondVersion* GameMode;
+	AGCPlayerController* PlayerController;
 	UPROPERTY()
 	FTimeline TimelineForStaminaProgressBar;
 	UCurveFloat* TimelineCurveForStaminaProgressBar;

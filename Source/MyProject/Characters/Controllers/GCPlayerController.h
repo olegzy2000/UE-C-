@@ -4,6 +4,11 @@
 
 
 #include "../GCBaseCharacter.h"
+#include "../../Widget/ProgressBarWidget.h"
+#include "../../Widget/AmmoWidget.h"
+#include "../../Widget/PlayerHUD.h"
+#include "../../Components/CharacterComponents/CharacterEquipmentComponent.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "CoreMinimal.h"
 #include "GCPlayerController.generated.h"
@@ -15,8 +20,16 @@ UCLASS()
 class MYPROJECT_API AGCPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+		virtual void BeginPlay() override;
 protected:
 	virtual void SetupInputComponent() override;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "User interface | setting")
+		TSubclassOf<class UUserWidget> UserInterface;
+	UPROPERTY()
+		UPlayerHUD* PlayerHUD;
+
+	
+
 private:
 	UPROPERTY()
 	TSoftObjectPtr<class AGCBaseCharacter> CachedBaseCharacter;
@@ -32,6 +45,7 @@ private:
 	void StartFireCustom();
 	void StopFireCustom();
 	void ChangeCrouchState();
+	void EquipPrimaryItem();
 	void ChangeProneState();
 	void StartSprint();
 	void StopSprint();
@@ -45,6 +59,10 @@ private:
 	void RunWall();
 	void StartAiming();
 	void StopAiming();
+	void Reload();
+	void NexItem();
+	void PreviousItem();
 public:
 	virtual void SetPawn(APawn* InPawn) override;
+	UPlayerHUD* GetPlayerHUD();
 };

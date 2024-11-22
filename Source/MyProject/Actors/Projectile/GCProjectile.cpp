@@ -1,27 +1,32 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Actors/Projectile/GCProjectile.h"
+#include "GCProjectile.h"
+#include "Components/SphereComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 // Sets default values
 AGCProjectile::AGCProjectile()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionComponent"));
+	CollisionComponent->InitSphereRadius(5.0f);
+	CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	CollisionComponent->SetCollisionResponseToAllChannels(ECR_Block);
+	SetRootComponent(CollisionComponent);
 
+	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("MovementComponent"));
+	ProjectileMovementComponent->InitialSpeed=2000.0f;
 }
 
-// Called when the game starts or when spawned
-void AGCProjectile::BeginPlay()
+
+
+void AGCProjectile::LaunchProjectile(FVector Direction)
 {
-	Super::BeginPlay();
-	
+	ProjectileMovementComponent->Velocity = Direction * ProjectileMovementComponent->InitialSpeed;
+	CollisionComponent->IgnoreActorWhenMoving(GetOwner(),true);
+	OnProjectileLaunch();
 }
 
-// Called every frame
-void AGCProjectile::Tick(float DeltaTime)
+void AGCProjectile::OnProjectileLaunch()
 {
-	Super::Tick(DeltaTime);
-
 }
-

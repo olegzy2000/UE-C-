@@ -55,6 +55,9 @@ void AGCBaseCharacter::Slide()
 
 void AGCBaseCharacter::StartFire()
 {
+	if (!CanStartFire()) {
+		return;
+	}
 	ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
 	if (IsValid(CurrentRangeWeapon)) {
 		CurrentRangeWeapon->StartFire();
@@ -62,7 +65,12 @@ void AGCBaseCharacter::StartFire()
 	//CharacterEquipmentComponent->Fire();
 }
 
-
+bool AGCBaseCharacter::CanStartFire() {
+	if (CharacterEquipmentComponent->IsEquipping()) {
+		return false;
+	}
+	return true;
+}
 void AGCBaseCharacter::ChangeMaxSpeedOfPlayer(float speed)
 {
 	GetBaseCharacterMovementComponent()->MaxWalkSpeed = speed;
@@ -100,6 +108,10 @@ void AGCBaseCharacter::StopAiming()
 	bIsAiming = false;
 	CurrentAimingMovementSpeed = 0.0f;
 	OnStopAiming();
+}
+void AGCBaseCharacter::EquipPrimaryItem()
+{
+	CharacterEquipmentComponent->EquipItemInSlot(EEquipmentSlots::PrivaryItemSlot);
 }
 float AGCBaseCharacter::GetAimingMovementSpeed() const
 {
@@ -176,6 +188,11 @@ const UCharacterEquipmentComponent* AGCBaseCharacter::GetCharacterEquipmentCompo
 {
 	return CharacterEquipmentComponent;
 }
+UCharacterEquipmentComponent* AGCBaseCharacter::GetCharacterEquipmentComponent_Mutable()const
+{
+	return CharacterEquipmentComponent;
+}
+
 
 bool AGCBaseCharacter::IsAming()
 {
@@ -558,15 +575,38 @@ void AGCBaseCharacter::OnStopAiming_Implementation()
 
 void AGCBaseCharacter::OnStartAimingInternal()
 {
+	if (OnAmingStateChanged.IsBound()) {
+		OnAmingStateChanged.Broadcast(true);
+	}
 }
 void AGCBaseCharacter::OnStopAimingInternal()
 {
+	if (OnAmingStateChanged.IsBound()) {
+		OnAmingStateChanged.Broadcast(false);
+	}
 }
 bool AGCBaseCharacter::CanSprint()
 {
 	if (bIsCrouched || !bCanStartSrpint || GCBaseCharacterMovementComponent->IsProning())
 		return false;
 	return true;
+}
+
+
+void AGCBaseCharacter::PreviousItem()
+{
+	CharacterEquipmentComponent->EquipPreviousItem();
+}
+void AGCBaseCharacter::NextItem()
+{
+	CharacterEquipmentComponent->EquipNextItem();
+}
+
+void AGCBaseCharacter::Reload()
+{
+	if (IsValid(CharacterEquipmentComponent->GetCurrentRangeWeaponItem())) {
+		CharacterEquipmentComponent->ReloadCurrentWeapon();
+	}
 }
 
 void AGCBaseCharacter::OnSprintStart_Implementation()

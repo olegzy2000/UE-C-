@@ -13,5 +13,5 @@ UCLASS()
 class MYPROJECT_API UAnimNotify_LaunchThrowable : public UAnimNotify
 {
 	GENERATED_BODY()
-	
+		virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) override;
 };

@@ -9,9 +9,17 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class MYPROJECT_API AThrowableItem : public AEquipableItem
 {
 	GENERATED_BODY()
-	
+public:
+	void Throw();
+
+protected:
+	virtual void BeginPlay() override;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Throwables")
+		TSubclassOf<class AGCProjectile> ProjectileClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Throwables", meta = (UIMin = -90.0f, UIMax = 90.0f,ClampMin=-90.0f,ClampMax=90.0f))
+		float ThrowAngle = 0.0f;
 };

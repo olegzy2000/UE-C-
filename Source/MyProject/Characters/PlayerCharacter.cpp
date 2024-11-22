@@ -10,7 +10,7 @@
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	GameMode = Cast<APayerGameModeBaseSecondVersion>(UGameplayStatics::GetGameMode(GetWorld()));
+	PlayerController = Cast<AGCPlayerController>(GetController());
 	InitTimelineToSprintCamera();
 //	InitTimelineToAimCamera();
 	InitStaminaParameters();
@@ -40,14 +40,10 @@ void APlayerCharacter::Turn(float Value)
 	if (IsAming()) {
 		ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
 		if (IsValid(CurrentRangeWeapon)) {
-			if (GEngine)
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("APlayerCharacter::Turn"));
 			AddControllerYawInput(Value * CurrentRangeWeapon->GetAimTurnModifier());
 		}
 	}
 	else {
-		if (GEngine)
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("APlayerCharacter::Turn"));
 		AddControllerYawInput(Value);
 	}
 	//AddControllerYawInput(Value);
@@ -198,7 +194,8 @@ void APlayerCharacter::Slide()
 
 void APlayerCharacter::UpdateHealthBar()
 {
-	GameMode->GetCurrentHealthWidget()->GetProgressBar()->SetPercent(CharacterAttributesComponent->GetHealth() / 100);
+	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetHealthProgressBar()!=nullptr)
+	PlayerController->GetPlayerHUD()->GetHealthProgressBar()->SetPercent(CharacterAttributesComponent->GetHealth() / 100);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -261,7 +258,8 @@ void APlayerCharacter::ChangeSpeedParamAfterFatigue()
 void APlayerCharacter::ChangeColorOfProgressBar()
 {
 	FLinearColor linerColor = FLinearColor(0.066792f, 0.484279f, 1.0f, 1.0f);
-	GameMode->GetCurrentStaminaWidget()->GetProgressBar()->SetFillColorAndOpacity(linerColor);
+	if(IsValid(PlayerController) && PlayerController->GetPlayerHUD()!=nullptr && PlayerController->GetPlayerHUD()->GetStaminaProgressBar()!=nullptr)
+	PlayerController->GetPlayerHUD()->GetStaminaProgressBar()->SetFillColorAndOpacity(linerColor);
 }
 
 void APlayerCharacter::SpringArmTargetLengthUpdate(float Alpha)
@@ -272,11 +270,6 @@ void APlayerCharacter::SpringArmTargetLengthUpdate(float Alpha)
 void APlayerCharacter::FovToAimUpdate(float Alpha)
 {
 	float CurrentTickFOV = FMath::Lerp(DefaultFOV, CurrentFOV, Alpha);
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, FString::Printf(TEXT("Alpha: %f"), Alpha));
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, FString::Printf(TEXT("CurrentFOV: %f"), CurrentFOV));
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, FString::Printf(TEXT("DefaultFOV: %f"), DefaultFOV));
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, FString::Printf(TEXT("CurrentTickFOV: %f"), CurrentTickFOV));
-	APlayerController* PlayerController = GetController<APlayerController>();
 	APlayerCameraManager* CameraManager = PlayerController->PlayerCameraManager;
 	CameraManager->SetFOV(Alpha);
 	//if (CurrentTickFOV >= 90.0f) {
@@ -288,15 +281,18 @@ void APlayerCharacter::InitStaminaParameters()
 	TimeStamina = CharacterAttributesComponent->GetMaxStamina() / CharacterAttributesComponent->GetSpeedDownStamina();
 	InitTimelineCurveToStaminaProgressBar();
 	InitTimelineToStaminaProgressBar();
-	GameMode->GetCurrentStaminaWidget()->GetProgressBar()->SetPercent(CharacterAttributesComponent->GetMaxStamina()/100);
+	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetStaminaProgressBar())
+	PlayerController->GetPlayerHUD()->GetStaminaProgressBar()->SetPercent(CharacterAttributesComponent->GetMaxStamina()/100);
 }
 void APlayerCharacter::InitHealthParameters()
 {
-	GameMode->GetCurrentHealthWidget()->GetProgressBar()->SetPercent(CharacterAttributesComponent->GetMaxHealth() / 100);
+	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetHealthProgressBar()!=nullptr)
+	PlayerController->GetPlayerHUD()->GetHealthProgressBar()->SetPercent(CharacterAttributesComponent->GetMaxHealth() / 100);
 }
 void APlayerCharacter::InitOxygenParameters()
 {
-	GameMode->GetCurrentOxygenWidget()->GetProgressBar()->SetPercent(CharacterAttributesComponent->GetMaxOxygen() / 100);
+	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetOxygenProgressBar()!=nullptr)
+	PlayerController->GetPlayerHUD()->GetOxygenProgressBar()->SetPercent(CharacterAttributesComponent->GetMaxOxygen() / 100);
 	InitTimelineCurveToOxygenProgressBar();
 	InitTimelineToOxygenProgressBar();
 }
@@ -335,10 +331,12 @@ void APlayerCharacter::InitTimelineToStaminaProgressBar()
 void APlayerCharacter::StaminaProgressBarUpdate(float Alpha)
 {
 	float StaminaPercent = FMath::Lerp(CharacterAttributesComponent->GetMaxStamina()/100, 0.0f, Alpha);
-	GameMode->GetCurrentStaminaWidget()->GetProgressBar()->SetPercent(StaminaPercent);
+	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetStaminaProgressBar()!=nullptr)
+	PlayerController->GetPlayerHUD()->GetStaminaProgressBar()->SetPercent(StaminaPercent);
 	if (StaminaPercent <= 0.0f) {
 		GetBaseCharacterMovementComponent()->MaxWalkSpeed = 300.0f;
-		GameMode->GetCurrentStaminaWidget()->GetProgressBar()->SetFillColorAndOpacity(FLinearColor::Red);
+		if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetStaminaProgressBar()!=nullptr)
+			PlayerController->GetPlayerHUD()->GetStaminaProgressBar()->SetFillColorAndOpacity(FLinearColor::Red);
 		bCanStartSrpint = false;
 		StopSprint();
 		GetWorld()->GetTimerManager().SetTimer(FuzeTimerHandle, this, &APlayerCharacter::ChangeSpeedParamAfterFatigue, TimeStamina, false);
@@ -352,7 +350,8 @@ void APlayerCharacter::OxygenProgressBarUpdate(float alpha)
 {
 	UE_LOG(LogDamage, Warning, TEXT("APlayerCharacter::OxygenProgressBarUpdate"));
 	float OxygenPercent = FMath::Lerp(CharacterAttributesComponent->GetMaxOxygen() / 100, 0.0f, alpha);
-	GameMode->GetCurrentOxygenWidget()->GetProgressBar()->SetPercent(OxygenPercent);
+	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetOxygenProgressBar()!=nullptr)
+	PlayerController->GetPlayerHUD()->GetOxygenProgressBar()->SetPercent(OxygenPercent);
 	if (OxygenPercent <= 0.0f) {
 		TakeDamage(CharacterAttributesComponent->GetMaxHealth(), FDamageEvent(), GetController(), this);
 		UE_LOG(LogDamage, Warning, TEXT("APlayerCharacter::OxygenProgressBarUpdate FINISH"));
@@ -394,7 +393,8 @@ void APlayerCharacter::ReverseResizeProgressBarPercent()
 void APlayerCharacter::StartProgressBarOxygenPercent()
 {
 	UE_LOG(LogDamage, Warning, TEXT("APlayerCharacter::StartProgressBarOxygenPercent()"));
-	GameMode->GetCurrentOxygenWidget()->SetVisibility(ESlateVisibility::Visible);
+	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetOxygenProgressBar()!=nullptr)
+	PlayerController->GetPlayerHUD()->GetOxygenProgressBar()->SetVisibility(ESlateVisibility::Visible);
 	if (TimelineForOxygenProgressBar.IsReversing()) {
 		TimelineForOxygenProgressBar.Stop();
 	}
@@ -404,7 +404,8 @@ void APlayerCharacter::StartProgressBarOxygenPercent()
 void APlayerCharacter::ReverseProgressBarOxygenPercent()
 {
 	UE_LOG(LogDamage, Warning, TEXT("APlayerCharacter::ReverseProgressBarOxygenPercent()"));
-	GameMode->GetCurrentOxygenWidget()->SetVisibility(ESlateVisibility::Hidden);
+	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetOxygenProgressBar() != nullptr)
+		PlayerController->GetPlayerHUD()->GetOxygenProgressBar()->SetVisibility(ESlateVisibility::Visible);
 	if (TimelineForOxygenProgressBar.IsPlaying()) {
 		TimelineForOxygenProgressBar.Stop();
 	}
@@ -445,7 +446,6 @@ void APlayerCharacter::InitTimelineToAimCamera()
 void APlayerCharacter::OnStartAimingInternal()
 {
 	Super::OnStartAimingInternal();
-	APlayerController* PlayerController = GetController<APlayerController>();
 	if (!IsValid(PlayerController)) {
 		return;
 	}
@@ -464,7 +464,6 @@ void APlayerCharacter::OnStartAimingInternal()
 void APlayerCharacter::OnStopAimingInternal()
 {
 	Super::OnStopAimingInternal();
-	APlayerController* PlayerController = GetController<APlayerController>();
 	if (!IsValid(PlayerController)) {
 		return;
 	}

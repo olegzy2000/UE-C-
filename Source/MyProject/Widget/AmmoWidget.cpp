@@ -3,3 +3,8 @@
 
 #include "Widget/AmmoWidget.h"
 
+void UAmmoWidget::UpdateAmmoCount(int32 NewAmmo, int32 NewTotalAmmo)
+{
+	this->Ammo = NewAmmo;
+	this->TotalAmmo = NewTotalAmmo;
+}

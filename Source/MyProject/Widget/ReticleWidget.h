@@ -13,5 +13,7 @@ UCLASS()
 class MYPROJECT_API UReticleWidget : public UUserWidget
 {
 	GENERATED_BODY()
-	
+protected:
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnAimingStateChange(bool bIsAming);
 };

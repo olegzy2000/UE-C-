@@ -19,5 +19,5 @@ protected:
 	class UProgressBar* ProgressBar;
 public:
 	class UProgressBar* GetProgressBar();
-private:
+
 };

@@ -6,23 +6,30 @@
 #include "Components/SceneComponent.h"
 #include "ExplosionComponent.generated.h"
 
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnExplosion);
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MYPROJECT_API UExplosionComponent : public USceneComponent
 {
 	GENERATED_BODY()
-
-public:	
-	// Sets default values for this component's properties
-	UExplosionComponent();
-
+public:
+	UFUNCTION(BlueprintCallable)
+		void Explode(AController* Controller);
+	UPROPERTY(BlueprintAssignable)
+		FOnExplosion OnExplosion;
 protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Explosion | Damage")
+		float MaxDamage = 75.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Explosion | Damage")
+		float MinDamage = 30.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Explosion | Damage")
+		float DamageFalloff = 1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Explosion | Damage")
+		TSubclassOf<class UDamageType> DamageTypeClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Explosion | Radius")
+		float InnerRadius = 300.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Explosion | Radius")
+		float OuterRadius = 500.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Explosion | VFX")
+		UParticleSystem* ExplosionVFX;
 		
 };

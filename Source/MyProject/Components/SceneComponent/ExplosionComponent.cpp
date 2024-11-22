@@ -2,33 +2,29 @@
 
 
 #include "Components/SceneComponent/ExplosionComponent.h"
-
-// Sets default values for this component's properties
-UExplosionComponent::UExplosionComponent()
-{
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
+#include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystem.h"
+void UExplosionComponent::Explode(AController* Controller) {
+	TArray<AActor*>IgnoredActors;
+	IgnoredActors.Add(GetOwner());
+	UGameplayStatics::ApplyRadialDamageWithFalloff(
+	GetWorld(),
+	MaxDamage,
+	MinDamage,
+	GetComponentLocation(),
+		InnerRadius,
+		OuterRadius,
+		DamageFalloff,
+		DamageTypeClass,
+		IgnoredActors,
+		GetOwner(),
+		Controller,
+		ECC_Visibility
+	);
+	if (IsValid(ExplosionVFX)) {
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionVFX,GetComponentLocation());
+	}
+	if (OnExplosion.IsBound()) {
+		OnExplosion.Broadcast();
+	}
 }
-
-
-// Called when the game starts
-void UExplosionComponent::BeginPlay()
-{
-	Super::BeginPlay();
-
-	// ...
-	
-}
-
-
-// Called every frame
-void UExplosionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
-}
-

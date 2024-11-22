@@ -42,12 +42,18 @@ struct FMantlingSettings
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0f, UMin = 0.0f))
 		float AnimationCorrectionZ = 200.0f;
 };
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnAminStateChanged,bool)
+
 UCLASS(Abstract,NotBlueprintable)
 class MYPROJECT_API AGCBaseCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
+	void PreviousItem();
+	void NextItem();
+	void Reload() ;
 	virtual void Falling() override;
 	virtual void NotifyJumpApex() override;
 	virtual void Landed(const FHitResult& Hit) override;
@@ -68,6 +74,7 @@ public:
 	virtual void StopFire();
 	virtual void StartAiming();
 	virtual void StopAiming();
+	virtual void EquipPrimaryItem();
 	float GetAimingMovementSpeed() const;
 	virtual void ChangeProneState();
 	virtual void SwimRight(float Value) {};
@@ -76,6 +83,7 @@ public:
 	void ChangeCapsuleParamOnProneStateFromCrouch(float Radius,float Height);
 	void ChangeCapsuleParamFromProneStateToCrouch(float Radius, float Height);
 	const UCharacterEquipmentComponent* GetCharacterEquipmentComponent() const;
+	UCharacterEquipmentComponent* GetCharacterEquipmentComponent_Mutable() const;
 	float GetProneCapsuleHeight() {
 		return ProneCapsuleHeight;
 	}
@@ -121,6 +129,7 @@ public:
 		void OnStartAiming();
 	UFUNCTION(BlueprintNativeEvent,BlueprintCallable, Category = "Character")
 		void OnStopAiming();
+	FOnAminStateChanged OnAmingStateChanged;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Controls")
@@ -180,6 +189,7 @@ protected:
 	const float CrouchCapsuleHeight = 50.0f;
 	void ChangeCapsuleParamOnProneState(float CapsuleRadius,float ProneCapsuleHalfHeight);
 	void ChangeCapsuleParamOutProneState(float CapsuleRadius, float ProneCapsuleHalfHeight);
+	bool CanStartFire();
 	void ChangeMaxSpeedOfPlayer(float speed);
 	void ChangeCapsuleParamFromCrouchedToIdleWalk();
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Movement")

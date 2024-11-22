@@ -3,6 +3,28 @@
 
 #include "GCPlayerController.h"
 
+void AGCPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+	if (IsValid(UserInterface)) {
+		PlayerHUD = CreateWidget<UPlayerHUD>(GetWorld(), UserInterface);
+		PlayerHUD->AddToViewport();
+		UReticleWidget* ReticleWidget = PlayerHUD->GetReticleWidget();
+		if (IsValid(ReticleWidget) && CachedBaseCharacter.IsValid()) {
+			CachedBaseCharacter->OnAmingStateChanged.AddUFunction(ReticleWidget,FName("OnAimingStateChange"));
+		}
+		UAmmoWidget* AmmoWidget = PlayerHUD->GetAmmoWidget();
+		if (IsValid(AmmoWidget) && CachedBaseCharacter.IsValid()) {
+			UCharacterEquipmentComponent* CharacterEquipment=CachedBaseCharacter->GetCharacterEquipmentComponent_Mutable();
+			CharacterEquipment->OnCurrentWeaponAmmoChanged.AddUFunction(AmmoWidget, FName("UpdateAmmoCount"));
+		}
+	}
+
+}
+UPlayerHUD* AGCPlayerController::GetPlayerHUD()
+{
+	return PlayerHUD;
+}
 
 
 void AGCPlayerController::MoveForward(float Value)
@@ -77,6 +99,13 @@ void AGCPlayerController::ChangeCrouchState()
 {
 	if (CachedBaseCharacter.IsValid()) {
 		CachedBaseCharacter->ChangeCrouchState();
+	}
+}
+
+void AGCPlayerController::EquipPrimaryItem()
+{
+	if (CachedBaseCharacter.IsValid()) {
+		CachedBaseCharacter->EquipPrimaryItem();
 	}
 }
 
@@ -173,6 +202,27 @@ void AGCPlayerController::StopAiming()
 	}
 }
 
+void AGCPlayerController::Reload()
+{
+	if (CachedBaseCharacter.IsValid()) {
+		CachedBaseCharacter->Reload();
+	}
+}
+
+void AGCPlayerController::NexItem()
+{
+	if (CachedBaseCharacter.IsValid()) {
+		CachedBaseCharacter->NextItem();
+	}
+}
+
+void AGCPlayerController::PreviousItem()
+{
+	if (CachedBaseCharacter.IsValid()) {
+		CachedBaseCharacter->PreviousItem();
+	}
+}
+
 void AGCPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -198,6 +248,10 @@ void AGCPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Fire", IE_Released, this, &AGCPlayerController::StopFireCustom);
 	InputComponent->BindAction("Aim", IE_Pressed,this, &AGCPlayerController::StartAiming);
 	InputComponent->BindAction("Aim", IE_Released,this, &AGCPlayerController::StopAiming);
+	InputComponent->BindAction("Reload", IE_Pressed, this, &AGCPlayerController::Reload);
+	InputComponent->BindAction("NextItem", IE_Pressed, this, &AGCPlayerController::NexItem);
+	InputComponent->BindAction("PreviousItem", IE_Pressed, this, &AGCPlayerController::PreviousItem);
+	InputComponent->BindAction("EquipPrimaryItem", IE_Pressed, this, &AGCPlayerController::EquipPrimaryItem);
 	InputComponent->BindAxis("SwimForward", this, &AGCPlayerController::SwimForward);
 	InputComponent->BindAxis("SwimRight", this, &AGCPlayerController::SwimRight);
 	InputComponent->BindAxis("SwimUp", this, &AGCPlayerController::SwimUp);

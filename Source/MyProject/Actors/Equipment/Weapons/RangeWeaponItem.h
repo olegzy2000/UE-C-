@@ -17,7 +17,13 @@ enum class EWeaponFireMode :uint8
 	Single,
 	FullAuto
 };
-
+UENUM(BlueprintType)
+enum class EReloadType :uint8 {
+	FullClip,
+	ByBullet
+};
+DECLARE_MULTICAST_DELEGATE(FOnReloadComplete)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnAmmoChanged,int32)
 class UAnimMontage;
 UCLASS(Blueprintable)
 class MYPROJECT_API ARangeWeaponItem : public AEquipableItem
@@ -29,18 +35,33 @@ public:
 	void StopFire();
 	void StartAim();
 	void StopAim();
+	//int32 GetMaxAmmo() const;
+	//int32 GetAmmo() const;
+	void SetAmmo(int32 NewAmmo);
+	bool CanShoot() const;
 	float GetAimFOV() const;
 	float GetAimTurnModifier() const;
 	float GetAimLookUpModifier() const;
 	float GetAimMovementMaxSpeed() const;
 	FTransform GetForGribTransform() const;
+	FOnAmmoChanged OnAmmoChanged;
+	//EAmunitionType GetAmmoType() const;
+	void StartReload();
+	void OnShotTimerElapsed();
+	void EndReload(bool bIsSuccess);
+	FOnReloadComplete OnReloadComplete;
 protected:
+	virtual void BeginPlay() override;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		USkeletalMeshComponent* WeaponMesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UWeaponBarellComponent* WeaponBarell;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animations | Weapon")
 		UAnimMontage* WeaponFireMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animations | Weapon")
+		UAnimMontage* WeaponReloadMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animations | Character")
+		UAnimMontage* CharacterReloadMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animations | Character")
 		UAnimMontage* CharacterFireMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters")
@@ -61,11 +82,25 @@ protected:
 		float AimTurnModifier = 1.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters | Aiming", meta = (ClampMin = 0.0f, UIMin = 0.0f, ClampMax = 1.0f, UIMax = 1.0f))
 		float AimLookUpModifier = 1.0f;
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters | Ammo")
+	//	int32 MaxAmmo = 30;
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters | Ammo")
+	//	EAmunitionType AmmoType;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters | Ammo")
+		bool bAutoReload = true;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animations | Weapon")
+		EReloadType ReloadType = EReloadType::FullClip;
+
+
 private:
+	bool bIsFiring = false;
+	bool bIsReloading = false;
+	//int32 Ammo = 0;
 	float GetCurrentBulletSpreadAngle() const;
 	void MakeShot();
 	float PlayAnimMontage(UAnimMontage* AnimMontage);
+	void StopAnimMontage(UAnimMontage* AnimMontage,float BlendOutTime=0.0);
 	FTimerHandle ShotTimer;
-	FVector GetBulletSpreadOffset(float Angle, FRotator ShotRotation) const;
+	FTimerHandle ReloadTimer;
 	bool bIsAiming;
 };

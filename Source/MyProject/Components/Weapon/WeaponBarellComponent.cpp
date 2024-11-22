@@ -10,45 +10,52 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 
-void UWeaponBarellComponent::Shot(FVector ShotStart,FVector ShotDirection,AController* Controller)
+void UWeaponBarellComponent::Shot(FVector ShotStart,FVector ShotDirection,AController* Controller,float SpreadAngle)
 {
-	FVector MuzzleLocation = GetComponentLocation();
-	FVector ShotEnd = ShotStart + FiringRange * ShotDirection;
-	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(),MuzzleFlashFX,MuzzleLocation,GetComponentRotation());
-	FHitResult ShotResult;
+	for (int i = 0; i < BulletsPerShot; i++) {
+		ShotDirection += GetBulletSpreadOffset(FMath::RandRange(0.0f, SpreadAngle), ShotDirection.ToOrientationRotator());
+		FVector MuzzleLocation = GetComponentLocation();
+		FVector ShotEnd = ShotStart + FiringRange * ShotDirection;
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleFlashFX, MuzzleLocation, GetComponentRotation());
+		FHitResult ShotResult;
 #if ENABLE_DRAW_DEBUG
-	UDebugSubsystem* DebugSubSystem = UGameplayStatics::GetGameInstance(GetWorld())->GetSubsystem<UDebugSubsystem>();
-	bool bIsDebugEnable = DebugSubSystem->IsCategoryEnable(DebugCategoryRangeWeapon);
+		UDebugSubsystem* DebugSubSystem = UGameplayStatics::GetGameInstance(GetWorld())->GetSubsystem<UDebugSubsystem>();
+		bool bIsDebugEnable = DebugSubSystem->IsCategoryEnable(DebugCategoryRangeWeapon);
 #else
-	bool bIsDebugEnable = false;
+		bool bIsDebugEnable = false;
 #endif
 
-	if (GetWorld()->LineTraceSingleByChannel(ShotResult, MuzzleLocation,ShotEnd, ECC_Bullet)) {
-		ShotEnd = ShotResult.ImpactPoint;
-		AActor* HitActor = ShotResult.GetActor();
-		if (IsValid(HitActor)) {
-			float Distance=FVector::Dist(MuzzleLocation, ShotEnd);
-			float DamageCoef=FalloffDiagram->GetFloatValue(Distance);
-			HitActor->TakeDamage(DamageAmount*DamageCoef, FDamageEvent{}, Controller, GetOwner());
+		if (GetWorld()->LineTraceSingleByChannel(ShotResult, MuzzleLocation, ShotEnd, ECC_Bullet)) {
+			ShotEnd = ShotResult.ImpactPoint;
+			AActor* HitActor = ShotResult.GetActor();
+			if (IsValid(HitActor)) {
+				float Distance = FVector::Dist(MuzzleLocation, ShotEnd);
+				float DamageCoef = FalloffDiagram->GetFloatValue(Distance);
+				FPointDamageEvent DamageEvent;
+				DamageEvent.HitInfo = ShotResult;
+				DamageEvent.ShotDirection = ShotDirection;
+				DamageEvent.DamageTypeClass = DamageTypeClass;
+				HitActor->TakeDamage(DamageAmount * DamageCoef, DamageEvent, Controller, GetOwner());
+			}
+			if (bIsDebugEnable) {
+				DrawDebugSphere(GetWorld(), ShotEnd, 10.0f, 24, FColor::Blue, false, 1.0f);
+			}
 		}
+		if (IsValid(DefaultDecalInfo.DecalMaterial)) {
+			UDecalComponent* DecalComponent = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), DefaultDecalInfo.DecalMaterial, DefaultDecalInfo.DecalSize, ShotResult.ImpactPoint, ShotResult.ImpactNormal.ToOrientationRotator());
+			if (IsValid(DecalComponent)) {
+				DecalComponent->SetFadeScreenSize(0.001f);
+				DecalComponent->SetFadeOut(DefaultDecalInfo.DecalLifeTime, DefaultDecalInfo.DecalFadeOutTime, true);
+			}
+		}
+		else {
+			UE_LOG(LogTemp, Log, TEXT("UWeaponBarellComponent::Shot Decal material not found"));
+		}
+		UNiagaraComponent* TraceFxComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TraceFX, MuzzleLocation, GetComponentRotation());
+		TraceFxComponent->SetVectorParameter(FXParamTraceEnd, ShotEnd);
 		if (bIsDebugEnable) {
-			DrawDebugSphere(GetWorld(), ShotEnd, 10.0f, 24, FColor::Blue,false,1.0f);
+			DrawDebugLine(GetWorld(), MuzzleLocation, ShotEnd, FColor::Red, false, 1.0f, 0, 3.0f);
 		}
-	}
-	if (IsValid(DefaultDecalInfo.DecalMaterial)) {
-		UDecalComponent* DecalComponent = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), DefaultDecalInfo.DecalMaterial, DefaultDecalInfo.DecalSize, ShotResult.ImpactPoint, ShotResult.ImpactNormal.ToOrientationRotator());
-		if (IsValid(DecalComponent)) {
-			DecalComponent->SetFadeScreenSize(0.001f);
-			DecalComponent->SetFadeOut(DefaultDecalInfo.DecalLifeTime, DefaultDecalInfo.DecalFadeOutTime, true);
-		}
-	}
-	else {
-		UE_LOG(LogTemp, Log, TEXT("UWeaponBarellComponent::Shot Decal material not found"));
-	}
-	UNiagaraComponent* TraceFxComponent=UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TraceFX, MuzzleLocation, GetComponentRotation());
-	TraceFxComponent->SetVectorParameter(FXParamTraceEnd,ShotEnd);
-	if (bIsDebugEnable) {
-		DrawDebugLine(GetWorld(), MuzzleLocation, ShotEnd, FColor::Red, false, 1.0f, 0, 3.0f);
 	}
 }
 void UWeaponBarellComponent::InitFalloffDiagram()
@@ -63,3 +70,13 @@ void UWeaponBarellComponent::BeginPlay()
 	Super::BeginPlay();
 	InitFalloffDiagram();
 }
+FVector UWeaponBarellComponent::GetBulletSpreadOffset(float Angle, FRotator ShotRotation) const
+{
+	float SpreadSize = FMath::Tan(Angle);
+	float RotationAngle = FMath::RandRange(0.0f, 2 * PI);
+	float SpreadY = FMath::Cos(RotationAngle);
+	float SpreadZ = FMath::Sin(RotationAngle);
+	FVector Result = (ShotRotation.RotateVector(FVector::UpVector) * SpreadZ + ShotRotation.RotateVector(FVector::RightVector) * SpreadY) * SpreadSize;
+	return Result;
+}
+

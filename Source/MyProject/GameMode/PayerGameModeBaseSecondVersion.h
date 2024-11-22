@@ -16,24 +16,5 @@ class MYPROJECT_API APayerGameModeBaseSecondVersion : public AGameModeBase
 {
 	GENERATED_BODY()
 		virtual void BeginPlay() override;
-protected:
-		UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="User interface | setting")
-	    TSubclassOf<class UUserWidget> StaminaBar;
-		UPROPERTY()
-		UProgressBarWidget* CurrentStaminaWidget;
-
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "User interface | setting")
-		TSubclassOf<class UUserWidget> HealthBar;
-		UPROPERTY()
-		UProgressBarWidget* CurrentHealthWidget;
-
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "User interface | setting")
-			TSubclassOf<class UUserWidget> OxygenBar;
-		UPROPERTY()
-			UProgressBarWidget* CurrentOxygenWidget;
-public:
-	UProgressBarWidget* GetCurrentStaminaWidget();
-	UProgressBarWidget* GetCurrentHealthWidget();
-	UProgressBarWidget* GetCurrentOxygenWidget();
 
 };
