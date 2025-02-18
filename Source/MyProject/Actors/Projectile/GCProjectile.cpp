@@ -17,6 +17,20 @@ AGCProjectile::AGCProjectile()
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("MovementComponent"));
 	ProjectileMovementComponent->InitialSpeed=2000.0f;
 }
+void AGCProjectile::BeginPlay()
+{
+	Super::BeginPlay();
+	CollisionComponent->OnComponentHit.AddDynamic(this,&AGCProjectile::OnCollisionHit);
+}
+void AGCProjectile::OnCollisionHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (OnProjectileHit.IsBound()) {
+		OnProjectileHit.Broadcast(Hit, ProjectileMovementComponent->Velocity.GetSafeNormal());
+	}
+}
+
+
+
 
 
 

@@ -60,7 +60,7 @@ void UCharacterAttributeComponent::DebugDrawAttributes()
 	if (DebugSubsystem->IsCategoryEnable(DebugCategoryCharacterAttributes)) {
 		return;
 	}
-	FVector TextLocation = CachedBaseCharacterOwner->GetActorLocation() + (CachedBaseCharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 5.0f);
+	FVector TextLocation = CachedBaseCharacterOwner->GetActorLocation() + (CachedBaseCharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 5.0f)*FVector::UpVector;
 	DrawDebugString(GetWorld(), TextLocation, FString::Printf(TEXT("Health: %.2f"), Health), nullptr, FColor::Green, 0.0f, true);
 }
 #endif

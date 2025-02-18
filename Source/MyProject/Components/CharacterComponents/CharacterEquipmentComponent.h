@@ -7,12 +7,15 @@
 #include "GameCodeTypes.h"
 #include <Actors/Equipment/Throwable/ThrowableItem.h>
 #include "Actors/Equipment/Weapons/RangeWeaponItem.h"
+#include "Actors/Equipment/Weapons/MeleeWeaponItem.h"
 #include "Characters/GCBaseCharacter.h"
 #include "CharacterEquipmentComponent.generated.h"
 typedef TArray<AEquipableItem*, TInlineAllocator<(uint32)EEquipmentSlots::MAX>> TItemsArray;
 typedef TArray<int32, TInlineAllocator<(uint32)EAmunitionType::MAX>> TAmunitionArray;
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnCurrentWeaponAmmoChanged,int32,int32)
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnCurrentWeaponAmmoChanged, int32, int32);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquippedItemChanged, const AEquipableItem*);
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MYPROJECT_API UCharacterEquipmentComponent : public UActorComponent
 {
@@ -23,6 +26,7 @@ public:
 	void ReloadCurrentWeapon() ;
 	void EquipItemInSlot(EEquipmentSlots Slot);
 	void AttachCurrentItemToEquippedSocket();
+	AMeleeWeaponItem* GetCurrentMeleeWeapon() const;
 	void UnEquipCurrentItem();
 	void EquipNextItem();
 	void EquipPreviousItem();
@@ -30,6 +34,7 @@ public:
 	void LaunchCurrentThrowableItem();
 	void ReloadAmmoInCurrentWeapon(int32 NumberOfAmmo=0, bool bCheckIsFull=false);
 	FOnCurrentWeaponAmmoChanged OnCurrentWeaponAmmoChanged;
+	FOnEquippedItemChanged OnEquippedItemChanged;
 protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Loadout")
@@ -51,6 +56,7 @@ private:
 	void CreateLoadout();
 	ARangeWeaponItem* CurrentEquippedWeapon;
 	AThrowableItem* CurrentThowableItem;
+	AMeleeWeaponItem* CurrentMeleeeWeaponItem;
 	TWeakObjectPtr<AGCBaseCharacter> CachedBaseCharacter;
 	FTimerHandle EquipTimer;
 	UFUNCTION()

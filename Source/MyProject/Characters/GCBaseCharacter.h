@@ -18,6 +18,7 @@
 #include "Components/TimelineComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Character.h"
+#include <Runtime/AIModule/Classes/GenericTeamAgentInterface.h>
 #include "CoreMinimal.h"
 #include "GCBaseCharacter.generated.h"
 class UCharacterEquipmentComponent;
@@ -46,14 +47,17 @@ struct FMantlingSettings
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnAminStateChanged,bool)
 
 UCLASS(Abstract,NotBlueprintable)
-class MYPROJECT_API AGCBaseCharacter : public ACharacter
+class MYPROJECT_API AGCBaseCharacter : public ACharacter,public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
 public:
+	virtual void PossessedBy(AController* NewController) override;
 	void PreviousItem();
 	void NextItem();
 	void Reload() ;
+	UCharacterAttributeComponent* GetCharacterAttributesComponent() const;
+	virtual void ChangeFireMode();
 	virtual void Falling() override;
 	virtual void NotifyJumpApex() override;
 	virtual void Landed(const FHitResult& Hit) override;
@@ -74,6 +78,8 @@ public:
 	virtual void StopFire();
 	virtual void StartAiming();
 	virtual void StopAiming();
+	void PrimaryMeleeAttack();
+	void SecondaryMeleeAttack();
 	virtual void EquipPrimaryItem();
 	float GetAimingMovementSpeed() const;
 	virtual void ChangeProneState();
@@ -130,7 +136,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent,BlueprintCallable, Category = "Character")
 		void OnStopAiming();
 	FOnAminStateChanged OnAmingStateChanged;
-
+	virtual FGenericTeamId GetGenericTeamId() const override;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Controls")
 		float BaseTurnRate = 45.0f;
@@ -213,6 +219,8 @@ protected:
 		UCharacterEquipmentComponent* CharacterEquipmentComponent;
 	virtual void OnStartAimingInternal();
 	virtual void OnStopAimingInternal();
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Team")
+		ETeams Team=ETeams::Enemy;
 private:
 	float CurrentAimingMovementSpeed;
 	void ShowLoseText();

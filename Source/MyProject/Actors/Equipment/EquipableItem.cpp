@@ -33,25 +33,46 @@ void AEquipableItem::UnEquip() {
 	}
 }
 
+EReticleType AEquipableItem::GetReticleType() const
+{
+	return ReticleType;
+}
+
 EAmunitionType AEquipableItem::GetAmmoType() const
 {
 	return AmmoType;
 }
 
-int32 AEquipableItem::GetAmmo() const
+int32 AEquipableItem::GetCurrentAmmo() const
 {
-	return Ammo;
+	return CurrentAmmo;
 }
 
 void AEquipableItem::SetAmmo(int32 NewAmmo)
 {
-	Ammo = NewAmmo;
+	CurrentAmmo = NewAmmo;
 }
 void AEquipableItem::SetMaxAmmo(int32 NewAmmo)
 {
 	MaxAmmo = NewAmmo;
 }
+void AEquipableItem::SetOwner(AActor* NewOwner)
+{
+	Super::SetOwner(NewOwner);
+	if (IsValid(NewOwner)) {
+		checkf(NewOwner->IsA<AGCBaseCharacter>(), TEXT("AEquipableItem::SetOwner only character can be owner of equipable item"));
+		AGCBaseCharacter* CurrentCharacterOwner = StaticCast<AGCBaseCharacter*>(NewOwner);
+		CharacterOwner = CurrentCharacterOwner;
+	}
+	else {
+		CharacterOwner = nullptr;
+	}
+}
 int32 AEquipableItem::GetMaxAmmo() const
 {
 	return MaxAmmo;
+}
+AGCBaseCharacter* AEquipableItem::GetCharacterOwner() 
+{
+	return CharacterOwner.IsValid() ? CharacterOwner.Get():nullptr;
 }

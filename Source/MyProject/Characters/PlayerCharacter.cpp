@@ -11,6 +11,10 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	PlayerController = Cast<AGCPlayerController>(GetController());
+
+	//FVector StartLocation = FVector(0.0f, 0.0f, 0.0f);
+	//CameraComponent->SetRelativeLocation(StartLocation);
+
 	InitTimelineToSprintCamera();
 //	InitTimelineToAimCamera();
 	InitStaminaParameters();
@@ -245,6 +249,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	GetBaseCharacterMovementComponent()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
 	InitTimelineCurveToStaminaProgressBar();
 	InitTimelineCurveToSprintCamera();
+	Team = ETeams::Player;
 }
 
 void APlayerCharacter::ChangeSpeedParamAfterFatigue()
@@ -454,7 +459,7 @@ void APlayerCharacter::OnStartAimingInternal()
 		ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
 		if (IsValid(CurrentRangeWeapon)) {
 			DefaultFOV = 90.0f;
-			CurrentFOV = 50.0f;
+			CurrentFOV = CurrentRangeWeapon->GetAimFOV();//50.0f;
 			InitTimelineToAimCamera();
 			TimelineForAimCamera.Play();
 		}

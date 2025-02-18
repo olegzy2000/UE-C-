@@ -3,13 +3,15 @@
 
 #include "ThrowableItem.h"
 #include "../../Projectile/GCProjectile.h"
-#include <Characters/GCBaseCharacter.h>
+//#include <Characters/GCBaseCharacter.h>
 
 void AThrowableItem::Throw() {
 	checkf(GetOwner()->IsA<AGCBaseCharacter>(), TEXT("AThrowableItem::Throw() only character can be owner of throable item"));
-	AGCBaseCharacter* CharacterOwner = StaticCast<AGCBaseCharacter*>(GetOwner());
+	AGCBaseCharacter* CurrentCharacterOwner = GetCharacterOwner();
+	if (!IsValid(CurrentCharacterOwner))
+		return;
 
-	APlayerController* Controller = CharacterOwner->GetController<APlayerController>();
+	APlayerController* Controller = CurrentCharacterOwner->GetController<APlayerController>();
 	if (!IsValid(Controller)) {
 		return;
 	}
@@ -20,7 +22,7 @@ void AThrowableItem::Throw() {
 	FVector ViewDirection = PlayerViewRotation.RotateVector(FVector::ForwardVector);
 	FVector ViewUpVector = PlayerViewRotation.RotateVector(FVector::UpVector);
 	FVector LaunchDirection = ViewDirection + FMath::Tan(FMath::DegreesToRadians(ThrowAngle))*ViewUpVector;
-	FVector ThrowableSocketLocation = CharacterOwner->GetMesh()->GetSocketLocation(ThroableItemSocket);
+	FVector ThrowableSocketLocation = CurrentCharacterOwner->GetMesh()->GetSocketLocation(ThroableItemSocket);
 	FVector SocketInViewSpace = PlayerViewTransform.InverseTransformPosition(ThrowableSocketLocation);
 
 	FVector SpawnLocation = PlayerViewPoint + ViewDirection* SocketInViewSpace.X;

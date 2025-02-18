@@ -4,6 +4,14 @@
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
 #include "WeaponBarellComponent.generated.h"
+
+UENUM(BlueprintType)
+enum class EHitRegistrationType :uint8
+{
+	HitScan,
+	Projectile
+};
+
 USTRUCT(BlueprintType)
 struct FDecalInfo {
 	GENERATED_BODY()
@@ -17,7 +25,7 @@ struct FDecalInfo {
 		float DecalFadeOutTime = 5.0f;
 
 };
-
+class AGCProjectile;
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MYPROJECT_API UWeaponBarellComponent : public USceneComponent
 {
@@ -25,7 +33,15 @@ class MYPROJECT_API UWeaponBarellComponent : public USceneComponent
 
 public:	
 	virtual void BeginPlay() override;
-	void Shot(FVector ShotStart, FVector ShotDirection, AController* Controller,float SpreadAngle);
+	void Shot(FVector ShotStart, FVector ShotDirection,float SpreadAngle);
+	void ChangeCurrentProjectileClass();
+	bool CanUseRifleGrenate();
+	bool UseRifleGrenate();
+	void ChangeUseRifleGrenate();
+	TSubclassOf<class AGCProjectile> GetRifleGreneteClass() const;
+	TSubclassOf<class AGCProjectile> GetProjectileClass() const;
+	TSubclassOf<class AGCProjectile> GetCurrentProjectileClass() const;
+
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes",meta = (ClampMin=1,UIMin=1))
 		int32 BulletsPerShot = 1.0f;
@@ -33,6 +49,14 @@ protected:
 		float FiringRange = 5000.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes")
 		TSubclassOf<class UDamageType> DamageTypeClass ;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | Hit registration")
+		EHitRegistrationType HitRegistration = EHitRegistrationType::HitScan;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | Hit registration" , meta=(EditCondition="HitRegistration==EHitRegistrationType::Projectile"))
+		TSubclassOf<class AGCProjectile> ProjectileClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | Alternative shoting")
+		bool bCanUseRifleGrenate = false;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | Alternative shoting", meta = (EditCondition = "bCanUseRifleGrenate"))
+		TSubclassOf<class AGCProjectile> RifleGreneteClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | Damage")
 		float DamageAmount = 20.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | VFX")
@@ -42,7 +66,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | Decals")
 		FDecalInfo DefaultDecalInfo;
 private:
+	TSubclassOf<class AGCProjectile> CurrentProjectileClass;
 	void InitFalloffDiagram();
 	UCurveFloat* FalloffDiagram;
 	FVector GetBulletSpreadOffset(float Angle, FRotator ShotRotation) const;
+	APawn* GetOwningPawn() const;
+	AController* GetController() const;
+	bool HitScan(FVector ShotStart, OUT FVector& ShotEnd, FVector ShotDirection);
+	void LaunchProjectile(const FVector& LaunchStart, FVector LaunchDirection);
+	UFUNCTION()
+	void ProcessHit(const FHitResult& HitResult, const FVector& Direction);
+	void HitByRifleGrenete();
+	void HitByDefaultBullet(const FHitResult& HitResult, const FVector& Direction);
+	bool bUseRifleGrenete = false;
+	EHitRegistrationType OldHitRegistration;
 };

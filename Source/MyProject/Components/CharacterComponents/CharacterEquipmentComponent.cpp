@@ -69,7 +69,7 @@ void UCharacterEquipmentComponent::OnWeaponReloadComplete()
 void UCharacterEquipmentComponent::ReloadAmmoInCurrentWeapon(int32 NumberOfAmmo, bool bCheckIsFull)
 {
 	int32 AvailableAmunition = GetAvailableAmunitionForCurrentWeapon();
-	int32 CurrentAmmo = CurrentEquippedWeapon->GetAmmo();
+	int32 CurrentAmmo = CurrentEquippedWeapon->GetCurrentAmmo();
 	int32 AmmoToReload = CurrentEquippedWeapon->GetMaxAmmo() - CurrentAmmo;
 	int32 ReloadedAmmo = FMath::Min(AvailableAmunition, AmmoToReload);
 	if (NumberOfAmmo > 0) {
@@ -80,7 +80,7 @@ void UCharacterEquipmentComponent::ReloadAmmoInCurrentWeapon(int32 NumberOfAmmo,
 	CurrentEquippedWeapon->SetAmmo(ReloadedAmmo + CurrentAmmo);
 	if (bCheckIsFull) {
 		AvailableAmunition = AmunitionArray[(uint32)CurrentEquippedWeapon->GetAmmoType()];
-		bool bIsFullyReloaded = CurrentEquippedWeapon->GetAmmo() == CurrentEquippedWeapon->GetMaxAmmo();
+		bool bIsFullyReloaded = CurrentEquippedWeapon->GetCurrentAmmo() == CurrentEquippedWeapon->GetMaxAmmo();
 		if (AvailableAmunition == 0 || bIsFullyReloaded) {
 			CurrentEquippedWeapon->EndReload(true);
 		}
@@ -96,8 +96,8 @@ void UCharacterEquipmentComponent::EquipAnimationFinished()
 
 EEquipableItemType UCharacterEquipmentComponent::GetCurrentEquippedWeaponType() const {
 	EEquipableItemType Result = EEquipableItemType::None;
-	if (IsValid(CurrentEquippedWeapon)) {
-		Result = CurrentEquippedWeapon->GetItemType();
+	if (IsValid(CurrentEquippedItem)) {
+		Result = CurrentEquippedItem->GetItemType();
 	}
 	return Result;
 }
@@ -129,11 +129,12 @@ void UCharacterEquipmentComponent::EquipItemInSlot(EEquipmentSlots Slot)
 	CurrentEquippedItem = ItemsArray[(uint32)Slot];
 	CurrentEquippedWeapon = Cast<ARangeWeaponItem>(CurrentEquippedItem);
 	CurrentThowableItem = Cast<AThrowableItem>(CurrentEquippedItem);
+	CurrentMeleeeWeaponItem = Cast<AMeleeWeaponItem>(CurrentEquippedItem);
 	if (IsValid(CurrentEquippedItem)) {
 		UAnimMontage* EquipMontage = CurrentEquippedItem->GetCharacterEquipAnimMontage();
 		if (IsValid(EquipMontage)) {
 			if (IsValid(CurrentThowableItem)) {
-				if (CurrentThowableItem->GetAmmo() > 0) {
+				if (CurrentThowableItem->GetCurrentAmmo() > 0) {
 					bIsEquipping = true;
 					UAnimInstance* CharacterAnimInstnce = CachedBaseCharacter->GetMesh()->GetAnimInstance();
 					float EquipDuration = CharacterAnimInstnce->Montage_Play(EquipMontage);
@@ -159,10 +160,13 @@ void UCharacterEquipmentComponent::EquipItemInSlot(EEquipmentSlots Slot)
 	if (IsValid(CurrentEquippedWeapon)) {
 		OnCurrentWeaponAmmoChangeHandle = CurrentEquippedWeapon->OnAmmoChanged.AddUFunction(this, FName("OnCurrentWeaponChanged"));
 		OnCurrentWeaponAReloadedHandle = CurrentEquippedWeapon->OnReloadComplete.AddUFunction(this, FName("OnWeaponReloadComplete"));
-		OnCurrentWeaponChanged(CurrentEquippedWeapon->GetAmmo());
+		OnCurrentWeaponChanged(CurrentEquippedWeapon->GetCurrentAmmo());
 	}
 	else if (IsValid(CurrentThowableItem)) {
-		OnCurrentItemChanged(CurrentThowableItem->GetAmmo());
+		OnCurrentItemChanged(CurrentThowableItem->GetCurrentAmmo());
+	}
+	if (OnEquippedItemChanged.IsBound()) {
+		OnEquippedItemChanged.Broadcast(CurrentEquippedItem);
 	}
 }
 
@@ -170,6 +174,11 @@ void UCharacterEquipmentComponent::AttachCurrentItemToEquippedSocket()
 {
 	if(IsValid(CurrentEquippedItem))
 	CurrentEquippedItem->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, CurrentEquippedItem->GetEquppedSocketName());
+}
+
+AMeleeWeaponItem* UCharacterEquipmentComponent::GetCurrentMeleeWeapon() const
+{
+	return CurrentMeleeeWeaponItem;
 }
 
 void UCharacterEquipmentComponent::UnEquipCurrentItem()
@@ -232,7 +241,7 @@ void UCharacterEquipmentComponent::LaunchCurrentThrowableItem()
 
 			CurrentThowableItem->Throw();
 			bIsEquipping = false;
-		    OnCurrentItemChanged(CurrentThowableItem->GetAmmo());
+		    OnCurrentItemChanged(CurrentThowableItem->GetCurrentAmmo());
 			if (PreviosEquippedSlot == EEquipmentSlots::PrivaryItemSlot)
 				PreviosEquippedSlot = EEquipmentSlots::None;
 			EquipItemInSlot(PreviosEquippedSlot);

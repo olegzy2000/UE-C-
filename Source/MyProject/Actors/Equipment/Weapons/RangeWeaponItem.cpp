@@ -3,7 +3,7 @@
 
 #include "Actors/Equipment/Weapons/RangeWeaponItem.h"
 #include "GameCodeTypes.h"
-#include "Characters/GCBaseCharacter.h"
+//#include "Characters/GCBaseCharacter.h"
 ARangeWeaponItem::ARangeWeaponItem() {
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("WeaponRoot"));
 
@@ -12,7 +12,9 @@ ARangeWeaponItem::ARangeWeaponItem() {
 
 	WeaponBarell = CreateDefaultSubobject<UWeaponBarellComponent>(TEXT("WeaponBarell"));
 	WeaponBarell->SetupAttachment(WeaponMesh, SocketWeaponMuzzleSocket);
+	ReticleType = EReticleType::Default;
 	EquppedSocketName = SocketCharacterWeapon;
+
 }
 
 float ARangeWeaponItem::GetCurrentBulletSpreadAngle() const
@@ -23,19 +25,20 @@ float ARangeWeaponItem::GetCurrentBulletSpreadAngle() const
 
 void ARangeWeaponItem::MakeShot()
 {
-	checkf(GetOwner()->IsA<AGCBaseCharacter>(), TEXT("ARangeWeaponItem::Fire() only character can be owner of range weapon"));
-	AGCBaseCharacter* CharacterOwner = StaticCast<AGCBaseCharacter*>(GetOwner());
+	AGCBaseCharacter* CurrentCharacterOwner = GetCharacterOwner();
+	if (!IsValid(CurrentCharacterOwner))
+		return;
 	if (!CanShoot()) {
 		StopFire();
-		if (GetAmmo() == 0 && bAutoReload) {
-			CharacterOwner->Reload();
+		if (GetCurrentAmmo() == 0 && bAutoReload) {
+			CurrentCharacterOwner->Reload();
 		}
 		return;
 	}
 	EndReload(false);
-	CharacterOwner->PlayAnimMontage(CharacterFireMontage);
+	CurrentCharacterOwner->PlayAnimMontage(CharacterFireMontage);
 	PlayAnimMontage(WeaponFireMontage);
-	APlayerController* Controller = CharacterOwner->GetController<APlayerController>();
+	APlayerController* Controller = CurrentCharacterOwner->GetController<APlayerController>();
 	if (!IsValid(Controller)) {
 		return;
 	}
@@ -44,9 +47,9 @@ void ARangeWeaponItem::MakeShot()
 	Controller->GetPlayerViewPoint(PlayerViewPoint,PlayerViewRotation);
 	FVector ViewDirection= PlayerViewRotation.RotateVector(FVector::ForwardVector);
 	
-	WeaponBarell->Shot(PlayerViewPoint, ViewDirection, Controller,GetCurrentBulletSpreadAngle());
-	SetAmmo(GetAmmo() - 1);
-	GetWorld()->GetTimerManager().SetTimer(ShotTimer, this, &ARangeWeaponItem::OnShotTimerElapsed, TimeBeetwenFire, false);
+	WeaponBarell->Shot(PlayerViewPoint, ViewDirection, GetCurrentBulletSpreadAngle());
+	SetAmmo(GetCurrentAmmo() - 1);
+	GetWorld()->GetTimerManager().SetTimer(ShotTimer, this, &ARangeWeaponItem::OnShotTimerElapsed, RateFire, false);
 }
 
 void ARangeWeaponItem::StartFire()
@@ -74,27 +77,17 @@ void ARangeWeaponItem::StopAim()
 	bIsAiming = false;
 }
 
-//int32 ARangeWeaponItem::GetMaxAmmo() const
-//{
-//	return MaxAmmo;
-//}
-
-//int32 ARangeWeaponItem::GetAmmo() const
-//{
-//	return Ammo;
-//}
-
 void ARangeWeaponItem::SetAmmo(int32 NewAmmo)
 {
 	Super::SetAmmo(NewAmmo);
 	if (OnAmmoChanged.IsBound()) {
-		OnAmmoChanged.Broadcast(GetAmmo());
+		OnAmmoChanged.Broadcast(GetCurrentAmmo());
 	}
 }
 
 bool ARangeWeaponItem::CanShoot() const
 {
-	return GetAmmo()>0;
+	return GetCurrentAmmo()>0;
 }
 
 float ARangeWeaponItem::GetAimFOV() const
@@ -122,18 +115,15 @@ FTransform ARangeWeaponItem::GetForGribTransform() const
 	return WeaponMesh->GetSocketTransform(WeaponForGribSocket);
 }
 
-//EAmunitionType ARangeWeaponItem::GetAmmoType() const
-//{
-//	return AmmoType;
-//}
-
 void ARangeWeaponItem::StartReload()
 {
 	checkf(GetOwner()->IsA<AGCBaseCharacter>(), TEXT("ARangeWeaponItem::StartReload() only character can be owner of range weapon"));
-	AGCBaseCharacter* CharacterOwner = StaticCast<AGCBaseCharacter*>(GetOwner());
+	AGCBaseCharacter* CurrentCharacterOwner = GetCharacterOwner();
+	if (!IsValid(CurrentCharacterOwner))
+		return;
 	bIsReloading = true;
 	if (IsValid(CharacterReloadMontage)) {
-		float MontageDuration=CharacterOwner->PlayAnimMontage(CharacterReloadMontage);
+		float MontageDuration=CurrentCharacterOwner->PlayAnimMontage(CharacterReloadMontage);
 		PlayAnimMontage(WeaponReloadMontage);
 		if (ReloadType == EReloadType::FullClip) {
 			GetWorld()->GetTimerManager().SetTimer(ReloadTimer, [this]() {EndReload(true); }, MontageDuration, false);
@@ -166,14 +156,17 @@ void ARangeWeaponItem::EndReload(bool bIsSuccess)
 		return;
 	}
 	if (!bIsSuccess) {
-		checkf(GetOwner()->IsA<AGCBaseCharacter>(), TEXT("ARangeWeaponItem::StartReload() only character can be owner of range weapon"));
-		AGCBaseCharacter* CharacterOwner = StaticCast<AGCBaseCharacter*>(GetOwner());
-		CharacterOwner->StopAnimMontage(CharacterReloadMontage);
+		AGCBaseCharacter* CurrentCharacterOwner = GetCharacterOwner();
+		if (!IsValid(CurrentCharacterOwner))
+			return;
+		CurrentCharacterOwner->StopAnimMontage(CharacterReloadMontage);
 		StopAnimMontage(WeaponReloadMontage);
 	}
 	if (ReloadType==EReloadType::ByBullet) {
-		AGCBaseCharacter* CharacterOwner = StaticCast<AGCBaseCharacter*>(GetOwner());
-		UAnimInstance* CharacterAnimInstance = CharacterOwner->GetMesh()->GetAnimInstance();
+		AGCBaseCharacter* CurrentCharacterOwner = GetCharacterOwner();
+		if (!IsValid(CurrentCharacterOwner))
+			return;
+		UAnimInstance* CharacterAnimInstance = CurrentCharacterOwner->GetMesh()->GetAnimInstance();
 		if (IsValid(CharacterAnimInstance)) {
 			CharacterAnimInstance->Montage_JumpToSection(SectionMontageReloadEnd,CharacterReloadMontage);
 		}
@@ -189,9 +182,43 @@ void ARangeWeaponItem::EndReload(bool bIsSuccess)
 	}
 }
 
+EReticleType ARangeWeaponItem::GetReticleType() const
+{
+	return bIsAiming?AimReticleType:Super::GetReticleType();
+}
+
+void ARangeWeaponItem::ChangeFireMode()
+{
+	if (!WeaponBarell->CanUseRifleGrenate())
+		return;
+	if (WeaponBarell->UseRifleGrenate()) {
+		FireMode = DefaultFireMode;
+		AmmoType = DefaultAmmoType;
+		CurrentAlternativeAmmo = GetCurrentAmmo();
+		MaxAmmo = MaxAmmoToDefaultShoting;
+		SetMaxAmmo(MaxAmmoToDefaultShoting);
+		SetAmmo(CurrentDefaultAmmo);
+	}
+	else {
+		DefaultFireMode = FireMode;
+		FireMode = EWeaponFireMode::Single;
+		AmmoType = EAmunitionType::RifleGrenete;
+		CurrentDefaultAmmo = GetCurrentAmmo();
+		SetMaxAmmo(MaxAmmoToAlternativeShoting);
+		MaxAmmo = MaxAmmoToAlternativeShoting;
+		SetAmmo(CurrentAlternativeAmmo);
+	}
+	WeaponBarell->ChangeUseRifleGrenate();
+	WeaponBarell->ChangeCurrentProjectileClass();
+}
+
 void ARangeWeaponItem::BeginPlay()
 {
 	Super::BeginPlay();
+	//if()
+	DefaultAmmoType = AmmoType;
+	SetMaxAmmo(MaxAmmoToDefaultShoting);
+	MaxAmmo = MaxAmmoToDefaultShoting;
 	SetAmmo(MaxAmmo);
 }
 

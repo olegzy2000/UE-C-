@@ -2,33 +2,46 @@
 
 
 #include "AI/Components/AlAttributeComponent.h"
-
-// Sets default values for this component's properties
+#include "../../GameCodeTypes.h"
+#include "Kismet/GameplayStatics.h"
+#include "../../Subsystems/DebugSubsystem.h"
+#include <Runtime/Engine/Public/DrawDebugHelpers.h>
+#include "AI/Turrent/Turret.h"
 UAlAttributeComponent::UAlAttributeComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
 }
-
-
-// Called when the game starts
 void UAlAttributeComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// ...
-	
+	checkf(GetOwner()->IsA<ATurret>(), TEXT("UAlAttributeComponent::BeginPlay UCharacterAttributeComponent can be used only with ATurret"));
+	CachedTurretOwner = StaticCast<ATurret*>(GetOwner());
 }
-
-
-// Called every frame
 void UAlAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
+#if UE_BUILD_DEBUG || UE_BUILD_DEVELOPMENT
+	DebugDrawAttributes();
+#endif
 }
 
+void UAlAttributeComponent::SetHealth(float NewHealth)
+{
+	this->Health = NewHealth;
+}
+float UAlAttributeComponent::GetHealth()
+{
+	return this->Health;
+}
+
+#if UE_BUILD_DEBUG || UE_BUILD_DEVELOPMENT
+void UAlAttributeComponent::DebugDrawAttributes()
+{
+	UDebugSubsystem* DebugSubsystem = UGameplayStatics::GetGameInstance(GetWorld())->GetSubsystem<UDebugSubsystem>();
+	if (DebugSubsystem->IsCategoryEnable(DebugCategoryCharacterAttributes)) {
+		return;
+	}
+	FVector TextLocation = CachedTurretOwner->GetActorLocation();
+	DrawDebugString(GetWorld(), TextLocation, FString::Printf(TEXT("Health: %.2f"), Health), nullptr, FColor::Red, 0.0f, true);
+}
+#endif

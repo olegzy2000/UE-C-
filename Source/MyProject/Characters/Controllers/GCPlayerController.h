@@ -62,6 +62,10 @@ private:
 	void Reload();
 	void NexItem();
 	void PreviousItem();
+	void ChangeFireMode();
+	void PrimaryMeleeAttack();
+	void SecondaryMeleeAttack();
+
 public:
 	virtual void SetPawn(APawn* InPawn) override;
 	UPlayerHUD* GetPlayerHUD();

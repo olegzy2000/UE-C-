@@ -9,13 +9,14 @@ void AGCPlayerController::BeginPlay()
 	if (IsValid(UserInterface)) {
 		PlayerHUD = CreateWidget<UPlayerHUD>(GetWorld(), UserInterface);
 		PlayerHUD->AddToViewport();
+		UCharacterEquipmentComponent* CharacterEquipment = CachedBaseCharacter->GetCharacterEquipmentComponent_Mutable();
 		UReticleWidget* ReticleWidget = PlayerHUD->GetReticleWidget();
 		if (IsValid(ReticleWidget) && CachedBaseCharacter.IsValid()) {
 			CachedBaseCharacter->OnAmingStateChanged.AddUFunction(ReticleWidget,FName("OnAimingStateChange"));
+			CharacterEquipment->OnEquippedItemChanged.AddUFunction(ReticleWidget, FName("OnEquippedItemChanged"));
 		}
 		UAmmoWidget* AmmoWidget = PlayerHUD->GetAmmoWidget();
 		if (IsValid(AmmoWidget) && CachedBaseCharacter.IsValid()) {
-			UCharacterEquipmentComponent* CharacterEquipment=CachedBaseCharacter->GetCharacterEquipmentComponent_Mutable();
 			CharacterEquipment->OnCurrentWeaponAmmoChanged.AddUFunction(AmmoWidget, FName("UpdateAmmoCount"));
 		}
 	}
@@ -223,6 +224,27 @@ void AGCPlayerController::PreviousItem()
 	}
 }
 
+void AGCPlayerController::ChangeFireMode()
+{
+	if (CachedBaseCharacter.IsValid()) {
+		CachedBaseCharacter->ChangeFireMode();
+	}
+}
+
+void AGCPlayerController::PrimaryMeleeAttack()
+{
+	if (CachedBaseCharacter.IsValid()) {
+		CachedBaseCharacter->PrimaryMeleeAttack();
+	}
+}
+
+void AGCPlayerController::SecondaryMeleeAttack()
+{
+	if (CachedBaseCharacter.IsValid()) {
+		CachedBaseCharacter->SecondaryMeleeAttack();
+	}
+}
+
 void AGCPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -252,6 +274,11 @@ void AGCPlayerController::SetupInputComponent()
 	InputComponent->BindAction("NextItem", IE_Pressed, this, &AGCPlayerController::NexItem);
 	InputComponent->BindAction("PreviousItem", IE_Pressed, this, &AGCPlayerController::PreviousItem);
 	InputComponent->BindAction("EquipPrimaryItem", IE_Pressed, this, &AGCPlayerController::EquipPrimaryItem);
+	InputComponent->BindAction("ChangeFireMode", IE_Pressed, this, &AGCPlayerController::ChangeFireMode);
+
+	InputComponent->BindAction("PrimaryMeleeAttack", IE_Pressed, this, &AGCPlayerController::PrimaryMeleeAttack);
+	InputComponent->BindAction("SecondaryMeleeAttack", IE_Pressed, this, &AGCPlayerController::SecondaryMeleeAttack);
+
 	InputComponent->BindAxis("SwimForward", this, &AGCPlayerController::SwimForward);
 	InputComponent->BindAxis("SwimRight", this, &AGCPlayerController::SwimRight);
 	InputComponent->BindAxis("SwimUp", this, &AGCPlayerController::SwimUp);

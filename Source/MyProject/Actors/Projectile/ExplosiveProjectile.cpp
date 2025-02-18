@@ -10,7 +10,15 @@ AExplosiveProjectile::AExplosiveProjectile() {
 }
 void AExplosiveProjectile::OnProjectileLaunch() {
 	Super::OnProjectileLaunch();
+	if(!bExplosByHit)
 	GetWorld()->GetTimerManager().SetTimer(DetonationTimer, this, &AExplosiveProjectile::OnDetonationTimerElapsed, DetonationTime);
+}
+void AExplosiveProjectile::OnCollisionHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	Super::OnCollisionHit(HitComponent, OtherActor, OtherComp, NormalImpulse, Hit);
+	if (bExplosByHit) {
+		ExplosionComponent->Explode(GetController());
+	}
 }
 void AExplosiveProjectile::OnDetonationTimerElapsed() {
 	ExplosionComponent->Explode(GetController());

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameCodeTypes.h"
+#include <Characters/GCBaseCharacter.h>
 #include "GameFramework/Actor.h"
 #include "EquipableItem.generated.h"
 
@@ -30,6 +31,11 @@ class MYPROJECT_API AEquipableItem : public AActor
 		  EAmunitionType AmmoType;
 	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipable item")
 		  UAnimMontage* CharacterEquipAnimMontage;
+	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Reticle")
+		  EReticleType ReticleType=EReticleType::None;
+	  EAmunitionType DefaultAmmoType;
+
+	  AGCBaseCharacter* GetCharacterOwner();
   public:
 	  EEquipableItemType GetItemType();
 	  FName GetUnEquppedSocketName() const;
@@ -37,11 +43,14 @@ class MYPROJECT_API AEquipableItem : public AActor
 	  UAnimMontage* GetCharacterEquipAnimMontage() const;
 	  virtual void Equip();
 	  virtual void UnEquip();
+	  virtual EReticleType GetReticleType() const;
+	  virtual void SetOwner(AActor* NewOwner) override;
 	  EAmunitionType GetAmmoType() const;
 	  int32 GetMaxAmmo() const;
-	  int32 GetAmmo() const;
+	  int32 GetCurrentAmmo() const;
 	  void SetAmmo(int32 Ammo);
 	  void SetMaxAmmo(int32 Ammo);
 private:
-	int32 Ammo = 0;
+	TWeakObjectPtr<AGCBaseCharacter> CharacterOwner;
+	int32 CurrentAmmo = 0;
 };

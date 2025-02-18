@@ -19,9 +19,13 @@ public:
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UExplosionComponent* ExplosionComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Explosion")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Explosion Type")
+		bool bExplosByHit=false;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Explosion")
 		float DetonationTime=2.0f;
 	virtual void OnProjectileLaunch() override;
+	//UFUNCTION()
+	virtual	void OnCollisionHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
 private:
 	void OnDetonationTimerElapsed();
 	FTimerHandle DetonationTimer;

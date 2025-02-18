@@ -9,6 +9,8 @@
 #include "Runtime/Engine/Classes/Components/TextRenderComponent.h"
 #include "DrawDebugHelpers.h"
 #include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
+#include "AIController.h"
+//#include "Actors/Equipment/Weapons/MeleeWeaponItem.h"
 void AGCBaseCharacter::ChangeCrouchState()
 {
 	if (!GetBaseCharacterMovementComponent()->IsFalling() && !GetBaseCharacterMovementComponent()->IsSwimming() && !GetBaseCharacterMovementComponent()->IsSlide() && !GetBaseCharacterMovementComponent()->IsSprinting()) {
@@ -33,6 +35,15 @@ void AGCBaseCharacter::ChangeCrouchState()
 	}
 }
 
+void AGCBaseCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	AAIController* AIController = Cast<AAIController>(NewController);
+	if (IsValid(AIController)) {
+		FGenericTeamId TeamId((uint8)Team);
+		AIController->SetGenericTeamId(TeamId);
+	}
+}
 void AGCBaseCharacter::StartSprint()
 {
 	if (!GetBaseCharacterMovementComponent()->IsFalling() && !GetBaseCharacterMovementComponent()->IsSlide()) {
@@ -108,6 +119,20 @@ void AGCBaseCharacter::StopAiming()
 	bIsAiming = false;
 	CurrentAimingMovementSpeed = 0.0f;
 	OnStopAiming();
+}
+void AGCBaseCharacter::PrimaryMeleeAttack()
+{
+	AMeleeWeaponItem* CurrentMeleeWeapon = CharacterEquipmentComponent->GetCurrentMeleeWeapon();
+	if (IsValid(CurrentMeleeWeapon)) {
+		CurrentMeleeWeapon->StartAttack(EMeleeAttackTypes::PrimaryAttack);
+	}
+}
+void AGCBaseCharacter::SecondaryMeleeAttack()
+{
+	AMeleeWeaponItem* CurrentMeleeWeapon = CharacterEquipmentComponent->GetCurrentMeleeWeapon();
+	if (IsValid(CurrentMeleeWeapon)) {
+		CurrentMeleeWeapon->StartAttack(EMeleeAttackTypes::SecondaryAttack);
+	}
 }
 void AGCBaseCharacter::EquipPrimaryItem()
 {
@@ -353,6 +378,8 @@ void AGCBaseCharacter::CalculateIkFootPosition()
 void AGCBaseCharacter::OnDeath()
 {
 	GetBaseCharacterMovementComponent()->DisableMovement();
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	float Duration=PlayAnimMontage(OnDeathAnimMontage);
 	if (Duration == 0.0f) {
 		EnableRagdoll();
@@ -564,6 +591,10 @@ AZipline* AGCBaseCharacter::GetAvailableZipline()
 	}
 	return Result;
 }
+FGenericTeamId AGCBaseCharacter::GetGenericTeamId() const
+{
+	return FGenericTeamId((uint8)Team);
+}
 void AGCBaseCharacter::OnStartAiming_Implementation()
 {
 	OnStartAimingInternal();
@@ -606,6 +637,18 @@ void AGCBaseCharacter::Reload()
 {
 	if (IsValid(CharacterEquipmentComponent->GetCurrentRangeWeaponItem())) {
 		CharacterEquipmentComponent->ReloadCurrentWeapon();
+	}
+}
+
+UCharacterAttributeComponent* AGCBaseCharacter::GetCharacterAttributesComponent() const
+{
+	return CharacterAttributesComponent;
+}
+
+void AGCBaseCharacter::ChangeFireMode()
+{
+	if (IsValid(CharacterEquipmentComponent) && IsValid(CharacterEquipmentComponent->GetCurrentRangeWeaponItem())) {
+		CharacterEquipmentComponent->GetCurrentRangeWeaponItem()->ChangeFireMode();
 	}
 }
 
