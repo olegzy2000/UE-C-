@@ -23,6 +23,10 @@ const FName DebugCategoryMelee = FName("MeleeWeapon");
 const FName CollisionProfileRagdoll = FName("Ragdoll");
 const FName FXParamTraceEnd = FName("TraceEnd");
 const FName SectionMontageReloadEnd = FName("EndReload");
+const FName BB_CurrentTarget = FName("CurrentTarget");
+const FName BB_NextLocation = FName("NextLocation");
+const FName BB_IsFiring = FName("IsFiring");
+
 UENUM(BlueprintType)
 enum class EEquipableItemType :uint8 {
 	None,

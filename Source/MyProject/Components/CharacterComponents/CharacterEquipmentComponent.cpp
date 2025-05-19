@@ -7,8 +7,14 @@ void UCharacterEquipmentComponent::BeginPlay()
 	Super::BeginPlay();
 	checkf(GetOwner()->IsA<AGCBaseCharacter>(), TEXT("UCharacterEquipmentComponent::BeginPlay() UCharacterEquipmentComponent can be used only with AGCBaseCharacter"))
 	CachedBaseCharacter = StaticCast<AGCBaseCharacter*>(GetOwner());
-
 	CreateLoadout();
+	AutoEquip();
+}
+void UCharacterEquipmentComponent::AutoEquip()
+{
+	if (AutoEquipItemInSlot != EEquipmentSlots::None) {
+		EquipItemInSlot(AutoEquipItemInSlot);
+	}
 }
 uint32 UCharacterEquipmentComponent::NextItemsArraySlotIndex(uint32 CurrentSlotIndex)
 {

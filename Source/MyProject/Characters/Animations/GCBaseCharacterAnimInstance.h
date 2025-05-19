@@ -69,7 +69,7 @@ protected:
 		bool bIsStrafing = false;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character animation", meta=(UIMin=-180.0f,UIMax=180.0f))
 		float Direction = 0.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character animation", meta = (UIMin = -180.0f, UIMax = 180.0f))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character animation")
 		EEquipableItemType CurrentEquippedItem = EEquipableItemType::None;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character animation | weapon")
 		FTransform ForGribSocketTransform;

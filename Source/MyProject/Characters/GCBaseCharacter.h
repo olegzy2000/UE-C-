@@ -111,6 +111,7 @@ public:
 	}
 	virtual void Tick(float DeltaTime) override;
 	void InitIkDebugDraw();
+	UFUNCTION(BlueprintCallable)
 	virtual void Mantle(bool bForce);
 	void TryToRunWall();
 	UGCBaseCharacterMovementComponent* GetBaseCharacterMovementComponent() const;

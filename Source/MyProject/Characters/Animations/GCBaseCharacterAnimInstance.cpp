@@ -30,6 +30,12 @@ void UGCBaseCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	AimRotation = CachedBaseCharacter->GetBaseAimRotation();
 	const UCharacterEquipmentComponent* CharacterEquipment = CachedBaseCharacter->GetCharacterEquipmentComponent();
 	CurrentEquippedItem = CharacterEquipment->GetCurrentEquippedWeaponType();
+	if (CurrentEquippedItem != EEquipableItemType::None) {
+		bIsStrafing = true;
+	}
+	else {
+		bIsStrafing = false;
+	}
 	ARangeWeaponItem* CurrentRangeWeaponItem = CharacterEquipment->GetCurrentRangeWeaponItem();
 	if (IsValid(CurrentRangeWeaponItem)) {
 		ForGribSocketTransform = CurrentRangeWeaponItem->GetForGribTransform();

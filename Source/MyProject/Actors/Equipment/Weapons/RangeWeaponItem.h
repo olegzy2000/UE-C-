@@ -31,6 +31,8 @@ class MYPROJECT_API ARangeWeaponItem : public AEquipableItem
 	GENERATED_BODY()
 public:
 	ARangeWeaponItem();
+	bool IsFiring() const;
+	bool IsReloading() const;
 	void StartFire();
 	void StopFire();
 	void StartAim();

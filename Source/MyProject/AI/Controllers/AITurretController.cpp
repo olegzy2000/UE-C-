@@ -19,63 +19,20 @@ void AAITurretController::SetPawn(APawn* InPawn)
 		CachedTurret = nullptr;
 	}
 }
-AAITurretController::AAITurretController()
-{
-	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("TurretPerception"));
-	//PerceptionComponent.
-}
 void AAITurretController::ActorsPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 {
+	Super::ActorsPerceptionUpdated(UpdatedActors);
 	if (!CachedTurret.IsValid()) {
 		return;
 	}
-	TArray<AActor*>SeenActors;
+	//TArray<AActor*>SeenActors;
 	//PerceptionComponent->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(),SeenActors);
-	PerceptionComponent->GetCurrentlyPerceivedActors(UAISense_Damage::StaticClass(), SeenActors);
-	AActor* ClosestActor = nullptr;
-	float MinSquaredDistance = FLT_MAX;
-	FVector TurretLocation = CachedTurret->GetActorLocation();
-	for (AActor* SeenActor : SeenActors) {
-		if (SeenActor != nullptr && SeenActor->IsA<AGCBaseCharacter>()) {
-			AGCBaseCharacter* CurrentTargetCharacter = Cast<AGCBaseCharacter>(SeenActor);
-			if (CurrentTargetCharacter->GetCharacterAttributesComponent()->GetHealth() > 0) {
-				float CurretSquaredDistance = (TurretLocation - SeenActor->GetActorLocation()).SizeSquared();
-				if (CurretSquaredDistance < MinSquaredDistance) {
-					MinSquaredDistance = CurretSquaredDistance;
-					ClosestActor = SeenActor;
-				}
-			}
-		}
-	}
+	//PerceptionComponent->GetCurrentlyPerceivedActors(UAISense_Damage::StaticClass(), SeenActors);
+	AActor* ClosestActor = GetClosestSensedActor(UAISense_Sight::StaticClass());
 	CachedTurret->SetCurrentTarget(ClosestActor);
-}
-
-void AAITurretController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
-{
-	Super::ActorsPerceptionUpdated(UpdatedActors);
-	if (!CachedTurret.IsValid())
-	{
-		return;
-	}
-
-	TArray<AActor*> DamageInstigators;
-	PerceptionComponent->GetCurrentlyPerceivedActors(UAISense_Damage::StaticClass(), DamageInstigators);
-	for (AActor* DamageInstigator : DamageInstigators)
-	{
-		if (IsValid(DamageInstigator))
-		{
-			CachedTurret->SetCurrentTarget(DamageInstigator);
-			return;
-		}
-	}
-
-	//AActor* ClosestActor = GetClosestSensedActor(UAISense_Sight::StaticClass());
-	//CachedTurret->CurrentTarget = ClosestActor;
-	//CachedTurret->OnCurrentTargetSet();
 }
 
 void AAITurretController::BeginPlay()
 {
 	Super::BeginPlay();
-	PerceptionComponent->OnPerceptionUpdated.AddDynamic(this, &AAITurretController::OnPerceptionUpdated);
 }

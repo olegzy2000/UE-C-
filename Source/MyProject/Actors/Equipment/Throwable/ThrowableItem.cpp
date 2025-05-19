@@ -3,15 +3,13 @@
 
 #include "ThrowableItem.h"
 #include "../../Projectile/GCProjectile.h"
-//#include <Characters/GCBaseCharacter.h>
 
 void AThrowableItem::Throw() {
 	checkf(GetOwner()->IsA<AGCBaseCharacter>(), TEXT("AThrowableItem::Throw() only character can be owner of throable item"));
 	AGCBaseCharacter* CurrentCharacterOwner = GetCharacterOwner();
 	if (!IsValid(CurrentCharacterOwner))
 		return;
-
-	APlayerController* Controller = CurrentCharacterOwner->GetController<APlayerController>();
+	AController* Controller = CurrentCharacterOwner->GetController();
 	if (!IsValid(Controller)) {
 		return;
 	}
@@ -26,6 +24,7 @@ void AThrowableItem::Throw() {
 	FVector SocketInViewSpace = PlayerViewTransform.InverseTransformPosition(ThrowableSocketLocation);
 
 	FVector SpawnLocation = PlayerViewPoint + ViewDirection* SocketInViewSpace.X;
+	//FVector SpawnLocation =  ViewDirection * SocketInViewSpace.X;
 	AGCProjectile* Projectile = GetWorld()->SpawnActor<AGCProjectile>(ProjectileClass, SpawnLocation,FRotator::ZeroRotator);
 	if (IsValid(Projectile)) {
 		Projectile->SetOwner(GetOwner());

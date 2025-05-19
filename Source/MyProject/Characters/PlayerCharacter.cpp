@@ -14,7 +14,7 @@ void APlayerCharacter::BeginPlay()
 
 	//FVector StartLocation = FVector(0.0f, 0.0f, 0.0f);
 	//CameraComponent->SetRelativeLocation(StartLocation);
-
+	//GetBaseCharacterMovementComponent()->bOrientRotationToMovement = 1;
 	InitTimelineToSprintCamera();
 //	InitTimelineToAimCamera();
 	InitStaminaParameters();
