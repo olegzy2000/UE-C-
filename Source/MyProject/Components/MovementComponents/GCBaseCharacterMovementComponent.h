@@ -58,6 +58,9 @@ class MYPROJECT_API UGCBaseCharacterMovementComponent : public UCharacterMovemen
 	GENERATED_BODY()
 public:
 	FORCEINLINE bool IsSprinting();
+	void SetIsSprinting(bool flag);
+	virtual void UpdateFromCompressedFlags(uint8 Flags);
+	virtual FNetworkPredictionData_Client* GetPredictionData_Client() const override;
 	UGCBaseCharacterMovementComponent();
 	FORCEINLINE bool IsProning();
 	FORCEINLINE bool IsCrouched();
@@ -142,4 +145,23 @@ private:
 	AZipline* CurrentZipline = nullptr;
 	FRotator ForceTargetRotation = FRotator::ZeroRotator;
 	bool bForceRotation = false;
+};
+class FSavedMove_GC : public FSavedMove_Character
+{
+	typedef FSavedMove_Character Super;
+private:
+	uint8 bSavedIsSprinting : 1;
+public:
+	virtual void Clear() override;
+	virtual uint8 GetCompressedFalgs() const;
+	virtual bool CanCombineWith(const FSavedMovePtr& NewMovePtr, ACharacter* InCharacter, float MaxDelta) const override;
+	virtual void SetMoveFor(ACharacter * Character,float InDeltaTimeFVector,FVector const& NewAccel,class FNetworkPredictionData_Client_Character & ClientDataCharacter) override;
+	virtual void PrepMoveFor(ACharacter* Character);
+};
+
+class FNetworkPredictionData_Client_Character_GC : public FNetworkPredictionData_Client_Character {
+	typedef FNetworkPredictionData_Client_Character Super;
+public:
+	FNetworkPredictionData_Client_Character_GC(const UCharacterMovementComponent& ClientMovement);
+	virtual FSavedMovePtr AllocateNewMove() override;
 };

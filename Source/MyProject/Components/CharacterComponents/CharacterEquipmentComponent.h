@@ -35,6 +35,9 @@ public:
 	void ReloadAmmoInCurrentWeapon(int32 NumberOfAmmo=0, bool bCheckIsFull=false);
 	FOnCurrentWeaponAmmoChanged OnCurrentWeaponAmmoChanged;
 	FOnEquippedItemChanged OnEquippedItemChanged;
+
+	void AddEquipmentItem(const TSubclassOf<AEquipableItem>EquipableItemClass);
+
 protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Loadout")

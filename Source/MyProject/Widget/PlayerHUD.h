@@ -11,6 +11,7 @@
 /**
  * 
  */
+class UHighglightInteractable;
 UCLASS()
 class MYPROJECT_API UPlayerHUD : public UUserWidget
 {
@@ -27,11 +28,16 @@ protected:
 		UReticleWidget* ReticleWidget;
 	UPROPERTY(meta = (BindWidget))
 		UAmmoWidget* AmmoWidget;
+	UPROPERTY(meta = (BindWidget))
+		UHighglightInteractable* InteractableKey;
+
 public:
 	class UProgressBar* GetHealthProgressBar();
 	class UProgressBar* GetOxygenProgressBar();
 	class UProgressBar* GetStaminaProgressBar();
 	UReticleWidget* GetReticleWidget();
 	UAmmoWidget* GetAmmoWidget();
-	
+
+	void SetHightInteractableActionText(FName KeyName);
+	void SetHighlightInteractableVisibility(bool bIsVisible);
 };

@@ -64,6 +64,10 @@ bool AGCAICharacterController::IsTargetReached(FVector TargetLocation)
 void AGCAICharacterController::BeginPlay()
 {
 	Super::BeginPlay();
+	//SetupPatrollingComponent();
+}
+void AGCAICharacterController::SetupPatrollingComponent()
+{
 	UAIPatrollingComponent* PatrollingComponent = CachedAICharacter->GetPatrollingComponent();
 	if (PatrollingComponent->CanPatrol()) {
 		FVector ClosestWayPoint = PatrollingComponent->GetClosestWayPoint();
@@ -82,6 +86,7 @@ void AGCAICharacterController::SetPawn(APawn* InPawn)
 		checkf(InPawn->IsA<AGCAICharacter>(), TEXT("AGCAICharacterController::SetPawn can possesed only by AGCAICharacter"));
 		CachedAICharacter = StaticCast<AGCAICharacter*>(InPawn);
 		RunBehaviorTree(CachedAICharacter->GetUBehaviorTree());
+		SetupPatrollingComponent();
 	}
 	else {
 		CachedAICharacter = nullptr;

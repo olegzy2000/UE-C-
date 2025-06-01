@@ -76,6 +76,9 @@ void UCharacterAttributeComponent::OnTakeAnyDamage(AActor* DamagedActor, float D
 			OnDeathEvent.Broadcast();
 		}
 	}
+	if (OnHealthChangedEvent.IsBound()) {
+		OnHealthChangedEvent.Broadcast(Health/MaxHealth);
+	}
 }
 
 

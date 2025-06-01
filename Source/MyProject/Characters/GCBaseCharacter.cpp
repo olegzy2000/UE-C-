@@ -8,8 +8,11 @@
 #include "Components/CharacterComponents/CharacterAttributeComponent.h"
 #include "Runtime/Engine/Classes/Components/TextRenderComponent.h"
 #include "DrawDebugHelpers.h"
+#include "../Components/CharacterComponents/CharacterEquipmentComponent.h"
 #include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
 #include "AIController.h"
+#include "Components/WidgetComponent.h"
+#include <Widget/GCAttributeProgressBar.h>
 //#include "Actors/Equipment/Weapons/MeleeWeaponItem.h"
 void AGCBaseCharacter::ChangeCrouchState()
 {
@@ -236,6 +239,7 @@ void AGCBaseCharacter::Tick(float DeltaTime)
 #else
 	bool bIsDebugEnable = false;
 #endif
+	TraceOfSight();
 }
 
 void AGCBaseCharacter::InitIkDebugDraw() {
@@ -506,7 +510,15 @@ void AGCBaseCharacter::BeginPlay()
 		InitialMeshRalativeLocation = GetMesh()->GetRelativeTransform().GetLocation();
 	}
 	InitTimelineToIKFoot();
+	InitializeHealthProgress();
 	CharacterAttributesComponent->OnDeathEvent.AddUObject(this,&AGCBaseCharacter::OnDeath);
+}
+void AGCBaseCharacter::EndPlay(const EEndPlayReason::Type Reason)
+{
+	if (OnInteractableObjectFound.IsBound()) {
+		OnInteractableObjectFound.Unbind();
+	}
+	Super::EndPlay(Reason);
 }
 UGCBaseCharacterMovementComponent* AGCBaseCharacter::GetBaseCharacterMovementComponent() const
 {
@@ -521,6 +533,9 @@ AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
 	GetMesh()->bCastDynamicShadow = true;
 	CharacterAttributesComponent= CreateDefaultSubobject<UCharacterAttributeComponent>(TEXT("CharacterAttributes"));
 	CharacterEquipmentComponent = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("CharacterEquipment"));
+
+	HealthBarProgressComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarProgressComponent"));
+	HealthBarProgressComponent->SetupAttachment(GetCapsuleComponent());
 }
 
 void AGCBaseCharacter::RegisterInteractiveActor(AInteractiveActor* InteractiveActor)
@@ -595,6 +610,31 @@ FGenericTeamId AGCBaseCharacter::GetGenericTeamId() const
 {
 	return FGenericTeamId((uint8)Team);
 }
+void AGCBaseCharacter::Interact()
+{
+	if (LineOfSightObject.GetInterface()) {
+		LineOfSightObject->Interact(this);
+	}
+}
+void AGCBaseCharacter::InitializeHealthProgress()
+{
+	UGCAttributeProgressBar* Widget = Cast<UGCAttributeProgressBar>(HealthBarProgressComponent->GetUserWidgetObject());
+	if (!IsValid(Widget)) {
+		HealthBarProgressComponent->SetVisibility(true);
+		return;
+	}
+
+	if (IsPlayerControlled() && IsLocallyControlled()) {
+		HealthBarProgressComponent->SetVisibility(false);
+	}
+	CharacterAttributesComponent->OnHealthChangedEvent.AddUObject(Widget,&UGCAttributeProgressBar::SetProgressPercantage);
+	CharacterAttributesComponent->OnDeathEvent.AddLambda([=]() {HealthBarProgressComponent->SetVisibility(false); });
+	Widget->SetProgressPercantage(CharacterAttributesComponent->GetHealth()/CharacterAttributesComponent->GetMaxHealth());
+}
+void AGCBaseCharacter::AddEquipmentItem(const TSubclassOf<AEquipableItem> EquipableItemClass)
+{
+	CharacterEquipmentComponent->AddEquipmentItem(EquipableItemClass);
+}
 void AGCBaseCharacter::OnStartAiming_Implementation()
 {
 	OnStartAimingInternal();
@@ -615,6 +655,35 @@ void AGCBaseCharacter::OnStopAimingInternal()
 	if (OnAmingStateChanged.IsBound()) {
 		OnAmingStateChanged.Broadcast(false);
 	}
+}
+void AGCBaseCharacter::TraceOfSight()
+{
+	if (!IsPlayerControlled()) {
+		return;
+	}
+	FVector ViewLocation;
+	FRotator ViewRotation;
+	TArray<AActor*>ActorsToIgnore;
+	APlayerController* PlayerController = GetController<APlayerController>();
+	PlayerController->GetPlayerViewPoint(ViewLocation, ViewRotation);
+	FVector ViewDirection = ViewRotation.Vector();
+	FVector TraceEnd = ViewLocation + ViewDirection * LineSightDistance;
+	FHitResult HitResult;
+	GetWorld()->LineTraceSingleByChannel(HitResult, ViewLocation, TraceEnd, ECC_Visibility);
+	FCollisionQueryParams ParamsCollision;
+	GCTraceUtils::LineTraceSingleByChannel(GetWorld(), HitResult, ViewLocation, TraceEnd, ECollisionChannel::ECC_Visibility, ParamsCollision, true, 1, FColor::Green);
+	if (LineOfSightObject.GetObject() != HitResult.Actor) {
+			LineOfSightObject = HitResult.Actor.Get();
+			FName ActionName;
+			if (LineOfSightObject.GetInterface()) {
+				ActionName = LineOfSightObject->GetActionEventName();
+			}
+			else {
+				ActionName = NAME_None;
+			}
+			OnInteractableObjectFound.ExecuteIfBound(ActionName);
+	}
+	
 }
 bool AGCBaseCharacter::CanSprint()
 {

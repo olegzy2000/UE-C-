@@ -31,15 +31,17 @@ void ABasePlatform::BeginPlay()
 void ABasePlatform::PlatformTimeluneUpdate(float Alpha)
 {
 	const FVector PlatformTagretLocation = FMath::Lerp(StartLocation, EndLocation, Alpha);
-	if (PlatformBehavior== EPlatformBehavior::OnDemand && PlatformTagretLocation == StartLocation) {
-		StopMovingPlatform();
+	if (PlatformBehavior== EPlatformBehavior::OnDemand && PlatformTagretLocation == EndLocation) {
+		PlatformTimeline.Reverse();
+		//StopMovingPlatform();
 	}
 	PlatformMesh->SetRelativeLocation(PlatformTagretLocation);
 }
 
 void ABasePlatform::StartMovingPlatform()
 {
-	PlatformTimeline.Play();
+	if(!PlatformTimeline.IsPlaying() && !PlatformTimeline.IsReversing())
+	PlatformTimeline.PlayFromStart();
 }
 
 

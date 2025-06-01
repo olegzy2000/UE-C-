@@ -2,23 +2,24 @@
 
 
 #include "GCPlayerController.h"
-
+#include "GameFramework/PlayerInput.h"
 void AGCPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	if (IsValid(UserInterface)) {
+	if (IsValid(UserInterface) && CachedBaseCharacter.IsValid()) {
 		PlayerHUD = CreateWidget<UPlayerHUD>(GetWorld(), UserInterface);
 		PlayerHUD->AddToViewport();
 		UCharacterEquipmentComponent* CharacterEquipment = CachedBaseCharacter->GetCharacterEquipmentComponent_Mutable();
 		UReticleWidget* ReticleWidget = PlayerHUD->GetReticleWidget();
-		if (IsValid(ReticleWidget) && CachedBaseCharacter.IsValid()) {
+		if (IsValid(ReticleWidget)) {
 			CachedBaseCharacter->OnAmingStateChanged.AddUFunction(ReticleWidget,FName("OnAimingStateChange"));
 			CharacterEquipment->OnEquippedItemChanged.AddUFunction(ReticleWidget, FName("OnEquippedItemChanged"));
 		}
 		UAmmoWidget* AmmoWidget = PlayerHUD->GetAmmoWidget();
-		if (IsValid(AmmoWidget) && CachedBaseCharacter.IsValid()) {
+		if (IsValid(AmmoWidget)) {
 			CharacterEquipment->OnCurrentWeaponAmmoChanged.AddUFunction(AmmoWidget, FName("UpdateAmmoCount"));
 		}
+		CachedBaseCharacter->OnInteractableObjectFound.BindUObject(this, &AGCPlayerController::OnInteractableObjectFound);
 	}
 
 }
@@ -162,6 +163,10 @@ void AGCPlayerController::SetPawn(APawn* InPawn)
 {
 	Super::SetPawn(InPawn);
 	CachedBaseCharacter = Cast<AGCBaseCharacter>(InPawn);
+	//if (CachedBaseCharacter.IsValid() && IsLocalController()) {
+		//CreateAndInitializeWidgets();
+	//	CachedBaseCharacter->OnInteractableObjectFound.BindUObject(this, &AGCPlayerController::OnInteractableObjectFound);
+	//}
 }
 void AGCPlayerController::ClimbLadderUp(float Value)
 {
@@ -245,6 +250,27 @@ void AGCPlayerController::SecondaryMeleeAttack()
 	}
 }
 
+void AGCPlayerController::Interact()
+{
+	if (CachedBaseCharacter.IsValid()) {
+		CachedBaseCharacter->Interact();
+	}
+}
+
+void AGCPlayerController::OnInteractableObjectFound(FName ActionName)
+{
+	if (!IsValid(PlayerHUD)) {
+		return;
+	}
+	TArray<FInputActionKeyMapping>ActionKeys = PlayerInput->GetKeysForAction(ActionName);
+	const bool HasAnyKeys = ActionKeys.Num() != 0;
+	if (HasAnyKeys) {
+		FName ActionKey = ActionKeys[0].Key.GetFName();
+		PlayerHUD->SetHightInteractableActionText(ActionKey);
+	}
+	PlayerHUD->SetHighlightInteractableVisibility(HasAnyKeys);
+}
+
 void AGCPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -278,6 +304,7 @@ void AGCPlayerController::SetupInputComponent()
 
 	InputComponent->BindAction("PrimaryMeleeAttack", IE_Pressed, this, &AGCPlayerController::PrimaryMeleeAttack);
 	InputComponent->BindAction("SecondaryMeleeAttack", IE_Pressed, this, &AGCPlayerController::SecondaryMeleeAttack);
+	InputComponent->BindAction("Interact", IE_Pressed, this, &AGCPlayerController::Interact);
 
 	InputComponent->BindAxis("SwimForward", this, &AGCPlayerController::SwimForward);
 	InputComponent->BindAxis("SwimRight", this, &AGCPlayerController::SwimRight);

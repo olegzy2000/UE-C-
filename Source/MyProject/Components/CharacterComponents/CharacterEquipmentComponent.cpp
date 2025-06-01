@@ -2,6 +2,18 @@
 
 
 #include "Components/CharacterComponents/CharacterEquipmentComponent.h"
+void UCharacterEquipmentComponent::AddEquipmentItem(const TSubclassOf<AEquipableItem> EquipableItemClass)
+{
+	ARangeWeaponItem* RangeWeaponObject = Cast<ARangeWeaponItem>(EquipableItemClass->GetDefaultObject());
+	if (!IsValid(RangeWeaponObject)) {
+		return;
+	}
+	uint32 currentIndex = (uint32)RangeWeaponObject->GetAmmoType();
+	AmunitionArray[currentIndex] += RangeWeaponObject->GetMaxAmmo();
+	if (IsValid(CurrentEquippedWeapon)) {
+		OnCurrentWeaponChanged(CurrentEquippedWeapon->GetCurrentAmmo());
+	}
+}
 void UCharacterEquipmentComponent::BeginPlay()
 {
 	Super::BeginPlay();

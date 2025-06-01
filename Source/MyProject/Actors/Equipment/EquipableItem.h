@@ -36,6 +36,9 @@ class MYPROJECT_API AEquipableItem : public AActor
 	  EAmunitionType DefaultAmmoType;
 
 	  AGCBaseCharacter* GetCharacterOwner();
+
+	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+		  FName DataTableID = NAME_None;
   public:
 	  EEquipableItemType GetItemType();
 	  FName GetUnEquppedSocketName() const;

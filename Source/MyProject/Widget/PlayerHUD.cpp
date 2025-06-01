@@ -2,7 +2,7 @@
 
 
 #include "Widget/PlayerHUD.h"
-
+#include "HighglightInteractable.h"
 UProgressBar* UPlayerHUD::GetStaminaProgressBar()
 {
     return StaminaProgressBar;
@@ -14,6 +14,24 @@ UReticleWidget* UPlayerHUD::GetReticleWidget()
 UAmmoWidget* UPlayerHUD::GetAmmoWidget()
 {
     return AmmoWidget;
+}
+void UPlayerHUD::SetHightInteractableActionText(FName KeyName)
+{
+    if (IsValid(InteractableKey)) {
+        InteractableKey->SetActionText(KeyName);
+    }
+}
+void UPlayerHUD::SetHighlightInteractableVisibility(bool bIsVisible)
+{
+    if (!IsValid(InteractableKey)) {
+        return;
+    }
+    if (bIsVisible) {
+        InteractableKey->SetVisibility(ESlateVisibility::Visible);
+    }
+    else {
+        InteractableKey->SetVisibility(ESlateVisibility::Hidden);
+    }
 }
 UProgressBar* UPlayerHUD::GetOxygenProgressBar()
 {

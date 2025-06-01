@@ -18,10 +18,15 @@
 #include "Components/TimelineComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Character.h"
+#include <Actors/Interactive/Interactive.h>
 #include <Runtime/AIModule/Classes/GenericTeamAgentInterface.h>
 #include "CoreMinimal.h"
 #include "GCBaseCharacter.generated.h"
+
+DECLARE_DELEGATE_OneParam(FOnInteractableObjectFound, FName)
 class UCharacterEquipmentComponent;
+class UWidgetComponent;
+class AEquipableItem;
 USTRUCT(BlueprintType)
 struct FMantlingSettings
 {
@@ -62,6 +67,7 @@ public:
 	virtual void NotifyJumpApex() override;
 	virtual void Landed(const FHitResult& Hit) override;
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	virtual bool CanJumpInternal_Implementation() const override;
 	virtual void MoveForward(float Value) {};
 	virtual void MoveRight(float Value) {};
@@ -138,6 +144,17 @@ public:
 		void OnStopAiming();
 	FOnAminStateChanged OnAmingStateChanged;
 	virtual FGenericTeamId GetGenericTeamId() const override;
+	void Interact();
+
+	UPROPERTY(EditAnywhere, Category = "Character | Components")
+	UWidgetComponent* HealthBarProgressComponent;
+
+	void InitializeHealthProgress();
+
+	FOnInteractableObjectFound OnInteractableObjectFound;
+
+	void AddEquipmentItem(const TSubclassOf<AEquipableItem>EquipableItemClass);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Controls")
 		float BaseTurnRate = 45.0f;
@@ -222,6 +239,11 @@ protected:
 	virtual void OnStopAimingInternal();
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Team")
 		ETeams Team=ETeams::Enemy;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character | Interactive")
+		float LineSightDistance = 500.0f;
+	void TraceOfSight();
+	UPROPERTY()
+		TScriptInterface<IInteractable> LineOfSightObject;
 private:
 	float CurrentAimingMovementSpeed;
 	void ShowLoseText();

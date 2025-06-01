@@ -7,6 +7,8 @@
 #include "CharacterAttributeComponent.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnDeathEventSignature);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnHealthChangedEvent,float);
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MYPROJECT_API UCharacterAttributeComponent : public UActorComponent
 {
@@ -16,6 +18,7 @@ public:
 	UCharacterAttributeComponent();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	FOnDeathEventSignature OnDeathEvent;
+	FOnHealthChangedEvent OnHealthChangedEvent;
 	bool IsAlive();
 	float GetMaxHealth();
 	float GetHealth();
