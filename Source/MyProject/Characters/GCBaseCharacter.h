@@ -27,6 +27,8 @@ DECLARE_DELEGATE_OneParam(FOnInteractableObjectFound, FName)
 class UCharacterEquipmentComponent;
 class UWidgetComponent;
 class AEquipableItem;
+class UInventoryItem;
+class UCharacterInventoryComponent;
 USTRUCT(BlueprintType)
 struct FMantlingSettings
 {
@@ -92,6 +94,8 @@ public:
 	virtual void SwimRight(float Value) {};
 	virtual void SwimForward(float Value) {};
 	virtual void SwimUp(float Value) {};
+	bool PickupItem(TWeakObjectPtr <UInventoryItem> ItemToPickup);
+	void UseInventory(APlayerController* PlayerController);
 	void ChangeCapsuleParamOnProneStateFromCrouch(float Radius,float Height);
 	void ChangeCapsuleParamFromProneStateToCrouch(float Radius, float Height);
 	const UCharacterEquipmentComponent* GetCharacterEquipmentComponent() const;
@@ -235,6 +239,8 @@ protected:
 		class UCurveFloat* FallDamageCurve;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
 		UCharacterEquipmentComponent* CharacterEquipmentComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
+		UCharacterInventoryComponent* CharacterInventoryComponent;
 	virtual void OnStartAimingInternal();
 	virtual void OnStopAimingInternal();
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Team")

@@ -208,6 +208,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	TimelineForCamera.TickTimeline(DeltaTime);
 	TimelineForStaminaProgressBar.TickTimeline(DeltaTime);
 	TimelineForAimCamera.TickTimeline(DeltaTime);
+	//UpdateHealthBar();
 	TickOxygen(DeltaTime);
 }
 
@@ -291,6 +292,7 @@ void APlayerCharacter::InitStaminaParameters()
 }
 void APlayerCharacter::InitHealthParameters()
 {
+	CharacterAttributesComponent->OnHealthAddEvent.AddUObject(this, &APlayerCharacter::UpdateHealthBar);
 	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetHealthProgressBar()!=nullptr)
 	PlayerController->GetPlayerHUD()->GetHealthProgressBar()->SetPercent(CharacterAttributesComponent->GetMaxHealth() / 100);
 }

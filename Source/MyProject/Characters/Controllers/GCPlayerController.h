@@ -67,6 +67,8 @@ private:
 	void SecondaryMeleeAttack();
 	void Interact();
 	void OnInteractableObjectFound(FName ActionName);
+	void UseInventory();
+
 public:
 	virtual void SetPawn(APawn* InPawn) override;
 	UPlayerHUD* GetPlayerHUD();

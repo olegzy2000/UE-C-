@@ -43,6 +43,20 @@ float UCharacterAttributeComponent::GetSwimOxygenConsumptionVelocity()
 	return SwimOxygenConsumptionVelocity;
 }
 
+void UCharacterAttributeComponent::AddHealth(float HealthToAdd)
+{
+	
+	Health=FMath::Clamp(Health + HealthToAdd, 0.0f, MaxHealth);
+	if (OnHealthChangedEvent.IsBound()) {
+		OnDeathEvent.Broadcast();
+	}
+}
+
+void UCharacterAttributeComponent::RestoreFullStamina()
+{
+	Stamina = MaxStamina;
+}
+
 // Called when the game starts
 void UCharacterAttributeComponent::BeginPlay()
 {
@@ -69,7 +83,7 @@ void UCharacterAttributeComponent::OnTakeAnyDamage(AActor* DamagedActor, float D
 	if (!IsAlive())
 		return;
 	UE_LOG(LogDamage, Warning, TEXT("UCharacterAttributeComponent::OnTakeAnyDamage %s recevied %.2f amount of damage form %s"), *CachedBaseCharacterOwner->GetName(), Damage, *DamageCauser->GetName());
-	Health =FMath::Clamp(Health-Damage,0.0f,MaxHealth);
+	Health = FMath::Clamp(Health-Damage,0.0f,MaxHealth);
 	if (!IsAlive()) {
 		UE_LOG(LogDamage, Warning, TEXT("UCharacterAttributeComponent::OnTakeAnyDamage character %s is killed by an actor %s"), *CachedBaseCharacterOwner->GetName(), *DamageCauser->GetName());
 		if(OnDeathEvent.IsBound()){

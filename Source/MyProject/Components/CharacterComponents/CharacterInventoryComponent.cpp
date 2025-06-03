@@ -25,7 +25,8 @@ void UCharacterInventoryComponent::CreateViewWidget(APlayerController* PlayerCon
 		return;
 	}
 	InventoryViewWidget = CreateWidget<UInventoryViewWidget>(PlayerController, InventoryViewWidgetClass);
-	InventoryViewWidget->InitializeViewWidget(&InventorySlots);
+	InventoryViewWidget->SetVisibility(ESlateVisibility::Visible);
+	InventoryViewWidget->InitializeViewWidget(InventorySlots);
 
 }
 
@@ -69,9 +70,9 @@ void UCharacterInventoryComponent::OpenViewInventory(APlayerController* Controll
 	if (!IsValid(InventoryViewWidget)) {
 		CreateViewWidget(Controller);
 	}
-	if (InventoryViewWidget->IsVisible()) {
+	//if (InventoryViewWidget->IsVisible()) {
 		InventoryViewWidget->AddToViewport();
-	}
+	//}
 
 }
 
@@ -119,7 +120,7 @@ TArray<FText> UCharacterInventoryComponent::GetAllItemsNames() const
 
 bool UCharacterInventoryComponent::AddItem(TWeakObjectPtr<UInventoryItem> ItemToAdd, int32 Count)
 {
-	if (ItemToAdd.IsValid() || Count<0) {
+	if (!ItemToAdd.IsValid() || Count<0) {
 		return false;
 	}
 	bool Result = false;

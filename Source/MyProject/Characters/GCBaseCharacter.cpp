@@ -6,13 +6,14 @@
 #include <MyProject/GameCodeTypes.h>
 #include "Components/CharacterComponents/CharacterEquipmentComponent.h"
 #include "Components/CharacterComponents/CharacterAttributeComponent.h"
+#include "Components/CharacterComponents/CharacterInventoryComponent.h"
 #include "Runtime/Engine/Classes/Components/TextRenderComponent.h"
 #include "DrawDebugHelpers.h"
-#include "../Components/CharacterComponents/CharacterEquipmentComponent.h"
 #include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
 #include "AIController.h"
 #include "Components/WidgetComponent.h"
 #include <Widget/GCAttributeProgressBar.h>
+#include <Inventary/InventoryItem.h>
 //#include "Actors/Equipment/Weapons/MeleeWeaponItem.h"
 void AGCBaseCharacter::ChangeCrouchState()
 {
@@ -192,6 +193,31 @@ void AGCBaseCharacter::ChangeCapsuleParamOutProneState(float CapsuleRadius, floa
 		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
 	ChangeSkeletalMeshPosition(InitialMeshRalativeLocation);
 	SpringArmComponent->SetRelativeLocation(SpringArmComponent->GetRelativeLocation() - FVector(0, 0, (GetProneCapsuleHeight() + 8)));
+}
+bool AGCBaseCharacter::PickupItem(TWeakObjectPtr<UInventoryItem> ItemToPickup)
+{
+	bool Result = false;
+	if (CharacterInventoryComponent->HasFreeSlot()) {
+		Result=CharacterInventoryComponent->AddItem(ItemToPickup, 1);
+	}
+	return Result;
+
+}
+void AGCBaseCharacter::UseInventory(APlayerController* PlayerController)
+{
+	if (!IsValid(PlayerController)) {
+		return;
+	}
+	if (!CharacterInventoryComponent->IsViewVisible()) {
+		CharacterInventoryComponent->OpenViewInventory(PlayerController);
+		PlayerController->SetInputMode(FInputModeGameAndUI{});
+		PlayerController->bShowMouseCursor=true;
+	}
+	else {
+		CharacterInventoryComponent->CloseViewInventory();
+		PlayerController->SetInputMode(FInputModeGameOnly{});
+		PlayerController->bShowMouseCursor = false;
+	}
 }
 void AGCBaseCharacter::ChangeCapsuleParamOnProneStateFromCrouch(float Radius, float ProneCapsuleHalfHeight)
 {
@@ -533,7 +559,7 @@ AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
 	GetMesh()->bCastDynamicShadow = true;
 	CharacterAttributesComponent= CreateDefaultSubobject<UCharacterAttributeComponent>(TEXT("CharacterAttributes"));
 	CharacterEquipmentComponent = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("CharacterEquipment"));
-
+	CharacterInventoryComponent = CreateDefaultSubobject<UCharacterInventoryComponent>(TEXT("CharacterInventory"));
 	HealthBarProgressComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarProgressComponent"));
 	HealthBarProgressComponent->SetupAttachment(GetCapsuleComponent());
 }
@@ -627,7 +653,8 @@ void AGCBaseCharacter::InitializeHealthProgress()
 	if (IsPlayerControlled() && IsLocallyControlled()) {
 		HealthBarProgressComponent->SetVisibility(false);
 	}
-	CharacterAttributesComponent->OnHealthChangedEvent.AddUObject(Widget,&UGCAttributeProgressBar::SetProgressPercantage);
+	//CharacterAttributesComponent->OnHealthChangedEvent.AddUObject(Widget,&UGCAttributeProgressBar::SetProgressPercantage);
+	CharacterAttributesComponent->OnHealthChangedEvent.AddUObject(Widget, &UGCAttributeProgressBar::SetProgressPercantage);
 	CharacterAttributesComponent->OnDeathEvent.AddLambda([=]() {HealthBarProgressComponent->SetVisibility(false); });
 	Widget->SetProgressPercantage(CharacterAttributesComponent->GetHealth()/CharacterAttributesComponent->GetMaxHealth());
 }
