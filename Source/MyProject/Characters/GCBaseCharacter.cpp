@@ -670,7 +670,8 @@ void AGCBaseCharacter::InitializeHealthProgress()
 }
 void AGCBaseCharacter::AddEquipmentItem(const TSubclassOf<AEquipableItem> EquipableItemClass)
 {
-	CharacterEquipmentComponent->AddEquipmentItemToSlot(EquipableItemClass, );
+	//TO DO
+	CharacterEquipmentComponent->AddEquipmentItemToSlot(EquipableItemClass, 1);
 }
 void AGCBaseCharacter::OnStartAiming_Implementation()
 {

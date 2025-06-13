@@ -11,7 +11,7 @@ void UEquipmentViewWidget::AddEquipmentSlotView(AEquipableItem* LinkToWeapon, in
 	checkf(IsValid(DefaultSlotViewClass.Get()), TEXT("UEquipmentViewWidget::AddEquipmentSlotView equipment class is not valid"))
 	UEquipmentSlotWidget* SlotWidget = CreateWidget<UEquipmentSlotWidget>(this, DefaultSlotViewClass);
 
-	if (SlotWidget != nullptr) {
+	if (IsValid(SlotWidget)) {
 		SlotWidget->InitializeEquipmentSlot(LinkToWeapon, SlotIndex);
 		VBWeaponSlots->AddChildToVerticalBox(SlotWidget);
 		SlotWidget->UpdateView();
@@ -31,11 +31,16 @@ void UEquipmentViewWidget::UpdateSlot(int32 SlotIndex)
 
 bool UEquipmentViewWidget::EquipEquipmentToSlot(const TSubclassOf<AEquipableItem>& WeaponClass, int32 SenderIndex)
 {
-	return false;
+	const bool Result = LinkedEquipmentComponent->AddEquipmentItemToSlot(WeaponClass, SenderIndex);
+	if (Result) {
+		UpdateSlot(SenderIndex);
+	}
+	return Result;
 }
 
 void UEquipmentViewWidget::RemoveEquipmentFromSlot(int32 SlotIndex)
 {
+	LinkedEquipmentComponent->RemoveItemFromSlot(SlotIndex);
 }
 
 void UEquipmentViewWidget::InitializeEquipmentWidget(UCharacterEquipmentComponent* EquipmentComponent) {

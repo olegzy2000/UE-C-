@@ -54,7 +54,7 @@ void UEquipmentSlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, con
 	if (!AdapterLinkedInventoryItem.IsValid()) {
 		return;
 	}
-	UDragDropOperation* DragOperation = Cast<UDragDropOperation>(UWidgetBlueprintLibrary::CreateDragDropOperation);
+	UDragDropOperation* DragOperation = UWidgetBlueprintLibrary::CreateDragDropOperation(UDragDropOperation::StaticClass());
 	UInventorySlotWidget* DragWidget = CreateWidget<UInventorySlotWidget>(GetOwningPlayer(), DragAndDropWidgetClass);
 	DragWidget->SetItemIcon(AdapterLinkedInventoryItem->GetDescription().Icon);
 

@@ -9,7 +9,6 @@
 #include "EquipableItem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquipmentStateChanged, bool, bIsEquipped);
-
 class UAnimMontage;
 UCLASS(Abstract,NotBlueprintable)
 class MYPROJECT_API AEquipableItem : public AActor
@@ -56,7 +55,7 @@ class MYPROJECT_API AEquipableItem : public AActor
 	  void SetAmmo(int32 Ammo);
 	  void SetMaxAmmo(int32 Ammo);
 	  FName GetDataTableID() const;
-	  bool IsSlotCompatable(EEquipmentSlots Slot);
+	  bool IsSlotCompatable(EEquipmentSlots Slot) const;
 private:
 	TWeakObjectPtr<AGCBaseCharacter> CharacterOwner;
 	int32 CurrentAmmo = 0;

@@ -9,7 +9,7 @@
 class UCharacterEquipmentComponent;
 class UVerticalBox;
 class UEquipmentSlotWidget;
-
+class AEquipableItem;
 /**
  * 
  */

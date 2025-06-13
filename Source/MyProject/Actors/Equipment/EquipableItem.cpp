@@ -60,9 +60,9 @@ FName AEquipableItem::GetDataTableID() const
 {
 	return DataTableID;
 }
-bool AEquipableItem::IsSlotCompatable(EEquipmentSlots Slot)
+bool AEquipableItem::IsSlotCompatable(EEquipmentSlots Slot) const
 {
-	return CompatableEquipmentSlots->Contains(Slot);
+	return CompatableEquipmentSlots.Contains(Slot);
 }
 void AEquipableItem::SetOwner(AActor* NewOwner)
 {
