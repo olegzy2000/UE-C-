@@ -202,13 +202,21 @@ void APlayerCharacter::UpdateHealthBar()
 	PlayerController->GetPlayerHUD()->GetHealthProgressBar()->SetPercent(CharacterAttributesComponent->GetHealth() / 100);
 }
 
+void APlayerCharacter::RestoreStaminaProgressBar()
+{
+	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetStaminaProgressBar()) {
+		TimelineForStaminaProgressBar.Stop();
+		ChangeSpeedParamAfterFatigue();
+	   PlayerController->GetPlayerHUD()->GetStaminaProgressBar()->SetPercent(CharacterAttributesComponent->GetMaxStamina() / 100);
+    }
+}
+
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	TimelineForCamera.TickTimeline(DeltaTime);
 	TimelineForStaminaProgressBar.TickTimeline(DeltaTime);
 	TimelineForAimCamera.TickTimeline(DeltaTime);
-	//UpdateHealthBar();
 	TickOxygen(DeltaTime);
 }
 
@@ -287,8 +295,8 @@ void APlayerCharacter::InitStaminaParameters()
 	TimeStamina = CharacterAttributesComponent->GetMaxStamina() / CharacterAttributesComponent->GetSpeedDownStamina();
 	InitTimelineCurveToStaminaProgressBar();
 	InitTimelineToStaminaProgressBar();
-	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetStaminaProgressBar())
-	PlayerController->GetPlayerHUD()->GetStaminaProgressBar()->SetPercent(CharacterAttributesComponent->GetMaxStamina()/100);
+	CharacterAttributesComponent->OnRestoreStaminaEvent.AddUObject(this, &APlayerCharacter::RestoreStaminaProgressBar);
+	RestoreStaminaProgressBar();
 }
 void APlayerCharacter::InitHealthParameters()
 {

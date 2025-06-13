@@ -29,6 +29,10 @@ void UInventorySlotWidget::InitializeItemSlot(FInventorySlot& InventarySlot) {
 	OnInventorySlotUpdate.BindUObject(this, &UInventorySlotWidget::UpdateView);
 	LinkedSlot->BindOnInventorySlotUpdate(OnInventorySlotUpdate);
 }
+void UInventorySlotWidget::SetItemIcon(UTexture2D* Icon)
+{
+	ImageItemIcon->SetBrushFromTexture(Icon);
+}
 FReply UInventorySlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	if (LinkedSlot == nullptr) {

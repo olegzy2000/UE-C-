@@ -56,6 +56,14 @@ void AEquipableItem::SetMaxAmmo(int32 NewAmmo)
 {
 	MaxAmmo = NewAmmo;
 }
+FName AEquipableItem::GetDataTableID() const
+{
+	return DataTableID;
+}
+bool AEquipableItem::IsSlotCompatable(EEquipmentSlots Slot)
+{
+	return CompatableEquipmentSlots->Contains(Slot);
+}
 void AEquipableItem::SetOwner(AActor* NewOwner)
 {
 	Super::SetOwner(NewOwner);

@@ -8,6 +8,7 @@
 #include <Actors/Equipment/Throwable/ThrowableItem.h>
 #include "Actors/Equipment/Weapons/RangeWeaponItem.h"
 #include "Actors/Equipment/Weapons/MeleeWeaponItem.h"
+#include <Widget/Equipment/EquipmentViewWidget.h>
 #include "Characters/GCBaseCharacter.h"
 #include "CharacterEquipmentComponent.generated.h"
 typedef TArray<AEquipableItem*, TInlineAllocator<(uint32)EEquipmentSlots::MAX>> TItemsArray;
@@ -36,8 +37,12 @@ public:
 	FOnCurrentWeaponAmmoChanged OnCurrentWeaponAmmoChanged;
 	FOnEquippedItemChanged OnEquippedItemChanged;
 
-	void AddEquipmentItem(const TSubclassOf<AEquipableItem>EquipableItemClass);
-
+	bool AddEquipmentItemToSlot(const TSubclassOf<AEquipableItem>EquipableItemClass, int32 SlotIndex);
+	void RemoveItemFromSlot(int32 SlotIndex);
+	void OpenViewEquipment(APlayerController* PlayerController);
+	void CloseViewEquipment();
+	bool IsViewVisible() const;
+	const TArray<AEquipableItem*> GetItems() const;
 protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Loadout")
@@ -48,6 +53,9 @@ protected:
 		TSet<EEquipmentSlots>IgnoreSlotsWhileSwitching;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Loadout")
 		EEquipmentSlots AutoEquipItemInSlot=EEquipmentSlots::None;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "View")
+		TSubclassOf<UEquipmentViewWidget> ViewWidgetClass ;
+	void CreateViewWidget(APlayerController* PlayerController);
 private:
 	void AutoEquip();
 	bool bIsEquipping=false;
@@ -58,7 +66,7 @@ private:
 	EEquipmentSlots PreviosEquippedSlot;
 	int32 GetAvailableAmunitionForCurrentWeapon();
 	TAmunitionArray AmunitionArray;
-	TItemsArray ItemsArray;
+	TArray<AEquipableItem*> ItemsArray;
 	void CreateLoadout();
 	ARangeWeaponItem* CurrentEquippedWeapon;
 	AThrowableItem* CurrentThowableItem;
@@ -73,6 +81,6 @@ private:
 	FDelegateHandle OnCurrentWeaponAmmoChangeHandle;
 	FDelegateHandle OnCurrentWeaponAReloadedHandle;
 	void EquipAnimationFinished();
-
+	UEquipmentViewWidget* ViewWidget;
 
 };

@@ -7,9 +7,9 @@
 #include "CharacterAttributeComponent.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnDeathEventSignature);
-DECLARE_MULTICAST_DELEGATE(FOnHealthAddEvent);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnHealthChangedEvent,float);
-//DECLARE_MULTICAST_DELEGATE(FOnHealthChangedEvent);
+DECLARE_MULTICAST_DELEGATE(FOnHealthAddEvent);
+DECLARE_MULTICAST_DELEGATE(FOnRestoreStaminaEvent);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MYPROJECT_API UCharacterAttributeComponent : public UActorComponent
@@ -22,6 +22,7 @@ public:
 	FOnDeathEventSignature OnDeathEvent;
 	FOnHealthChangedEvent OnHealthChangedEvent;
 	FOnHealthAddEvent OnHealthAddEvent;
+	FOnRestoreStaminaEvent OnRestoreStaminaEvent;
 	bool IsAlive();
 	float GetMaxHealth();
 	float GetHealth();
@@ -33,6 +34,7 @@ public:
 	float GetMaxOxygen();
 	float GetOxygenRestoreVelocity();
 	float GetSwimOxygenConsumptionVelocity();
+	UFUNCTION()
 	void AddHealth(float HealthToAdd);
 	void RestoreFullStamina();
 protected:

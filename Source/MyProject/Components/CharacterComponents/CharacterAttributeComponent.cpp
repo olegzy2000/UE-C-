@@ -47,14 +47,17 @@ void UCharacterAttributeComponent::AddHealth(float HealthToAdd)
 {
 	
 	Health=FMath::Clamp(Health + HealthToAdd, 0.0f, MaxHealth);
-	if (OnHealthChangedEvent.IsBound()) {
-		OnDeathEvent.Broadcast();
+	if (OnHealthAddEvent.IsBound()) {
+		OnHealthAddEvent.Broadcast();
 	}
 }
 
 void UCharacterAttributeComponent::RestoreFullStamina()
 {
 	Stamina = MaxStamina;
+	if(OnRestoreStaminaEvent.IsBound()) {
+		OnRestoreStaminaEvent.Broadcast();
+	}
 }
 
 // Called when the game starts

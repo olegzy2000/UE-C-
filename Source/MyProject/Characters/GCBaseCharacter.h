@@ -98,6 +98,8 @@ public:
 	void UseInventory(APlayerController* PlayerController);
 	void ChangeCapsuleParamOnProneStateFromCrouch(float Radius,float Height);
 	void ChangeCapsuleParamFromProneStateToCrouch(float Radius, float Height);
+	UFUNCTION()
+	void AddHealth(float Health);
 	const UCharacterEquipmentComponent* GetCharacterEquipmentComponent() const;
 	UCharacterEquipmentComponent* GetCharacterEquipmentComponent_Mutable() const;
 	float GetProneCapsuleHeight() {

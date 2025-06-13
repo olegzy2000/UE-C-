@@ -31,6 +31,8 @@ class MYPROJECT_API AEquipableItem : public AActor
 		  EAmunitionType AmmoType;
 	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipable item")
 		  UAnimMontage* CharacterEquipAnimMontage;
+	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipable item")
+		  TArray<EEquipmentSlots> CompatableEquipmentSlots;
 	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Reticle")
 		  EReticleType ReticleType=EReticleType::None;
 	  EAmunitionType DefaultAmmoType;
@@ -53,6 +55,8 @@ class MYPROJECT_API AEquipableItem : public AActor
 	  int32 GetCurrentAmmo() const;
 	  void SetAmmo(int32 Ammo);
 	  void SetMaxAmmo(int32 Ammo);
+	  FName GetDataTableID() const;
+	  bool IsSlotCompatable(EEquipmentSlots Slot);
 private:
 	TWeakObjectPtr<AGCBaseCharacter> CharacterOwner;
 	int32 CurrentAmmo = 0;

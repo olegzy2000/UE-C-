@@ -17,6 +17,7 @@ class MYPROJECT_API UInventorySlotWidget : public UUserWidget
 public:
 	void UpdateView();
 	void InitializeItemSlot(FInventorySlot& InventarySlot);
+	void SetItemIcon(UTexture2D* Icon);
 protected:
 	UPROPERTY(meta = (BindWidget))
 	UImage* ImageItemIcon;

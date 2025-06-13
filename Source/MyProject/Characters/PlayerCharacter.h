@@ -51,6 +51,8 @@ public:
 	virtual void Jump() override;
 	void Slide() override;
 	void UpdateHealthBar();
+	UFUNCTION()
+	void RestoreStaminaProgressBar();
 private:
 	float TimeStamina;
 	float TimeOxygen;

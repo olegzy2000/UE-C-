@@ -15,6 +15,7 @@ class MYPROJECT_API UGCAttributeProgressBar : public UUserWidget
 {
 	GENERATED_BODY()
 public:
+	UFUNCTION()
 	void SetProgressPercantage(float Percentage);
 protected:
 	UPROPERTY(meta = (BindWidget))

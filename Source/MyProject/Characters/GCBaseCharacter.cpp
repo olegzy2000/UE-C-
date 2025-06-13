@@ -210,11 +210,13 @@ void AGCBaseCharacter::UseInventory(APlayerController* PlayerController)
 	}
 	if (!CharacterInventoryComponent->IsViewVisible()) {
 		CharacterInventoryComponent->OpenViewInventory(PlayerController);
+		CharacterEquipmentComponent->OpenViewEquipment(PlayerController);
 		PlayerController->SetInputMode(FInputModeGameAndUI{});
 		PlayerController->bShowMouseCursor=true;
 	}
 	else {
 		CharacterInventoryComponent->CloseViewInventory();
+		CharacterEquipmentComponent->CloseViewEquipment();
 		PlayerController->SetInputMode(FInputModeGameOnly{});
 		PlayerController->bShowMouseCursor = false;
 	}
@@ -236,6 +238,14 @@ void AGCBaseCharacter::ChangeCapsuleParamFromProneStateToCrouch(float Radius, fl
 	ChangeSkeletalMeshPosition(InitialMeshRalativeLocation + FVector(0.f, 0.f, fabs(ProneCapsuleHalfHeight)));
 	SpringArmComponent->MoveComponent(FVector(0.f, 0.f, GetBaseCharacterMovementComponent()->CrouchedHalfHeight - ProneCapsuleHalfHeight), GetCapsuleComponent()->GetComponentQuat()
 		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
+}
+
+void AGCBaseCharacter::AddHealth(float Health)
+{
+	CharacterAttributesComponent->AddHealth(Health);
+	//if (CharacterAttributesComponent->OnHealthChangedEvent.IsBound()) {
+	//	CharacterAttributesComponent->OnHealthChangedEvent.Broadcast(Health/CharacterAttributesComponent->GetMaxHealth());
+	//}
 }
 
 const UCharacterEquipmentComponent* AGCBaseCharacter::GetCharacterEquipmentComponent() const
@@ -660,7 +670,7 @@ void AGCBaseCharacter::InitializeHealthProgress()
 }
 void AGCBaseCharacter::AddEquipmentItem(const TSubclassOf<AEquipableItem> EquipableItemClass)
 {
-	CharacterEquipmentComponent->AddEquipmentItem(EquipableItemClass);
+	CharacterEquipmentComponent->AddEquipmentItemToSlot(EquipableItemClass, );
 }
 void AGCBaseCharacter::OnStartAiming_Implementation()
 {
