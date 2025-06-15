@@ -17,6 +17,8 @@ class MYPROJECT_API UWeaponInventoryItem : public UInventoryItem
 public:
 	UWeaponInventoryItem();
 	void SetEquipWeaponClass(TSubclassOf<AEquipableItem>& EquipWeaponClass);
+	bool Consume(AGCBaseCharacter* ConsumeTarget) override;
+
 	TSubclassOf<AEquipableItem> GetEquipWeaponClass() const;
 protected:
 	TSubclassOf<AEquipableItem> EquipWeaponClass;
