@@ -116,7 +116,11 @@ float ARangeWeaponItem::GetAimMovementMaxSpeed() const
 
 FTransform ARangeWeaponItem::GetForGribTransform() const
 {
-	return WeaponMesh->GetSocketTransform(WeaponForGribSocket);
+	FTransform GribSocketTransform;
+	if (WeaponMesh && WeaponForGribSocket.IsValid()) {
+		GribSocketTransform = WeaponMesh->GetSocketTransform(WeaponForGribSocket);
+	}
+	return GribSocketTransform;
 }
 
 void ARangeWeaponItem::StartReload()

@@ -115,7 +115,7 @@ void UWeaponBarellComponent::HitByRifleGrenete() {
 }
 void UWeaponBarellComponent::HitByDefaultBullet(const FHitResult& HitResult, const FVector& Direction) {
 	AActor* HitActor = HitResult.GetActor();
-	if (IsValid(HitActor)) {
+	if (IsValid(HitActor) && FalloffDiagram!=nullptr && IsValid(FalloffDiagram)) {
 		float DamageCoef = FalloffDiagram->GetFloatValue(HitResult.Distance);//Distance
 		FPointDamageEvent DamageEvent;
 		DamageEvent.HitInfo = HitResult;
