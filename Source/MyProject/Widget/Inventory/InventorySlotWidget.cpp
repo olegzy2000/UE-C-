@@ -3,7 +3,6 @@
 
 #include "InventorySlotWidget.h"
 #include "../../Inventary/InventoryItem.h"
-//#include "Characters/GCBaseCharacter.h"
 #include "Framework/Application/SlateApplication.h"
 #include <Components/CharacterComponents/CharacterInventoryComponent.h>
 #include <Runtime/UMG/Public/Components/Image.h>
@@ -36,9 +35,11 @@ void UInventorySlotWidget::SetItemIcon(UTexture2D* Icon)
 FReply UInventorySlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	if (LinkedSlot == nullptr) {
+		LinkedSlot->UpdateSlotState();
 		return FReply::Handled();
 	}
 	if (!LinkedSlot->Item.IsValid()) {
+		LinkedSlot->UpdateSlotState();
 		return FReply::Handled();
 	}
 	FKey MouseBtn = InMouseEvent.GetEffectingButton();
