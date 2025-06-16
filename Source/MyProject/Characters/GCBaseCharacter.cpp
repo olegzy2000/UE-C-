@@ -710,7 +710,7 @@ void AGCBaseCharacter::TraceOfSight()
 	GetWorld()->LineTraceSingleByChannel(HitResult, ViewLocation, TraceEnd, ECC_Visibility);
 	FCollisionQueryParams ParamsCollision;
 	GCTraceUtils::LineTraceSingleByChannel(GetWorld(), HitResult, ViewLocation, TraceEnd, ECollisionChannel::ECC_Visibility, ParamsCollision, true, 1, FColor::Green);
-	if (LineOfSightObject.GetObject() != HitResult.Actor) {
+	if (HitResult.Actor!=nullptr) {
 			LineOfSightObject = HitResult.Actor.Get();
 			FName ActionName;
 			if (LineOfSightObject.GetInterface()) {
@@ -720,6 +720,10 @@ void AGCBaseCharacter::TraceOfSight()
 				ActionName = NAME_None;
 			}
 			OnInteractableObjectFound.ExecuteIfBound(ActionName);
+	}
+	else {
+		LineOfSightObject = nullptr;
+		OnInteractableObjectFound.ExecuteIfBound(NAME_None);
 	}
 	
 }

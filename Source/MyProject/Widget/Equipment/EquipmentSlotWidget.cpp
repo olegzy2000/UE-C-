@@ -13,11 +13,12 @@
 
 void UEquipmentSlotWidget::InitializeEquipmentSlot(TWeakObjectPtr<AEquipableItem> Equipment, int32 index)
 {
+	SlotIndexInComponent = index;
 	if (!Equipment.IsValid()) {
 		return;
 	}
 	LinkedEquipableItem = Equipment;
-	SlotIndexInComponent = index;
+	
 
 	FWeaponTableRow* EquipmentData = GCDataTableUtils::FindWeaponData(Equipment->GetDataTableID());
 	if (EquipmentData != nullptr) {

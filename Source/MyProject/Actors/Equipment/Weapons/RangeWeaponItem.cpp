@@ -117,7 +117,10 @@ float ARangeWeaponItem::GetAimMovementMaxSpeed() const
 FTransform ARangeWeaponItem::GetForGribTransform() const
 {
 	FTransform GribSocketTransform;
-	if (WeaponMesh && WeaponForGribSocket.IsValid()) {
+	if (WeaponMesh && WeaponForGribSocket.IsValid()) { 
+		UE_LOG(LogTemp, Display, TEXT("Weapon mesh  %s , Owner %s"), *WeaponMesh->GetName(), *GetOwner()->GetName());
+		const USkeletalMeshSocket* SkeletalMeshSocket = WeaponMesh->GetSocketByName(WeaponForGribSocket);
+		if(SkeletalMeshSocket)
 		GribSocketTransform = WeaponMesh->GetSocketTransform(WeaponForGribSocket);
 	}
 	return GribSocketTransform;

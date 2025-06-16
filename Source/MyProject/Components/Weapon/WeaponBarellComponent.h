@@ -65,10 +65,11 @@ protected:
 		class UNiagaraSystem* TraceFX;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | Decals")
 		FDecalInfo DefaultDecalInfo;
+	UPROPERTY()
+	UCurveFloat* FalloffDiagram;
 private:
 	TSubclassOf<class AGCProjectile> CurrentProjectileClass;
 	void InitFalloffDiagram();
-	UCurveFloat* FalloffDiagram;
 	FVector GetBulletSpreadOffset(float Angle, FRotator ShotRotation) const;
 	APawn* GetOwningPawn() const;
 	AController* GetController() const;

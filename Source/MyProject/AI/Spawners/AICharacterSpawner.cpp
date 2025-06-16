@@ -43,6 +43,9 @@ void AAICharacterSpawner::SpawnAI() {
 	}
 	 
 	AGCAICharacter* AICharacter = GetWorld()->SpawnActor<AGCAICharacter>(CharacterClass, GetTransform());
+	if (!AICharacter) {
+		return;
+	}
 	if (!IsValid(AICharacter->Controller)) {
 		AICharacter->SpawnDefaultController();
 	}
