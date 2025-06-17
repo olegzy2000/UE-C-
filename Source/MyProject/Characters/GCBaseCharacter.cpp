@@ -668,11 +668,7 @@ void AGCBaseCharacter::InitializeHealthProgress()
 	CharacterAttributesComponent->OnDeathEvent.AddLambda([=]() {HealthBarProgressComponent->SetVisibility(false); });
 	Widget->SetProgressPercantage(CharacterAttributesComponent->GetHealth()/CharacterAttributesComponent->GetMaxHealth());
 }
-void AGCBaseCharacter::AddEquipmentItem(const TSubclassOf<AEquipableItem> EquipableItemClass)
-{
-	//TO DO
-	CharacterEquipmentComponent->AddEquipmentItemToSlot(EquipableItemClass, 1);
-}
+
 void AGCBaseCharacter::OnStartAiming_Implementation()
 {
 	OnStartAimingInternal();
