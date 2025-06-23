@@ -32,6 +32,7 @@ class MYPROJECT_API UCharacterInventoryComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:	
+	UCharacterInventoryComponent();
 	void OpenViewInventory(APlayerController* Controller);
 	void CloseViewInventory();
 	bool IsViewVisible();
@@ -43,6 +44,7 @@ public:
 	bool RemoveItem(FName ItemID);
 protected:
 	// Called when the game starts
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere, Category = "Items")

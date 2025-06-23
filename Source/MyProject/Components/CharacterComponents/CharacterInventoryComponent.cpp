@@ -4,16 +4,41 @@
 #include "CharacterInventoryComponent.h"
 #include "../../Widget/Inventory/InventoryViewWidget.h"
 #include "../../Inventary/InventoryItem.h"
+#include <Characters/PlayerCharacter.h>
+#include <Runtime/CoreUObject/Public/UObject/ReferenceChainSearch.h>
 // Sets default values for this component's properties
 
 
+void UCharacterInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if (GetOwner()->IsA<APlayerCharacter>()) {
+		if (InventorySlots.Num() > 0) {
+			if (InventorySlots[0].Item != nullptr) {
+				UE_LOG(LogTemp, Log, TEXT("UCharacterInventoryComponent::TickComponent %s"), *InventorySlots[0].Item.Get()->GetName());
+				if (InventorySlots[0].Item.Get()->IsPendingKill())
+				{
+					UE_LOG(LogTemp, Log, TEXT("Object is pending kill!"));
+				}
+
+
+				TArray<FReferenceChainSearch::FReferenceChain> ReferenceChains;
+			}
+			else {
+				UE_LOG(LogTemp, Log, TEXT("UCharacterInventoryComponent::TickComponent NULL"));
+			}
+		}
+	}
+}
+
+UCharacterInventoryComponent::UCharacterInventoryComponent() {
+	PrimaryComponentTick.bCanEverTick = true;
+}
 // Called when the game starts
 void UCharacterInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	InventorySlots.AddDefaulted(Capacity);
-
-	
 }
 
 void UCharacterInventoryComponent::CreateViewWidget(APlayerController* PlayerController)
@@ -127,6 +152,7 @@ bool UCharacterInventoryComponent::AddItem(TWeakObjectPtr<UInventoryItem> ItemTo
 	FInventorySlot* FreeSlot = FindFreeSlot();
 	if (FreeSlot != nullptr) {
 		FreeSlot->Item = ItemToAdd;
+		FreeSlot->Item->AddToRoot();
 		FreeSlot->Count = Count;
 		ItemsInInventory++;
 		Result = true;
