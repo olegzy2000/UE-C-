@@ -2,6 +2,7 @@
 
 
 #include "Components/CharacterComponents/CharacterEquipmentComponent.h"
+#include <Characters/PlayerCharacter.h>
 bool UCharacterEquipmentComponent::AddEquipmentItemToSlot(const TSubclassOf<AEquipableItem> EquipableItemClass, int32 SlotIndex)
 {
 	if (!IsValid(EquipableItemClass)) {
@@ -27,17 +28,14 @@ bool UCharacterEquipmentComponent::AddEquipmentItemToSlot(const TSubclassOf<AEqu
 		AmunitionArray[SlotIndex] += RangeWeaponObject->GetMaxAmmo();
 	}
 	return true;
-	/*uint32 currentIndex = (uint32)RangeWeaponObject->GetAmmoType();
-	AmunitionArray[currentIndex] += RangeWeaponObject->GetMaxAmmo();
-	if (IsValid(CurrentEquippedWeapon)) {
-		OnCurrentWeaponChanged(CurrentEquippedWeapon->GetCurrentAmmo());
-	}*/
 }
 void UCharacterEquipmentComponent::RemoveItemFromSlot(int32 SlotIndex)
 {
 	if ((uint32)CurrentEquippedSlot == SlotIndex) {
 		UnEquipCurrentItem();
 	}
+	UE_LOG(LogTemp, Log, TEXT("UCharacterEquipmentComponent::RemoveItemFromSlot %i"), SlotIndex);
+	ItemsArray[SlotIndex]->RemoveFromRoot();
 	ItemsArray[SlotIndex]->Destroy();
 	ItemsArray[SlotIndex] = nullptr;
 }
@@ -128,11 +126,6 @@ void UCharacterEquipmentComponent::CreateLoadout()
 			continue;
 		}
 		AddEquipmentItemToSlot(ItemPair.Value,(int32)ItemPair.Key);
-		/*AEquipableItem* Item = GetWorld()->SpawnActor<AEquipableItem>(ItemPair.Value);
-		Item->AttachToComponent(CachedBaseCharacter->GetMesh(),FAttachmentTransformRules::KeepRelativeTransform,Item->GetUnEquppedSocketName());
-		Item->SetOwner(CachedBaseCharacter.Get());
-		Item->UnEquip();
-		ItemsArray[(uint32)ItemPair.Key]=Item;*/
 	}
 }
 
@@ -180,6 +173,25 @@ void UCharacterEquipmentComponent::EquipAnimationFinished()
 	bIsEquipping = false;
 	AttachCurrentItemToEquippedSocket();
 }
+
+UCharacterEquipmentComponent::UCharacterEquipmentComponent()
+{
+	PrimaryComponentTick.bCanEverTick = true;
+}
+
+
+void UCharacterEquipmentComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
+
+
+
+
+
+
+
+
 
 EEquipableItemType UCharacterEquipmentComponent::GetCurrentEquippedWeaponType() const {
 	EEquipableItemType Result = EEquipableItemType::None;

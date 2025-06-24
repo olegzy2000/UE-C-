@@ -22,6 +22,8 @@ class MYPROJECT_API UCharacterEquipmentComponent : public UActorComponent
 {
 	GENERATED_BODY()
 public:
+	UCharacterEquipmentComponent();
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction);
 	EEquipableItemType GetCurrentEquippedWeaponType() const;
 	ARangeWeaponItem* GetCurrentRangeWeaponItem() const;
 	void ReloadCurrentWeapon() ;
@@ -36,7 +38,6 @@ public:
 	void ReloadAmmoInCurrentWeapon(int32 NumberOfAmmo=0, bool bCheckIsFull=false);
 	FOnCurrentWeaponAmmoChanged OnCurrentWeaponAmmoChanged;
 	FOnEquippedItemChanged OnEquippedItemChanged;
-
 	bool AddEquipmentItemToSlot(const TSubclassOf<AEquipableItem>EquipableItemClass, int32 SlotIndex);
 	void RemoveItemFromSlot(int32 SlotIndex);
 	void OpenViewEquipment(APlayerController* PlayerController);

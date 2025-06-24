@@ -37,9 +37,11 @@ protected:
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 	virtual void NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
-private:
+	UPROPERTY()
 	TWeakObjectPtr<AEquipableItem>LinkedEquipableItem;
+	UPROPERTY()
 	TWeakObjectPtr<UWeaponInventoryItem> AdapterLinkedInventoryItem;
+private:
 
 	int32 SlotIndexInComponent = 0;
 };

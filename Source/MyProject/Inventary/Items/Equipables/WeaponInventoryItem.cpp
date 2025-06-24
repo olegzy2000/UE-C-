@@ -6,7 +6,9 @@
 UWeaponInventoryItem::UWeaponInventoryItem() {
 	bIsConsumable = true;
 }
-
+void UWeaponInventoryItem::BeginDestroy() {
+	RemoveFromRoot();
+}
 void UWeaponInventoryItem::SetEquipWeaponClass(TSubclassOf<AEquipableItem>& EquipWeapon)
 {
 	EquipWeaponClass = EquipWeapon;

@@ -15,11 +15,12 @@ class MYPROJECT_API UWeaponInventoryItem : public UInventoryItem
 {
 	GENERATED_BODY()
 public:
+	virtual void BeginDestroy() override;
 	UWeaponInventoryItem();
 	void SetEquipWeaponClass(TSubclassOf<AEquipableItem>& EquipWeaponClass);
 	bool Consume(AGCBaseCharacter* ConsumeTarget) override;
-
 	TSubclassOf<AEquipableItem> GetEquipWeaponClass() const;
 protected:
+	UPROPERTY()
 	TSubclassOf<AEquipableItem> EquipWeaponClass;
 };
