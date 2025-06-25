@@ -53,7 +53,7 @@ class MYPROJECT_API UInventoryItem : public UObject
 	GENERATED_BODY()
 public:
 	void Initialize(FName DataTableID_In, const FInventoryItemDescription& Description_In);
-
+	virtual void BeginDestroy() override;
 	FName GetDataTableID() const;
 	const FInventoryItemDescription& GetDescription() const;
 	virtual bool IsEquipable() const;

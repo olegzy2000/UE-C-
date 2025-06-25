@@ -3,6 +3,15 @@
 
 #include "InventoryItem.h"
 
+void UInventoryItem::BeginDestroy()
+{
+    if (IsRooted())
+    {
+        RemoveFromRoot();
+    }
+    Super::BeginDestroy();
+}
+
 FName UInventoryItem::GetDataTableID() const
 {
     return DataTableID;

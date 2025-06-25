@@ -7,7 +7,11 @@ UWeaponInventoryItem::UWeaponInventoryItem() {
 	bIsConsumable = true;
 }
 void UWeaponInventoryItem::BeginDestroy() {
-	RemoveFromRoot();
+	if (IsRooted())
+	{
+		RemoveFromRoot();
+	}
+	Super::BeginDestroy();
 }
 void UWeaponInventoryItem::SetEquipWeaponClass(TSubclassOf<AEquipableItem>& EquipWeapon)
 {

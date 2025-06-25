@@ -22,10 +22,9 @@ void UEquipmentSlotWidget::InitializeEquipmentSlot(TWeakObjectPtr<AEquipableItem
 
 	FWeaponTableRow* EquipmentData = GCDataTableUtils::FindWeaponData(Equipment->GetDataTableID());
 	if (EquipmentData != nullptr) {
-		AdapterLinkedInventoryItem = NewObject<UWeaponInventoryItem>(Equipment->GetOwner());
+		AdapterLinkedInventoryItem = NewObject<UWeaponInventoryItem>(Equipment->GetOwner() ,NAME_None, RF_Standalone);
 		AdapterLinkedInventoryItem->Initialize(Equipment->GetDataTableID(), EquipmentData->WeaponItemDescription);
 		AdapterLinkedInventoryItem->SetEquipWeaponClass(EquipmentData->EquipableActor);
-		//AdapterLinkedInventoryItem->AddToRoot();
 	}
 }
 

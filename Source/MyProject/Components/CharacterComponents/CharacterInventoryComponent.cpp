@@ -134,7 +134,9 @@ bool UCharacterInventoryComponent::AddItem(TWeakObjectPtr<UInventoryItem> ItemTo
 	FInventorySlot* FreeSlot = FindFreeSlot();
 	if (FreeSlot != nullptr) {
 		FreeSlot->Item = ItemToAdd;
-		FreeSlot->Item->AddToRoot();
+		
+		//FreeSlot->Item->AddToRoot();
+
 		FreeSlot->Count = Count;
 		ItemsInInventory++;
 		Result = true;

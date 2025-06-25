@@ -14,7 +14,7 @@ void APickableWeapon::Interact(AGCBaseCharacter* Character)
 {
 	FWeaponTableRow* WeaponRow = GCDataTableUtils::FindWeaponData(DataTableID);
 	if (WeaponRow) {
-			TWeakObjectPtr<UWeaponInventoryItem> Weapon = NewObject<UWeaponInventoryItem>(Character);
+			TWeakObjectPtr<UWeaponInventoryItem> Weapon = NewObject<UWeaponInventoryItem>(Character, NAME_None, RF_Standalone);
 			Weapon->Initialize(DataTableID, WeaponRow->WeaponItemDescription);
 			Weapon->SetEquipWeaponClass(WeaponRow->EquipableActor);
 			Character->PickupItem(Weapon);
