@@ -56,6 +56,7 @@ protected:
 	void CreateViewWidget(APlayerController* PlayerController);
 	FInventorySlot* FindItemSlot(FName ItemID);
 	FInventorySlot* FindFreeSlot();
+	FInventorySlot* FindSlotWithCustomAmmoItem(EAmunitionType AmmoType);
 private:
 	UPROPERTY()
 	UInventoryViewWidget* InventoryViewWidget;

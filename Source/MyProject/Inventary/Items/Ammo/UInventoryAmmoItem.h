@@ -13,4 +13,14 @@ UCLASS()
 class MYPROJECT_API UUInventoryAmmoItem : public UInventoryItem
 {
 	GENERATED_BODY()
+public:
+	void SetAmmoType(EAmunitionType AmunitionType);
+	void SetAmount(int32 Amount);
+	EAmunitionType GetAmmoType();
+	int32 GetAmount();
+protected:
+	UPROPERTY(EditAnywhere)
+	EAmunitionType AmunitionType;
+private :
+	int32 Amount=0;
 };

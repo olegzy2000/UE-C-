@@ -7,5 +7,6 @@
 namespace GCDataTableUtils
 {
 	FWeaponTableRow* FindWeaponData(FName WeaponID);
+	FAmmoTableRow* FindAmmoData(FName AmmoID);
 	FItemTableRow* FindInventoryItemData(const FName ItemID);
 };

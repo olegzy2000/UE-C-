@@ -47,6 +47,19 @@ public:
 	FInventoryItemDescription WeaponItemDescription;
 };
 
+USTRUCT(BlueprintType)
+struct FAmmoTableRow : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item view")
+		TSubclassOf<APickableItem> PickableActorClass;
+		UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item view")
+		EAmunitionType AmunitionType;
+		UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item view")
+		FInventoryItemDescription InventoryItemDescription;
+};
+
 UCLASS(Blueprintable)
 class MYPROJECT_API UInventoryItem : public UObject
 {
