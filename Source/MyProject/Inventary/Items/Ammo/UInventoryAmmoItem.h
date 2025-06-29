@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class MYPROJECT_API UUInventoryAmmoItem : public UInventoryItem
+class MYPROJECT_API UInventoryAmmoItem : public UInventoryItem
 {
 	GENERATED_BODY()
 public:

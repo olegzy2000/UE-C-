@@ -3,21 +3,21 @@
 
 #include "UInventoryAmmoItem.h"
 
-void UUInventoryAmmoItem::SetAmmoType(EAmunitionType NewAmunitionType) {
+void UInventoryAmmoItem::SetAmmoType(EAmunitionType NewAmunitionType) {
     AmunitionType = NewAmunitionType;
 }
 
-void UUInventoryAmmoItem::SetAmount(int32 NewAmount)
+void UInventoryAmmoItem::SetAmount(int32 NewAmount)
 {
     this->Amount = NewAmount;
 }
 
-EAmunitionType UUInventoryAmmoItem::GetAmmoType()
+EAmunitionType UInventoryAmmoItem::GetAmmoType()
 {
     return AmunitionType;
 }
 
-int32 UUInventoryAmmoItem::GetAmount()
+int32 UInventoryAmmoItem::GetAmount()
 {
     return Amount;
 }

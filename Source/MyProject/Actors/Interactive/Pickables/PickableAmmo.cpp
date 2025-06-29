@@ -12,7 +12,7 @@ void APickableAmmo::Interact(AGCBaseCharacter* Character)
 {
 	FAmmoTableRow* AmmoRow = GCDataTableUtils::FindAmmoData(DataTableID);
 	if (AmmoRow) {
-		TWeakObjectPtr<UUInventoryAmmoItem> Ammo = NewObject<UUInventoryAmmoItem>(Character, NAME_None, RF_Standalone);
+		TWeakObjectPtr<UInventoryAmmoItem> Ammo = NewObject<UInventoryAmmoItem>(Character, NAME_None, RF_Standalone);
 		Ammo->Initialize(DataTableID, AmmoRow->InventoryItemDescription);
 		Ammo->SetAmmoType(AmmoRow->AmunitionType);
 		Character->PickupItem(Ammo);

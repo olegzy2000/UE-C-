@@ -1,12 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-
+#include "GameCodeTypes.h"
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "CharacterInventoryComponent.generated.h"
 
 class UInventoryItem;
+
 USTRUCT(BlueprintType)
 struct FInventorySlot
 {
@@ -41,6 +42,7 @@ public:
 	TArray<FInventorySlot>GetAllItemsCopy() const;
 	TArray<FText>GetAllItemsNames() const;
 	bool AddItem(TWeakObjectPtr<UInventoryItem>ItemToAdd, int32 Count);
+	bool UpdateAmountAmmoInSlot(TWeakObjectPtr<UInventoryItem> ItemToAdd);
 	bool RemoveItem(FName ItemID);
 protected:
 	// Called when the game starts

@@ -7,15 +7,12 @@
 #include <Characters/PlayerCharacter.h>
 #include <Inventary/Items/Ammo/UInventoryAmmoItem.h>
 // Sets default values for this component's properties
-
-
+UCharacterInventoryComponent::UCharacterInventoryComponent() {
+	PrimaryComponentTick.bCanEverTick = true;
+}
 void UCharacterInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
-UCharacterInventoryComponent::UCharacterInventoryComponent() {
-	PrimaryComponentTick.bCanEverTick = true;
 }
 // Called when the game starts
 void UCharacterInventoryComponent::BeginPlay()
@@ -50,10 +47,10 @@ FInventorySlot* UCharacterInventoryComponent::FindFreeSlot()
 
 FInventorySlot* UCharacterInventoryComponent::FindSlotWithCustomAmmoItem(EAmunitionType AmmoType)
 {
-	FInventorySlot * InventorySlotResult=InventorySlots.FindByPredicate([=](const FInventorySlot& Slot) {
+	FInventorySlot* InventorySlotResult=InventorySlots.FindByPredicate([=](const FInventorySlot& Slot) {
 		TWeakObjectPtr<UInventoryItem> CurrentInventoryItem = Slot.Item;
-		if (CurrentInventoryItem.IsValid() && CurrentInventoryItem->IsA<UUInventoryAmmoItem>()) {
-			UUInventoryAmmoItem* CurrentInventoryAmmoItem = Cast<UUInventoryAmmoItem>(CurrentInventoryItem);
+		if (CurrentInventoryItem.IsValid() && CurrentInventoryItem->IsA<UInventoryAmmoItem>()) {
+			UInventoryAmmoItem* CurrentInventoryAmmoItem = Cast<UInventoryAmmoItem>(CurrentInventoryItem);
 			if (CurrentInventoryAmmoItem->GetAmmoType() == AmmoType) {
 				return true;
 			}
@@ -145,17 +142,33 @@ bool UCharacterInventoryComponent::AddItem(TWeakObjectPtr<UInventoryItem> ItemTo
 		return false;
 	}
 	bool Result = false;
-	if (ItemToAdd->IsA<UUInventoryAmmoItem>()) {
-		UUInventoryAmmoItem* CurrentInventoryAmmoItem = Cast<UUInventoryAmmoItem>(ItemToAdd);
-		FindSlotWithCustomAmmoItem(CurrentInventoryAmmoItem->GetAmmoType());
+	if (ItemToAdd->IsA<UInventoryAmmoItem>()) {
+		Result = UpdateAmountAmmoInSlot(ItemToAdd);
 	}
-	FInventorySlot* FreeSlot = FindFreeSlot();
-	if (FreeSlot != nullptr) {
-		FreeSlot->Item = ItemToAdd;
-		FreeSlot->Count = Count;
-		ItemsInInventory++;
+	if(!Result) {
+		FInventorySlot* FreeSlot = FindFreeSlot();
+		if (FreeSlot != nullptr) {
+			FreeSlot->Item = ItemToAdd;
+			FreeSlot->Count = Count;
+			ItemsInInventory++;
+			Result = true;
+			FreeSlot->UpdateSlotState();
+		}
+	}
+	return Result;
+}
+
+bool UCharacterInventoryComponent::UpdateAmountAmmoInSlot(TWeakObjectPtr<UInventoryItem> ItemToAdd)
+{
+	bool Result = false;
+	UInventoryAmmoItem* CurrentInventoryAmmoItem = Cast<UInventoryAmmoItem>(ItemToAdd);
+	FInventorySlot* InventorySlot = FindSlotWithCustomAmmoItem(CurrentInventoryAmmoItem->GetAmmoType());
+	if (InventorySlot != nullptr) {
+		UInventoryAmmoItem* InventoryAmmoItemInInventory = Cast<UInventoryAmmoItem>(InventorySlot->Item);
+		int32 ResultAmount = CurrentInventoryAmmoItem->GetAmount() + InventoryAmmoItemInInventory->GetAmount();
+		InventoryAmmoItemInInventory->SetAmount(ResultAmount);
+		InventorySlot->UpdateSlotState();
 		Result = true;
-		FreeSlot->UpdateSlotState();
 	}
 	return Result;
 }
