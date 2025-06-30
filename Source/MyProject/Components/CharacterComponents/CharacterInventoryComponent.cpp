@@ -6,6 +6,8 @@
 #include "../../Inventary/InventoryItem.h"
 #include <Characters/PlayerCharacter.h>
 #include <Inventary/Items/Ammo/UInventoryAmmoItem.h>
+#include <Widget/Equipment/EquipmentSlotWidget.h>
+#include "../../Inventary/Items/Equipables/WeaponInventoryItem.h"
 // Sets default values for this component's properties
 UCharacterInventoryComponent::UCharacterInventoryComponent() {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -142,6 +144,9 @@ bool UCharacterInventoryComponent::AddItem(TWeakObjectPtr<UInventoryItem> ItemTo
 		return false;
 	}
 	bool Result = false;
+	if (ItemToAdd->IsA<UWeaponInventoryItem>()) {
+		Result = UpdateInventoryAmmoSlotByWeaponAmmo(ItemToAdd);
+	}
 	if (ItemToAdd->IsA<UInventoryAmmoItem>()) {
 		Result = UpdateAmountAmmoInSlot(ItemToAdd);
 	}
@@ -171,6 +176,11 @@ bool UCharacterInventoryComponent::UpdateAmountAmmoInSlot(TWeakObjectPtr<UInvent
 		Result = true;
 	}
 	return Result;
+}
+
+bool UCharacterInventoryComponent::UpdateInventoryAmmoSlotByWeaponAmmo(TWeakObjectPtr<UInventoryItem> ItemToAdd)
+{
+	return false;
 }
 
 bool UCharacterInventoryComponent::RemoveItem(FName ItemID)

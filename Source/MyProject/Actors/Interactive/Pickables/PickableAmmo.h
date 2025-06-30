@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class MYPROJECT_API APickableAmmo : public APickableItem
 {
 	GENERATED_BODY()
@@ -17,7 +17,11 @@ public:
 	APickableAmmo();
 	virtual void Interact(AGCBaseCharacter* Character) override;
 	virtual FName GetActionEventName() const override;
+	int32 GetAmountAmmo() const;
+	void SetAmountAmmo(int32 Ammo);
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		UStaticMeshComponent* AmmoMesh;
+	UStaticMeshComponent* AmmoMesh;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	int32 AmountAmmo;
 };

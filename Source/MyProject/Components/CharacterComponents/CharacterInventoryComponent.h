@@ -43,6 +43,7 @@ public:
 	TArray<FText>GetAllItemsNames() const;
 	bool AddItem(TWeakObjectPtr<UInventoryItem>ItemToAdd, int32 Count);
 	bool UpdateAmountAmmoInSlot(TWeakObjectPtr<UInventoryItem> ItemToAdd);
+	bool UpdateInventoryAmmoSlotByWeaponAmmo(TWeakObjectPtr<UInventoryItem> ItemToAdd);
 	bool RemoveItem(FName ItemID);
 protected:
 	// Called when the game starts

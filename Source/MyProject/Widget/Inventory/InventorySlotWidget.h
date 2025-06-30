@@ -18,9 +18,12 @@ public:
 	void UpdateView();
 	void InitializeItemSlot(FInventorySlot& InventarySlot);
 	void SetItemIcon(UTexture2D* Icon);
+	void SetAmount(int32 Amount);
 protected:
 	UPROPERTY(meta = (BindWidget))
 	UImage* ImageItemIcon;
+	UPROPERTY(meta = (BindWidget))
+	int32 Amount;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;

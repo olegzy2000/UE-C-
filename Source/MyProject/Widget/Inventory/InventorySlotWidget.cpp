@@ -7,6 +7,7 @@
 #include <Components/CharacterComponents/CharacterInventoryComponent.h>
 #include <Runtime/UMG/Public/Components/Image.h>
 #include <Runtime/UMG/Public/Blueprint/WidgetBlueprintLibrary.h>
+#include <Inventary/Items/Ammo/UInventoryAmmoItem.h>
 
 void UInventorySlotWidget::UpdateView()
 {
@@ -17,6 +18,10 @@ void UInventorySlotWidget::UpdateView()
 	if (LinkedSlot->Item.IsValid()) {
 		const FInventoryItemDescription& Description = LinkedSlot->Item->GetDescription();
 		ImageItemIcon->SetBrushFromTexture(Description.Icon);
+		if (LinkedSlot->Item->IsA<UInventoryAmmoItem>()) {
+			UInventoryAmmoItem* CurrentInventoryAmmoItem=Cast<UInventoryAmmoItem>(LinkedSlot->Item);
+			Amount = CurrentInventoryAmmoItem->GetAmount();
+		}
 	}
 	else {
 		ImageItemIcon->SetBrushFromTexture(nullptr);
@@ -31,6 +36,10 @@ void UInventorySlotWidget::InitializeItemSlot(FInventorySlot& InventarySlot) {
 void UInventorySlotWidget::SetItemIcon(UTexture2D* Icon)
 {
 	ImageItemIcon->SetBrushFromTexture(Icon);
+}
+void UInventorySlotWidget::SetAmount(int32 NewAmount)
+{
+	this->Amount = NewAmount;
 }
 FReply UInventorySlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {

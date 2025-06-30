@@ -15,6 +15,7 @@ void APickableAmmo::Interact(AGCBaseCharacter* Character)
 		TWeakObjectPtr<UInventoryAmmoItem> Ammo = NewObject<UInventoryAmmoItem>(Character, NAME_None, RF_Standalone);
 		Ammo->Initialize(DataTableID, AmmoRow->InventoryItemDescription);
 		Ammo->SetAmmoType(AmmoRow->AmunitionType);
+		Ammo->SetAmount(AmountAmmo);
 		Character->PickupItem(Ammo);
 		Destroy();
 	}
@@ -22,5 +23,15 @@ void APickableAmmo::Interact(AGCBaseCharacter* Character)
 
 FName APickableAmmo::GetActionEventName() const
 {
-	return FName();
+	return ActionInteract;
+}
+
+int32 APickableAmmo::GetAmountAmmo() const
+{
+	return AmountAmmo;
+}
+
+void APickableAmmo::SetAmountAmmo(int32 Ammo)
+{
+	this->AmountAmmo = Ammo;
 }
