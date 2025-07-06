@@ -19,7 +19,7 @@ public:
 	UWeaponInventoryItem();
 	void SetEquipWeaponClass(TSubclassOf<AEquipableItem>& EquipWeaponClass);
 	void SetStartedAmmoAmount(int32 StartedAmmoAmount);
-	int32 GetStartedAmmoAmount();
+	int32 GetStartedAmmoAmount() const;
 	bool Consume(AGCBaseCharacter* ConsumeTarget) override;
 	TSubclassOf<AEquipableItem> GetEquipWeaponClass() const;
 protected:

@@ -19,7 +19,7 @@ class MYPROJECT_API UEquipmentSlotWidget : public UUserWidget
 {
 	GENERATED_BODY()
 public:
-	DECLARE_DELEGATE_RetVal_TwoParams(bool, FOnEquipmentDropInSlot, const TSubclassOf<AEquipableItem>&, int32);
+	DECLARE_DELEGATE_RetVal_ThreeParams(bool, FOnEquipmentDropInSlot, const TSubclassOf<AEquipableItem>&, int32, int32);
 	DECLARE_DELEGATE_OneParam(FOnEquipmentRemoveFromSlot, int32);
 
 	FOnEquipmentDropInSlot OnEquipmentDropInSlot;

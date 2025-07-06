@@ -23,7 +23,7 @@ void UWeaponInventoryItem::SetStartedAmmoAmount(int32 NewStartedAmmoAmount)
 	this->StartedAmmoAmount = NewStartedAmmoAmount;
 }
 
-int32 UWeaponInventoryItem::GetStartedAmmoAmount()
+int32 UWeaponInventoryItem::GetStartedAmmoAmount() const
 {
 	return StartedAmmoAmount;
 }

@@ -29,9 +29,9 @@ void UEquipmentViewWidget::UpdateSlot(int32 SlotIndex)
 	}
 }
 
-bool UEquipmentViewWidget::EquipEquipmentToSlot(const TSubclassOf<AEquipableItem>& WeaponClass, int32 SenderIndex)
+bool UEquipmentViewWidget::EquipEquipmentToSlot(const TSubclassOf<AEquipableItem>& WeaponClass, int32 SenderIndex, int32 StartedAmmo)
 {
-	const bool Result = LinkedEquipmentComponent->AddEquipmentItemToSlot(WeaponClass, SenderIndex);
+	const bool Result = LinkedEquipmentComponent->AddEquipmentItemToSlot(WeaponClass, SenderIndex, StartedAmmo);
 	if (Result) {
 		UpdateSlot(SenderIndex);
 	}

@@ -7,7 +7,7 @@
 #include "../../Inventary/InventoryItem.h"
 #include <Characters/PlayerCharacter.h>
 #include <Utils/GCSpawner.h>
-bool UCharacterEquipmentComponent::AddEquipmentItemToSlot(const TSubclassOf<AEquipableItem> EquipableItemClass, int32 SlotIndex)
+bool UCharacterEquipmentComponent::AddEquipmentItemToSlot(const TSubclassOf<AEquipableItem> EquipableItemClass, int32 SlotIndex, int32 StartedAmmo)
 {
 	if (!IsValid(EquipableItemClass)) {
 		return false;
@@ -23,7 +23,7 @@ bool UCharacterEquipmentComponent::AddEquipmentItemToSlot(const TSubclassOf<AEqu
 		AEquipableItem* Item = GetWorld()->SpawnActor<AEquipableItem>(EquipableItemClass);
 		Item->AttachToComponent(CachedBaseCharacter->GetMesh(),FAttachmentTransformRules::KeepRelativeTransform, Item->GetUnEquppedSocketName());
 		Item->SetOwner(CachedBaseCharacter.Get());
-		Item->SetAmmo(0);
+		Item->SetAmmo(StartedAmmo);
 		Item->UnEquip();
 		ItemsArray[SlotIndex] = Item;
 	}
@@ -135,7 +135,7 @@ void UCharacterEquipmentComponent::CreateLoadout()
 		if (!IsValid(ItemPair.Value)) {
 			continue;
 		}
-		AddEquipmentItemToSlot(ItemPair.Value,(int32)ItemPair.Key);
+		AddEquipmentItemToSlot(ItemPair.Value,(int32)ItemPair.Key,0);
 	}
 }
 void UCharacterEquipmentComponent::AddAmunition(EAmunitionType AmunitionType, int32 Amount) {

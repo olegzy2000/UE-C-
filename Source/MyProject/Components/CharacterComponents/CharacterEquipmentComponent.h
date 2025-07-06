@@ -38,7 +38,7 @@ public:
 	void ReloadAmmoInCurrentWeapon(int32 NumberOfAmmo=0, bool bCheckIsFull=false);
 	FOnCurrentWeaponAmmoChanged OnCurrentWeaponAmmoChanged;
 	FOnEquippedItemChanged OnEquippedItemChanged;
-	bool AddEquipmentItemToSlot(const TSubclassOf<AEquipableItem>EquipableItemClass, int32 SlotIndex);
+	bool AddEquipmentItemToSlot(const TSubclassOf<AEquipableItem>EquipableItemClass, int32 SlotIndex, int32 StartedAmmo);
 	void RemoveItemFromSlot(int32 SlotIndex);
 	void OpenViewEquipment(APlayerController* PlayerController);
 	void CloseViewEquipment();
