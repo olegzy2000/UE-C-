@@ -4,19 +4,27 @@
 #include "Actors/Interactive/Pickables/PickableAmmo.h"
 #include <Utils/GCDataTableUtils.h>
 #include <Inventary/Items/Ammo/UInventoryAmmoItem.h>
+#include <Utils/GCSpawner.h>
 APickableAmmo::APickableAmmo() {
 	AmmoMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
 	SetRootComponent(AmmoMesh);
 }
 void APickableAmmo::Interact(AGCBaseCharacter* Character)
 {
-	FAmmoTableRow* AmmoRow = GCDataTableUtils::FindAmmoData(DataTableID);
+
+	/*FAmmoTableRow* AmmoRow = GCDataTableUtils::FindAmmoData(DataTableID);
 	if (AmmoRow) {
 		TWeakObjectPtr<UInventoryAmmoItem> Ammo = NewObject<UInventoryAmmoItem>(Character, NAME_None, RF_Standalone);
 		Ammo->Initialize(DataTableID, AmmoRow->InventoryItemDescription);
 		Ammo->SetAmmoType(AmmoRow->AmunitionType);
 		Ammo->SetAmount(AmountAmmo);
 		Character->PickupItem(Ammo);
+		Destroy();
+	}
+	*/
+	TWeakObjectPtr<UInventoryAmmoItem> AmmoInventoryItem = GCSpawner::SpawnInventoryAmmoItem(Character,DataTableID,AmountAmmo);
+	if (AmmoInventoryItem.IsValid()) {
+		Character->PickupItem(AmmoInventoryItem);
 		Destroy();
 	}
 }

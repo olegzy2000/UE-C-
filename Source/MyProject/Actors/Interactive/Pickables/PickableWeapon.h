@@ -19,6 +19,8 @@ public:
 		virtual FName GetActionEventName() const override;
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		UStaticMeshComponent* WeaponMesh;
+	UStaticMeshComponent* WeaponMesh;
+	UPROPERTY(EditAnywhere)
+	int32 StartedAmmoAmount=0;
 
 };

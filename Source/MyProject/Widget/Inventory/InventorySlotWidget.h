@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
 #include "InventorySlotWidget.generated.h"
 class UImage;
@@ -23,7 +24,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UImage* ImageItemIcon;
 	UPROPERTY(meta = (BindWidget))
-	int32 Amount;
+	UTextBlock* AmountTextBlock;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;

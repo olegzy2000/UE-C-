@@ -75,7 +75,7 @@ public:
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory item")
-		FName DataTableID=NAME_None;
+		FName DataTableID = NAME_None;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory item")
 		FInventoryItemDescription Description;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory item")

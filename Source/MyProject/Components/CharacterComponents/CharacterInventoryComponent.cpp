@@ -4,6 +4,7 @@
 #include "CharacterInventoryComponent.h"
 #include "../../Widget/Inventory/InventoryViewWidget.h"
 #include "../../Inventary/InventoryItem.h"
+#include "../../Utils/GCSpawner.h"
 #include <Characters/PlayerCharacter.h>
 #include <Inventary/Items/Ammo/UInventoryAmmoItem.h>
 #include <Widget/Equipment/EquipmentSlotWidget.h>
@@ -20,9 +21,15 @@ void UCharacterInventoryComponent::TickComponent(float DeltaTime, ELevelTick Tic
 void UCharacterInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	BaseCharacterOwner = Cast<AGCBaseCharacter>(GetOwner());
+	//BaseCharacterOwner->GetCharacterEquipmentComponent_Mutable()->OnCurrentWeaponAmmoChanged.AddUFunction(this, FName("UpdateInventoryAmmoComponentAmount"));
 	InventorySlots.AddDefaulted(Capacity);
 }
-
+void UCharacterInventoryComponent::UpdateInventoryAmmoComponentAmount() {
+	EAmunitionType AmmoType=BaseCharacterOwner->GetCharacterEquipmentComponent()->GetCurrentRangeWeaponItem()->GetAmmoType();
+	int32 Amount = BaseCharacterOwner->GetCharacterEquipmentComponent()->GetCurrentRangeWeaponItem()->GetCurrentAmmo();
+	UpdateAmountAmmoInSlot(AmmoType, Amount);
+}
 void UCharacterInventoryComponent::CreateViewWidget(APlayerController* PlayerController)
 {
 	if (IsValid(InventoryViewWidget)) {
@@ -145,10 +152,13 @@ bool UCharacterInventoryComponent::AddItem(TWeakObjectPtr<UInventoryItem> ItemTo
 	}
 	bool Result = false;
 	if (ItemToAdd->IsA<UWeaponInventoryItem>()) {
-		Result = UpdateInventoryAmmoSlotByWeaponAmmo(ItemToAdd);
+		//Result = UpdateInventoryAmmoSlotByWeaponAmmo(ItemToAdd);
 	}
 	if (ItemToAdd->IsA<UInventoryAmmoItem>()) {
-		Result = UpdateAmountAmmoInSlot(ItemToAdd);
+		UInventoryAmmoItem* CurrentInventoryAmmoItem = Cast<UInventoryAmmoItem>(ItemToAdd);
+		Result = UpdateAmountAmmoInSlot(CurrentInventoryAmmoItem->GetAmmoType(), CurrentInventoryAmmoItem->GetAmount());
+		if(Result)
+		UpdateAmunition(CurrentInventoryAmmoItem->GetAmmoType(), CurrentInventoryAmmoItem->GetAmount());
 	}
 	if(!Result) {
 		FInventorySlot* FreeSlot = FindFreeSlot();
@@ -163,23 +173,59 @@ bool UCharacterInventoryComponent::AddItem(TWeakObjectPtr<UInventoryItem> ItemTo
 	return Result;
 }
 
-bool UCharacterInventoryComponent::UpdateAmountAmmoInSlot(TWeakObjectPtr<UInventoryItem> ItemToAdd)
+bool UCharacterInventoryComponent::UpdateAmountAmmoInSlot(EAmunitionType AmunitionType,int32 Amount)
 {
 	bool Result = false;
-	UInventoryAmmoItem* CurrentInventoryAmmoItem = Cast<UInventoryAmmoItem>(ItemToAdd);
-	FInventorySlot* InventorySlot = FindSlotWithCustomAmmoItem(CurrentInventoryAmmoItem->GetAmmoType());
+	FInventorySlot* InventorySlot = FindSlotWithCustomAmmoItem(AmunitionType);
 	if (InventorySlot != nullptr) {
 		UInventoryAmmoItem* InventoryAmmoItemInInventory = Cast<UInventoryAmmoItem>(InventorySlot->Item);
-		int32 ResultAmount = CurrentInventoryAmmoItem->GetAmount() + InventoryAmmoItemInInventory->GetAmount();
+		int32 ResultAmount = InventoryAmmoItemInInventory->GetAmount() + Amount;
 		InventoryAmmoItemInInventory->SetAmount(ResultAmount);
 		InventorySlot->UpdateSlotState();
 		Result = true;
 	}
 	return Result;
 }
-
+void UCharacterInventoryComponent::UpdateAmunition(EAmunitionType AmunitionType, const int32& Amount)
+{
+	BaseCharacterOwner->GetCharacterEquipmentComponent_Mutable()->AddAmunition(AmunitionType, Amount);
+}
+// TO REMOVE
 bool UCharacterInventoryComponent::UpdateInventoryAmmoSlotByWeaponAmmo(TWeakObjectPtr<UInventoryItem> ItemToAdd)
 {
+	UWeaponInventoryItem* WeaponInventoryItem = Cast<UWeaponInventoryItem>(ItemToAdd);
+	AEquipableItem* EquipableItem = WeaponInventoryItem->GetEquipWeaponClass()->GetDefaultObject<AEquipableItem>();
+	if (EquipableItem->IsA<ARangeWeaponItem>()) {
+	  ARangeWeaponItem* RangeWeaponObject = StaticCast<ARangeWeaponItem*>(EquipableItem);
+	  FName AmmoType;
+	  switch (RangeWeaponObject->GetAmmoType())
+	  {
+	  case EAmunitionType::Pistol :{
+		  AmmoType= FName(TEXT("Pistol"));
+		  break;
+	  }
+	  case EAmunitionType::Rifle: {
+		  AmmoType = FName(TEXT("Rifle"));
+		  break;
+	  }
+	  case EAmunitionType::ShotgunShells: {
+		  AmmoType = FName(TEXT("ShotgunShells"));
+		  break;
+	  }
+	  case EAmunitionType::Sniper: {
+		  AmmoType = FName(TEXT("Sniper"));
+		  break;
+	  }
+	  default:
+		  break;
+	  }
+	  if (RangeWeaponObject->GetAmmoType() == EAmunitionType::Pistol) {
+		  TWeakObjectPtr<UInventoryAmmoItem> AmmoItem = GCSpawner::SpawnInventoryAmmoItem(Cast<AGCBaseCharacter>(GetOwner()), AmmoType, RangeWeaponObject->GetMaxAmmo());
+		  AddItem(AmmoItem, 1);
+	  }
+
+	  //AmunitionArray[SlotIndex] += RangeWeaponObject->GetMaxAmmo();
+	}
 	return false;
 }
 

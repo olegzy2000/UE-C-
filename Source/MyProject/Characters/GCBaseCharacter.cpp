@@ -257,6 +257,11 @@ UCharacterEquipmentComponent* AGCBaseCharacter::GetCharacterEquipmentComponent_M
 	return CharacterEquipmentComponent;
 }
 
+UCharacterInventoryComponent* AGCBaseCharacter::GetCharacterInventoryComponent()
+{
+	return CharacterInventoryComponent;
+}
+
 
 bool AGCBaseCharacter::IsAming()
 {
@@ -568,8 +573,8 @@ AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
 	GetMesh()->CastShadow = true;
 	GetMesh()->bCastDynamicShadow = true;
 	CharacterAttributesComponent = CreateDefaultSubobject<UCharacterAttributeComponent>(TEXT("CharacterAttributes"));
-	CharacterEquipmentComponent = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("CharacterEquipment"));
 	CharacterInventoryComponent = CreateDefaultSubobject<UCharacterInventoryComponent>(TEXT("CharacterInventory"));
+	CharacterEquipmentComponent = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("CharacterEquipment"));
 	HealthBarProgressComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarProgressComponent"));
 	HealthBarProgressComponent->SetupAttachment(GetCapsuleComponent());
 }

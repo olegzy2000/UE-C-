@@ -13,18 +13,20 @@ void UInventorySlotWidget::UpdateView()
 {
 	if (LinkedSlot == nullptr) {
 		ImageItemIcon->SetBrushFromTexture(nullptr);
+		SetAmount(0);
 		return;
 	}
 	if (LinkedSlot->Item.IsValid()) {
 		const FInventoryItemDescription& Description = LinkedSlot->Item->GetDescription();
 		ImageItemIcon->SetBrushFromTexture(Description.Icon);
 		if (LinkedSlot->Item->IsA<UInventoryAmmoItem>()) {
-			UInventoryAmmoItem* CurrentInventoryAmmoItem=Cast<UInventoryAmmoItem>(LinkedSlot->Item);
-			Amount = CurrentInventoryAmmoItem->GetAmount();
+			UInventoryAmmoItem* CurrentInventoryAmmoItem = Cast<UInventoryAmmoItem>(LinkedSlot->Item);
+			SetAmount(CurrentInventoryAmmoItem->GetAmount());
 		}
 	}
 	else {
 		ImageItemIcon->SetBrushFromTexture(nullptr);
+		SetAmount(0);
 	}
 }
 void UInventorySlotWidget::InitializeItemSlot(FInventorySlot& InventarySlot) {
@@ -39,7 +41,14 @@ void UInventorySlotWidget::SetItemIcon(UTexture2D* Icon)
 }
 void UInventorySlotWidget::SetAmount(int32 NewAmount)
 {
-	this->Amount = NewAmount;
+	if (NewAmount != 0) {
+		FString Result = FString::Printf(TEXT("%i"), NewAmount);
+		this->AmountTextBlock->SetText(FText::FromString(Result));
+	}
+	else {
+		this->AmountTextBlock->SetText(FText::FromString(""));
+	}
+
 }
 FReply UInventorySlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
@@ -55,7 +64,6 @@ FReply UInventorySlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry
 	if (MouseBtn == EKeys::RightMouseButton) {
 		TWeakObjectPtr<UInventoryItem>LinkedSlotItem = LinkedSlot->Item;
 		AGCBaseCharacter* ItemOwner = Cast<AGCBaseCharacter>(LinkedSlotItem->GetOuter());
-
 		if (LinkedSlotItem->Consume(ItemOwner)) {
 			LinkedSlot->ClearSlot();
 		}

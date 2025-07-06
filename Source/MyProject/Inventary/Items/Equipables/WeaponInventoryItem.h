@@ -18,9 +18,13 @@ public:
 	virtual void BeginDestroy() override;
 	UWeaponInventoryItem();
 	void SetEquipWeaponClass(TSubclassOf<AEquipableItem>& EquipWeaponClass);
+	void SetStartedAmmoAmount(int32 StartedAmmoAmount);
+	int32 GetStartedAmmoAmount();
 	bool Consume(AGCBaseCharacter* ConsumeTarget) override;
 	TSubclassOf<AEquipableItem> GetEquipWeaponClass() const;
 protected:
 	UPROPERTY()
 	TSubclassOf<AEquipableItem> EquipWeaponClass;
+private:
+	int32 StartedAmmoAmount = 0;
 };

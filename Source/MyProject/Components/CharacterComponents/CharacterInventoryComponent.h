@@ -7,7 +7,7 @@
 #include "CharacterInventoryComponent.generated.h"
 
 class UInventoryItem;
-
+class AGCBaseCharacter;
 USTRUCT(BlueprintType)
 struct FInventorySlot
 {
@@ -42,13 +42,16 @@ public:
 	TArray<FInventorySlot>GetAllItemsCopy() const;
 	TArray<FText>GetAllItemsNames() const;
 	bool AddItem(TWeakObjectPtr<UInventoryItem>ItemToAdd, int32 Count);
-	bool UpdateAmountAmmoInSlot(TWeakObjectPtr<UInventoryItem> ItemToAdd);
+	bool UpdateAmountAmmoInSlot(EAmunitionType AmunitionType, int32 Amount);
+	void UpdateAmunition(EAmunitionType AmunitionType, const int32& Amount);
 	bool UpdateInventoryAmmoSlotByWeaponAmmo(TWeakObjectPtr<UInventoryItem> ItemToAdd);
 	bool RemoveItem(FName ItemID);
 protected:
 	// Called when the game starts
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void BeginPlay() override;
+
+	void UpdateInventoryAmmoComponentAmount();
 
 	UPROPERTY(EditAnywhere, Category = "Items")
 	TArray<FInventorySlot> InventorySlots;
@@ -63,7 +66,7 @@ protected:
 private:
 	UPROPERTY()
 	UInventoryViewWidget* InventoryViewWidget;
-
+	AGCBaseCharacter* BaseCharacterOwner;
 	int32 ItemsInInventory;
 		
 };

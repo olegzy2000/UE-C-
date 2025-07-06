@@ -61,6 +61,7 @@ void UEquipmentSlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, con
 
 	DragOperation->DefaultDragVisual = DragWidget;
 	DragOperation->Pivot = EDragPivot::CenterCenter;
+	AdapterLinkedInventoryItem.Get()->SetStartedAmmoAmount(LinkedEquipableItem->GetCurrentAmmo());
 	DragOperation->Payload = AdapterLinkedInventoryItem.Get();
 	OutOperation = DragOperation;
 

@@ -18,6 +18,16 @@ void UWeaponInventoryItem::SetEquipWeaponClass(TSubclassOf<AEquipableItem>& Equi
 	EquipWeaponClass = EquipWeapon;
 }
 
+void UWeaponInventoryItem::SetStartedAmmoAmount(int32 NewStartedAmmoAmount)
+{
+	this->StartedAmmoAmount = NewStartedAmmoAmount;
+}
+
+int32 UWeaponInventoryItem::GetStartedAmmoAmount()
+{
+	return StartedAmmoAmount;
+}
+
 bool UWeaponInventoryItem::Consume(AGCBaseCharacter* ConsumeTarget)
 {
 	return false;

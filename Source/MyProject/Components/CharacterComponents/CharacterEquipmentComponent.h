@@ -44,6 +44,7 @@ public:
 	void CloseViewEquipment();
 	bool IsViewVisible() const;
 	const TArray<AEquipableItem*> GetItems() const;
+	void AddAmunition(EAmunitionType AmunitionType, int32 Amount);
 protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Loadout")

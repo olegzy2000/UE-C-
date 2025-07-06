@@ -102,6 +102,7 @@ public:
 	void AddHealth(float Health);
 	const UCharacterEquipmentComponent* GetCharacterEquipmentComponent() const;
 	UCharacterEquipmentComponent* GetCharacterEquipmentComponent_Mutable() const;
+	UCharacterInventoryComponent* GetCharacterInventoryComponent();
 	float GetProneCapsuleHeight() {
 		return ProneCapsuleHeight;
 	}
@@ -240,9 +241,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character | Attributes")
 		class UCurveFloat* FallDamageCurve;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
-		UCharacterEquipmentComponent* CharacterEquipmentComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
 		UCharacterInventoryComponent* CharacterInventoryComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
+		UCharacterEquipmentComponent* CharacterEquipmentComponent;
 	virtual void OnStartAimingInternal();
 	virtual void OnStopAimingInternal();
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Team")

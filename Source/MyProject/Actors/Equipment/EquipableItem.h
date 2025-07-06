@@ -28,6 +28,8 @@ class MYPROJECT_API AEquipableItem : public AActor
 		  int32 MaxAmmo = 30;
 	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters | Ammo")
 		  EAmunitionType AmmoType;
+	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters | Ammo")
+		  int32 CurrentAmmo = 0;
 	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipable item")
 		  UAnimMontage* CharacterEquipAnimMontage;
 	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipable item")
@@ -58,5 +60,4 @@ class MYPROJECT_API AEquipableItem : public AActor
 	  bool IsSlotCompatable(EEquipmentSlots Slot) const;
 private:
 	TWeakObjectPtr<AGCBaseCharacter> CharacterOwner;
-	int32 CurrentAmmo = 0;
 };
