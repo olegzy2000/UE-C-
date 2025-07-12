@@ -42,6 +42,7 @@ public:
 	TArray<FInventorySlot>GetAllItemsCopy() const;
 	TArray<FText>GetAllItemsNames() const;
 	bool AddItem(TWeakObjectPtr<UInventoryItem>ItemToAdd, int32 Count);
+	bool CreateNewInventorySlot(const TWeakObjectPtr<UInventoryItem> ItemToAdd, const int32 Count);
 	bool UpdateAmountAmmoInSlot(EAmunitionType AmunitionType, int32 Amount);
 	void UpdateAmunition(EAmunitionType AmunitionType, const int32& Amount);
 	bool UpdateInventoryAmmoSlotByWeaponAmmo(TWeakObjectPtr<UInventoryItem> ItemToAdd);

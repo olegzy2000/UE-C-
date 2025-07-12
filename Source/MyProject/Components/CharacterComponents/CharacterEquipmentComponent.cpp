@@ -123,10 +123,33 @@ void UCharacterEquipmentComponent::CreateLoadout()
 	AmunitionArray.AddZeroed((uint32)EAmunitionType::MAX);
 	UCharacterInventoryComponent* InventoryComponent = CachedBaseCharacter->GetCharacterInventoryComponent();
 	for (const TPair<EAmunitionType, int32>& AmmoPair : MaxAmunitionAmount) {
-		AmunitionArray[(uint32)AmmoPair.Key] = FMath::Max(AmmoPair.Value, 0);
-		if (AmmoPair.Key == EAmunitionType::Pistol) {
-			TWeakObjectPtr<UInventoryAmmoItem> InventoryAmmo = GCSpawner::SpawnInventoryAmmoItem(CachedBaseCharacter.Get(),FName(TEXT("Pistol")), AmunitionArray[(uint32)AmmoPair.Key]);
-			InventoryComponent->AddItem(InventoryAmmo,1);
+		//AmunitionArray[(uint32)AmmoPair.Key] = FMath::Max(AmmoPair.Value, 0);
+		int32 LoadoutValue = FMath::Max(AmmoPair.Value, 0);
+		FName AmmoType = NAME_None;
+		switch (AmmoPair.Key)
+		{
+		case EAmunitionType::Pistol: {
+			AmmoType = FName(TEXT("Pistol"));
+			break;
+		}
+		case EAmunitionType::Rifle: {
+			AmmoType = FName(TEXT("Rifle"));
+			break;
+		}
+		case EAmunitionType::ShotgunShells: {
+			AmmoType = FName(TEXT("ShotgunShells"));
+			break;
+		}
+		case EAmunitionType::Sniper: {
+			AmmoType = FName(TEXT("Sniper"));
+			break;
+		}
+		default:
+			break;
+		}
+		if (!AmmoType.IsNone()) {
+			TWeakObjectPtr<UInventoryAmmoItem> AmmoItem = GCSpawner::SpawnInventoryAmmoItem(Cast<AGCBaseCharacter>(GetOwner()), AmmoType, LoadoutValue);
+			InventoryComponent->AddItem(AmmoItem, 1);
 		}
 	}
 

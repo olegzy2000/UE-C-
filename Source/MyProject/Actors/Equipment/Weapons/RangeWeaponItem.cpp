@@ -119,7 +119,7 @@ FTransform ARangeWeaponItem::GetForGribTransform() const
 	FTransform GribSocketTransform;
 	if (WeaponMesh && WeaponForGribSocket.IsValid()) { 
 		const USkeletalMeshSocket* SkeletalMeshSocket = WeaponMesh->GetSocketByName(WeaponForGribSocket);
-		if(SkeletalMeshSocket)
+		if(SkeletalMeshSocket && WeaponMesh)
 		GribSocketTransform = WeaponMesh->GetSocketTransform(WeaponForGribSocket);
 	}
 	return GribSocketTransform;

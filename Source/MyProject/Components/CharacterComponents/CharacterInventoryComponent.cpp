@@ -157,18 +157,26 @@ bool UCharacterInventoryComponent::AddItem(TWeakObjectPtr<UInventoryItem> ItemTo
 	if (ItemToAdd->IsA<UInventoryAmmoItem>()) {
 		UInventoryAmmoItem* CurrentInventoryAmmoItem = Cast<UInventoryAmmoItem>(ItemToAdd);
 		Result = UpdateAmountAmmoInSlot(CurrentInventoryAmmoItem->GetAmmoType(), CurrentInventoryAmmoItem->GetAmount());
-		if(Result)
+		if(!Result)
+			Result = CreateNewInventorySlot(ItemToAdd, Count);
 		UpdateAmunition(CurrentInventoryAmmoItem->GetAmmoType(), CurrentInventoryAmmoItem->GetAmount());
 	}
 	if(!Result) {
-		FInventorySlot* FreeSlot = FindFreeSlot();
-		if (FreeSlot != nullptr) {
-			FreeSlot->Item = ItemToAdd;
-			FreeSlot->Count = Count;
-			ItemsInInventory++;
-			Result = true;
-			FreeSlot->UpdateSlotState();
-		}
+		Result=CreateNewInventorySlot(ItemToAdd, Count);
+	}
+	return Result;
+}
+
+bool UCharacterInventoryComponent::CreateNewInventorySlot(TWeakObjectPtr<UInventoryItem> ItemToAdd, const int32 Count)
+{
+	bool Result = false;
+	FInventorySlot* FreeSlot = FindFreeSlot();
+	if (FreeSlot != nullptr) {
+		FreeSlot->Item = ItemToAdd;
+		FreeSlot->Count = Count;
+		ItemsInInventory++;
+		Result = true;
+		FreeSlot->UpdateSlotState();
 	}
 	return Result;
 }
@@ -197,7 +205,7 @@ bool UCharacterInventoryComponent::UpdateInventoryAmmoSlotByWeaponAmmo(TWeakObje
 	AEquipableItem* EquipableItem = WeaponInventoryItem->GetEquipWeaponClass()->GetDefaultObject<AEquipableItem>();
 	if (EquipableItem->IsA<ARangeWeaponItem>()) {
 	  ARangeWeaponItem* RangeWeaponObject = StaticCast<ARangeWeaponItem*>(EquipableItem);
-	  FName AmmoType;
+	  FName AmmoType=NAME_None;
 	  switch (RangeWeaponObject->GetAmmoType())
 	  {
 	  case EAmunitionType::Pistol :{
@@ -219,11 +227,10 @@ bool UCharacterInventoryComponent::UpdateInventoryAmmoSlotByWeaponAmmo(TWeakObje
 	  default:
 		  break;
 	  }
-	  if (RangeWeaponObject->GetAmmoType() == EAmunitionType::Pistol) {
+	  if (!AmmoType.IsNone()) {
 		  TWeakObjectPtr<UInventoryAmmoItem> AmmoItem = GCSpawner::SpawnInventoryAmmoItem(Cast<AGCBaseCharacter>(GetOwner()), AmmoType, RangeWeaponObject->GetMaxAmmo());
 		  AddItem(AmmoItem, 1);
 	  }
-
 	  //AmunitionArray[SlotIndex] += RangeWeaponObject->GetMaxAmmo();
 	}
 	return false;
