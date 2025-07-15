@@ -221,7 +221,7 @@ void UCharacterEquipmentComponent::TickComponent(float DeltaTime, ELevelTick Tic
 
 EEquipableItemType UCharacterEquipmentComponent::GetCurrentEquippedWeaponType() const {
 	EEquipableItemType Result = EEquipableItemType::None;
-	if (IsValid(CurrentEquippedItem)) {
+	if (CurrentEquippedItem && IsValid(CurrentEquippedItem)) {
 		Result = CurrentEquippedItem->GetItemType();
 	}
 	return Result;
