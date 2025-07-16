@@ -129,7 +129,11 @@ void ARangeWeaponItem::StartReload()
 {
 	checkf(GetOwner()->IsA<AGCBaseCharacter>(), TEXT("ARangeWeaponItem::StartReload() only character can be owner of range weapon"));
 	AGCBaseCharacter* CurrentCharacterOwner = GetCharacterOwner();
+	if (bIsReloading)
+		return;
 	if (!IsValid(CurrentCharacterOwner))
+		return;
+	if (GetCurrentAmmo() == MaxAmmoToDefaultShoting)
 		return;
 	bIsReloading = true;
 	if (IsValid(CharacterReloadMontage)) {
@@ -225,7 +229,6 @@ void ARangeWeaponItem::ChangeFireMode()
 void ARangeWeaponItem::BeginPlay()
 {
 	Super::BeginPlay();
-	//if()
 	DefaultAmmoType = AmmoType;
 	SetMaxAmmo(MaxAmmoToDefaultShoting);
 	MaxAmmo = MaxAmmoToDefaultShoting;

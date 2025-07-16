@@ -76,8 +76,14 @@ void AGCBaseCharacter::StartFire()
 	ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
 	if (IsValid(CurrentRangeWeapon)) {
 		CurrentRangeWeapon->StartFire();
+		return;
 	}
-	//CharacterEquipmentComponent->Fire();
+	AThrowableItem* CurrentThrowableItem = CharacterEquipmentComponent->GetCurrentThowableItem();
+	if (IsValid(CurrentThrowableItem)) {
+		CharacterEquipmentComponent->StartLaunching(CurrentThrowableItem->GetCharacterThrowAnimMontage());
+		return;
+	}
+	
 }
 
 bool AGCBaseCharacter::CanStartFire() {
@@ -710,7 +716,7 @@ void AGCBaseCharacter::TraceOfSight()
 	FHitResult HitResult;
 	GetWorld()->LineTraceSingleByChannel(HitResult, ViewLocation, TraceEnd, ECC_Visibility);
 	FCollisionQueryParams ParamsCollision;
-	GCTraceUtils::LineTraceSingleByChannel(GetWorld(), HitResult, ViewLocation, TraceEnd, ECollisionChannel::ECC_Visibility, ParamsCollision, true, 1, FColor::Green);
+	//GCTraceUtils::LineTraceSingleByChannel(GetWorld(), HitResult, ViewLocation, TraceEnd, ECollisionChannel::ECC_Visibility, ParamsCollision, true, 1, FColor::Green);
 	if (HitResult.Actor!=nullptr) {
 			LineOfSightObject = HitResult.Actor.Get();
 			FName ActionName;

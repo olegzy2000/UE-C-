@@ -20,9 +20,10 @@ protected:
 		void OnAimingStateChange(bool bIsAming);
 	UFUNCTION(BlueprintNativeEvent)
 		void OnEquippedItemChanged(const AEquipableItem* EquippedItem);
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reticle")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Reticle")
 		EReticleType CurrentReticle;
 private:
 	TWeakObjectPtr<const AEquipableItem> CurrentEquippedItem;
+public:
 	void SetupCurrentReticle();
 };

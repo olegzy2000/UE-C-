@@ -28,8 +28,10 @@ public:
 	ARangeWeaponItem* GetCurrentRangeWeaponItem() const;
 	void ReloadCurrentWeapon() ;
 	void EquipItemInSlot(EEquipmentSlots Slot);
+	void StartLaunching(UAnimMontage* EquipMontage);
 	void AttachCurrentItemToEquippedSocket();
 	AMeleeWeaponItem* GetCurrentMeleeWeapon() const;
+	AThrowableItem* GetCurrentThowableItem() const;
 	void UnEquipCurrentItem();
 	void EquipNextItem();
 	void EquipPreviousItem();

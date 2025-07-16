@@ -12,5 +12,5 @@ void UReticleWidget::OnAimingStateChange_Implementation(bool bIsAming) {
 	SetupCurrentReticle();
 }
 void UReticleWidget::SetupCurrentReticle() {
-	CurrentReticle = CurrentEquippedItem.IsValid() ? CurrentEquippedItem->GetReticleType() : EReticleType::None;
+	CurrentReticle = CurrentEquippedItem.IsValid() ? CurrentEquippedItem->GetReticleType() : EReticleType::Default;
 }

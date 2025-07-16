@@ -26,7 +26,7 @@ TWeakObjectPtr<UInventoryItem> GCSpawner::SpawnInventoryItem(AGCBaseCharacter* C
 		return nullptr;
 	}
 
-	TWeakObjectPtr<UInventoryItem> Item = TWeakObjectPtr<UInventoryItem>(NewObject<UInventoryItem>(Character, ItemData->InventroryItemClass));
+	TWeakObjectPtr<UInventoryItem> Item = NewObject<UInventoryItem>(Character, ItemData->InventroryItemClass,NAME_None, RF_Standalone);
 	Item->Initialize(DataTableID, ItemData->InventoryItemDescription);
 	return Item;
 }

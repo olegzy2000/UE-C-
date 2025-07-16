@@ -11,6 +11,7 @@ void AGCPlayerController::BeginPlay()
 		PlayerHUD->AddToViewport();
 		UCharacterEquipmentComponent* CharacterEquipment = CachedBaseCharacter->GetCharacterEquipmentComponent_Mutable();
 		UReticleWidget* ReticleWidget = PlayerHUD->GetReticleWidget();
+		ReticleWidget->SetupCurrentReticle();
 		if (IsValid(ReticleWidget)) {
 			CachedBaseCharacter->OnAmingStateChanged.AddUFunction(ReticleWidget,FName("OnAimingStateChange"));
 			CharacterEquipment->OnEquippedItemChanged.AddUFunction(ReticleWidget, FName("OnEquippedItemChanged"));

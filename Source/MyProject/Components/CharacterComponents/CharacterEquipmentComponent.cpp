@@ -258,23 +258,10 @@ void UCharacterEquipmentComponent::EquipItemInSlot(EEquipmentSlots Slot)
 	if (IsValid(CurrentEquippedItem)) {
 		UAnimMontage* EquipMontage = CurrentEquippedItem->GetCharacterEquipAnimMontage();
 		if (IsValid(EquipMontage)) {
-			if (IsValid(CurrentThowableItem)) {
-				if (CurrentThowableItem->GetCurrentAmmo() > 0) {
-					bIsEquipping = true;
-					UAnimInstance* CharacterAnimInstnce = CachedBaseCharacter->GetMesh()->GetAnimInstance();
-					float EquipDuration = CharacterAnimInstnce->Montage_Play(EquipMontage);
-					GetWorld()->GetTimerManager().SetTimer(EquipTimer, this, &UCharacterEquipmentComponent::EquipAnimationFinished, EquipDuration, false);
-				}
-				else {
-
-				}
-			}
-			else {
-				bIsEquipping = true;
-				UAnimInstance* CharacterAnimInstnce = CachedBaseCharacter->GetMesh()->GetAnimInstance();
-				float EquipDuration = CharacterAnimInstnce->Montage_Play(EquipMontage);
-				GetWorld()->GetTimerManager().SetTimer(EquipTimer, this, &UCharacterEquipmentComponent::EquipAnimationFinished, EquipDuration, false);
-			}
+			bIsEquipping = true;
+			UAnimInstance* CharacterAnimInstnce = CachedBaseCharacter->GetMesh()->GetAnimInstance();
+			float EquipDuration = CharacterAnimInstnce->Montage_Play(EquipMontage);
+			GetWorld()->GetTimerManager().SetTimer(EquipTimer, this, &UCharacterEquipmentComponent::EquipAnimationFinished, EquipDuration, false);
 		}
 		else {
 			AttachCurrentItemToEquippedSocket();
@@ -295,6 +282,18 @@ void UCharacterEquipmentComponent::EquipItemInSlot(EEquipmentSlots Slot)
 	}
 }
 
+void UCharacterEquipmentComponent::StartLaunching(UAnimMontage* EquipMontage)
+{
+	if (IsValid(CurrentThowableItem)) {
+		if (CurrentThowableItem->GetMaxAmmo() > 0) {
+			bIsEquipping = true;
+			UAnimInstance* CharacterAnimInstnce = CachedBaseCharacter->GetMesh()->GetAnimInstance();
+			float EquipDuration = CharacterAnimInstnce->Montage_Play(EquipMontage);
+			GetWorld()->GetTimerManager().SetTimer(EquipTimer, this, &UCharacterEquipmentComponent::EquipAnimationFinished, EquipDuration, false);
+		}
+	}
+}
+
 void UCharacterEquipmentComponent::AttachCurrentItemToEquippedSocket()
 {
 	if(IsValid(CurrentEquippedItem))
@@ -305,7 +304,10 @@ AMeleeWeaponItem* UCharacterEquipmentComponent::GetCurrentMeleeWeapon() const
 {
 	return CurrentMeleeeWeaponItem;
 }
-
+AThrowableItem* UCharacterEquipmentComponent::GetCurrentThowableItem() const
+{
+	return CurrentThowableItem;
+}
 void UCharacterEquipmentComponent::UnEquipCurrentItem()
 {
 	if (IsValid(CurrentEquippedItem)) {

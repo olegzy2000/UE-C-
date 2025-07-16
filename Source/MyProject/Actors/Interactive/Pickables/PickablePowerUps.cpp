@@ -14,14 +14,6 @@ APickablePowerUps::APickablePowerUps() {
 }
 void APickablePowerUps::Interact(AGCBaseCharacter* Character)
 {
-	/*FItemTableRow* ItemData = GCDataTableUtils::FindInventoryItemData(GetDataTableID());
-	if (ItemData == nullptr) {
-		return;
-	}
-
-	TWeakObjectPtr<UInventoryItem> Item = TWeakObjectPtr<UInventoryItem>(NewObject<UInventoryItem>(Character, ItemData->InventroryItemClass));
-	Item->Initialize(DataTableID, ItemData->InventoryItemDescription);
-	*/
 	TWeakObjectPtr<UInventoryItem> Item = GCSpawner::SpawnInventoryItem(Character, DataTableID);
 	const bool bPickedUp = Character->PickupItem(Item);
 	if (bPickedUp) {

@@ -40,3 +40,7 @@ void AThrowableItem::BeginPlay()
 		SetMaxAmmo(GetMaxAmmo() - 1);
 	}
 }
+UAnimMontage* AThrowableItem::GetCharacterThrowAnimMontage() const
+{
+	return CharacterThrowAnimMontage;
+}
