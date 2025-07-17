@@ -24,6 +24,7 @@ void AGCProjectile::BeginPlay()
 }
 void AGCProjectile::OnCollisionHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	if (OnProjectileHit.IsBound()) {
 		OnProjectileHit.Broadcast(Hit, ProjectileMovementComponent->Velocity.GetSafeNormal());
 	}

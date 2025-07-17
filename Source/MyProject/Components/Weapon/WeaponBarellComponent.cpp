@@ -36,7 +36,19 @@ void UWeaponBarellComponent::Shot(FVector ShotStart,FVector ShotDirection,float 
 			break;
 		}
 		case EHitRegistrationType::Projectile: {
-			LaunchProjectile(MuzzleLocation,ShotDirection);
+			FHitResult ShotResult;
+			bool bHasHit = GetWorld()->LineTraceSingleByChannel(ShotResult, ShotStart, ShotEnd, ECC_Bullet);
+			if (bHasHit) {
+				ShotEnd = ShotResult.ImpactPoint;
+			}
+			
+			FVector ShotDirectionProjectile= ShotEnd - MuzzleLocation;
+
+			
+			if (bIsDebugEnable && bHasHit) {
+				DrawDebugLine(GetWorld(), MuzzleLocation, ShotEnd, FColor::Red, false, 1.0f, 0, 3.0f);
+			}
+			LaunchProjectile(MuzzleLocation, ShotDirectionProjectile);
 			break;
 		}
 		default:
