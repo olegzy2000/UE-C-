@@ -369,10 +369,9 @@ void UCharacterEquipmentComponent::LaunchCurrentThrowableItem()
 			CurrentThowableItem->Throw();
 			bIsEquipping = false;
 		    OnCurrentItemChanged(CurrentThowableItem->GetCurrentAmmo());
-			if (PreviosEquippedSlot == EEquipmentSlots::PrivaryItemSlot)
-				PreviosEquippedSlot = EEquipmentSlots::None;
-			EquipItemInSlot(PreviosEquippedSlot);
-		
+			//if (PreviosEquippedSlot == EEquipmentSlots::PrivaryItemSlot)
+			//	PreviosEquippedSlot = EEquipmentSlots::None;
+			//EquipItemInSlot(PreviosEquippedSlot);
 	}
 }
 

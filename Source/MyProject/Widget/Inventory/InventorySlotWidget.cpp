@@ -22,6 +22,8 @@ void UInventorySlotWidget::UpdateView()
 		if (LinkedSlot->Item->IsA<UInventoryAmmoItem>()) {
 			UInventoryAmmoItem* CurrentInventoryAmmoItem = Cast<UInventoryAmmoItem>(LinkedSlot->Item);
 			SetAmount(CurrentInventoryAmmoItem->GetAmount());
+			if (CurrentInventoryAmmoItem->GetAmount() == 0)
+				LinkedSlot->ClearSlot();
 		}
 	}
 	else {
