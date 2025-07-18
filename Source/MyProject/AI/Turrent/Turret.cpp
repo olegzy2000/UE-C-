@@ -70,7 +70,7 @@ void ATurret::MakeShot()
 	FVector ShotLocation = WeaponBarell->GetComponentLocation();
 	FVector ShotDirection = WeaponBarell->GetComponentRotation().RotateVector(FVector::ForwardVector);
 	float SpreadAngle = FMath::DegreesToRadians(BulletSpreadAngle);
-	WeaponBarell->Shot(ShotLocation, ShotDirection, SpreadAngle);
+	WeaponBarell->Shot(ShotLocation, ShotDirection, SpreadAngle,false);
 	if (CurrentTarget!=nullptr && CurrentTarget->IsA<AGCBaseCharacter>()) {
 		AGCBaseCharacter* CurrentTargetCharacter = Cast<AGCBaseCharacter>(CurrentTarget);
 		if (CurrentTargetCharacter->GetCharacterAttributesComponent()->GetHealth() <= 0) {

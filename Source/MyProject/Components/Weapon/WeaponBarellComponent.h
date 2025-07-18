@@ -26,6 +26,8 @@ struct FDecalInfo {
 
 };
 class AGCProjectile;
+class ARangeWeaponItem;
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MYPROJECT_API UWeaponBarellComponent : public USceneComponent
 {
@@ -33,7 +35,7 @@ class MYPROJECT_API UWeaponBarellComponent : public USceneComponent
 
 public:	
 	virtual void BeginPlay() override;
-	void Shot(FVector ShotStart, FVector ShotDirection,float SpreadAngle);
+	void Shot(FVector ShotStart, FVector ShotDirection,float SpreadAngle, bool IsAming);
 	void ChangeCurrentProjectileClass();
 	bool CanUseRifleGrenate();
 	bool UseRifleGrenate();
@@ -41,7 +43,7 @@ public:
 	TSubclassOf<class AGCProjectile> GetRifleGreneteClass() const;
 	TSubclassOf<class AGCProjectile> GetProjectileClass() const;
 	TSubclassOf<class AGCProjectile> GetCurrentProjectileClass() const;
-
+	EHitRegistrationType GetHitRegistration();
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes",meta = (ClampMin=1,UIMin=1))
 		int32 BulletsPerShot = 1.0f;
@@ -72,6 +74,7 @@ private:
 	void InitFalloffDiagram();
 	FVector GetBulletSpreadOffset(float Angle, FRotator ShotRotation) const;
 	APawn* GetOwningPawn() const;
+	ARangeWeaponItem* CachedRangeWeaponItem;
 	AController* GetController() const;
 	bool HitScan(FVector ShotStart, OUT FVector& ShotEnd, FVector ShotDirection);
 	void LaunchProjectile(const FVector& LaunchStart, FVector LaunchDirection);

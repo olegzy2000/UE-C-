@@ -5,13 +5,14 @@
 #include "GameCodeTypes.h"
 #include "Subsystems/DebugSubsystem.h"
 #include "../../Actors/Projectile/GCProjectile.h"
+#include "../../Actors/Equipment/Weapons/RangeWeaponItem.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "Components/DecalComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 
-void UWeaponBarellComponent::Shot(FVector ShotStart,FVector ShotDirection,float SpreadAngle)
+void UWeaponBarellComponent::Shot(FVector ShotStart, FVector ShotDirection, float SpreadAngle,bool IsAming)
 {
 	FVector MuzzleLocation = GetComponentLocation();
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleFlashFX, MuzzleLocation, GetComponentRotation());
@@ -41,14 +42,16 @@ void UWeaponBarellComponent::Shot(FVector ShotStart,FVector ShotDirection,float 
 			if (bHasHit) {
 				ShotEnd = ShotResult.ImpactPoint;
 			}
-			
-			FVector ShotDirectionProjectile= ShotEnd - MuzzleLocation;
+			FVector CurrentStartLocation = MuzzleLocation;
+			if (CachedRangeWeaponItem->GetReticleType() == EReticleType::SniperRifle && IsAming)
+				CurrentStartLocation = ShotStart;
+			FVector ShotDirectionProjectile = ShotEnd - CurrentStartLocation;
 
 			
 			if (bIsDebugEnable && bHasHit) {
-				DrawDebugLine(GetWorld(), MuzzleLocation, ShotEnd, FColor::Red, false, 1.0f, 0, 3.0f);
+				DrawDebugLine(GetWorld(), CurrentStartLocation, ShotEnd, FColor::Red, false, 1.0f, 0, 3.0f);
 			}
-			LaunchProjectile(MuzzleLocation, ShotDirectionProjectile);
+			LaunchProjectile(CurrentStartLocation, ShotDirectionProjectile);
 			break;
 		}
 		default:
@@ -159,6 +162,8 @@ void UWeaponBarellComponent::BeginPlay()
 	Super::BeginPlay();
 	InitFalloffDiagram();
     ChangeCurrentProjectileClass();
+	if(GetOwner()->IsA<ARangeWeaponItem>())
+	CachedRangeWeaponItem = Cast<ARangeWeaponItem>(GetOwner());
 }
 FVector UWeaponBarellComponent::GetBulletSpreadOffset(float Angle, FRotator ShotRotation) const
 {
@@ -185,3 +190,6 @@ AController* UWeaponBarellComponent::GetController() const
 	return IsValid(PawnOwner) ? PawnOwner->GetController() : nullptr;
 }
 
+EHitRegistrationType UWeaponBarellComponent::GetHitRegistration() {
+	return HitRegistration;
+}
