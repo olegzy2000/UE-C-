@@ -65,12 +65,31 @@ void APlayerCharacter::Tick(float DeltaTime)
 	TickOxygen(DeltaTime);
 }
 void APlayerCharacter::StartAiming() {
+	bIsCallingAimingByFireFunction = false;
+	if (GetWorld()->GetTimerManager().IsTimerActive(StopAimTimerHandle)) {
+		GetWorld()->GetTimerManager().ClearTimer(StopAimTimerHandle);
+	}
 	Super::StartAiming();
 	InitAimCameraBehavior();
 }
 void APlayerCharacter::StopAiming() {
 	Super::StopAiming();
+	bIsCallingAimingByFireFunction = false;
 	InitDefaultCameraBehavior();
+}
+
+void APlayerCharacter::StartFire() {
+	if (!IsAming()) {
+		StartAiming();
+		bIsCallingAimingByFireFunction = true;
+	}
+	Super::StartFire();
+}
+void APlayerCharacter::StopFire() {
+	if (bIsCallingAimingByFireFunction && IsAming()) {
+		GetWorld()->GetTimerManager().SetTimer(StopAimTimerHandle, this, &APlayerCharacter::StopAiming,2, false);
+	}
+	Super::StopFire();
 }
 void APlayerCharacter::MoveForward(float Value)
 {

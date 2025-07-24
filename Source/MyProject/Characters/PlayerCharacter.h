@@ -58,6 +58,8 @@ public:
 	void RestoreStaminaProgressBar();
 	virtual void StartAiming() override;
 	virtual void StopAiming() override;
+	virtual void StartFire() override;
+	virtual void StopFire() override;
 private:
 	float TimeStamina;
 	float TimeOxygen;
@@ -90,14 +92,17 @@ private:
 	UPROPERTY()
 	AGCPlayerController* PlayerController;
 	UPROPERTY()
+	FTimerHandle StopAimTimerHandle;
+	UPROPERTY()
 	FTimeline TimelineForStaminaProgressBar;
 	UCurveFloat* TimelineCurveForStaminaProgressBar;
 	UPROPERTY()
 	FTimeline TimelineForOxygenProgressBar;
 	UCurveFloat* TimelineCurveForOxygenProgressBar;
 	UPROPERTY()
-		FTimeline TimelineForAimCamera;
+	FTimeline TimelineForAimCamera;
 	UCurveFloat* TimelineCurveForAimCamera;
+	bool bIsCallingAimingByFireFunction = false;
 protected:
 	UPROPERTY(VisibleAnywhere)
 	class UWidgetComponent* StaminaWidgetComponent;
