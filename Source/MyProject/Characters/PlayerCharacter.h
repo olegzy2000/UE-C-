@@ -25,6 +25,9 @@ class MYPROJECT_API APlayerCharacter : public AGCBaseCharacter
 	GENERATED_BODY()
 public:
 	virtual void BeginPlay() override;
+	void InitDefaultCameraBehavior();
+	void InitAimCameraBehavior();
+	void InitSwimmingCameraBehavior();
 	virtual void Tick(float DeltaTime) override;
 	void TickOxygen(float DeltaTime);
 	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
@@ -53,6 +56,8 @@ public:
 	void UpdateHealthBar();
 	UFUNCTION()
 	void RestoreStaminaProgressBar();
+	virtual void StartAiming() override;
+	virtual void StopAiming() override;
 private:
 	float TimeStamina;
 	float TimeOxygen;

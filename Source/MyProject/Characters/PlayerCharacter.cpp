@@ -12,17 +12,66 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 	PlayerController = Cast<AGCPlayerController>(GetController());
 
-	//FVector StartLocation = FVector(0.0f, 0.0f, 0.0f);
-	//CameraComponent->SetRelativeLocation(StartLocation);
-	//GetBaseCharacterMovementComponent()->bOrientRotationToMovement = 1;
+	InitDefaultCameraBehavior();
+
 	InitTimelineToSprintCamera();
-//	InitTimelineToAimCamera();
 	InitStaminaParameters();
 	InitHealthParameters();
 	InitOxygenParameters();
 }
+void APlayerCharacter::InitDefaultCameraBehavior()
+{
+	bUseControllerRotationYaw = false;
+	GetBaseCharacterMovementComponent()->bOrientRotationToMovement = true;
+}
+void APlayerCharacter::InitAimCameraBehavior()
+{
+	bUseControllerRotationYaw = true;
+	GetBaseCharacterMovementComponent()->bOrientRotationToMovement = false;
+}
+void APlayerCharacter::InitSwimmingCameraBehavior()
+{
+	
+}
+APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
+	:Super(ObjectInitializer)
+{
+	PrimaryActorTick.bCanEverTick = true;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring arm"));
+	SpringArmComponent->SetupAttachment(RootComponent);
+	SpringArmComponent->bUsePawnControlRotation = true;
+	SpringArmComponent->TargetArmLength = DefaultSpringArmLenght;
+	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	CameraComponent->SetupAttachment(SpringArmComponent);
+	
+	FVector StartLocation = FVector(0.0f, DefaultPositionOfCamera, 0.0f);
+	CameraComponent->SetRelativeLocation(StartLocation);
 
+	GetBaseCharacterMovementComponent()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
+	InitTimelineCurveToStaminaProgressBar();
+	InitTimelineCurveToSprintCamera();
+	Team = ETeams::Player;
+}
 
+void APlayerCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	TimelineForCamera.TickTimeline(DeltaTime);
+	TimelineForStaminaProgressBar.TickTimeline(DeltaTime);
+	TimelineForAimCamera.TickTimeline(DeltaTime);
+	TickOxygen(DeltaTime);
+}
+void APlayerCharacter::StartAiming() {
+	Super::StartAiming();
+	InitAimCameraBehavior();
+}
+void APlayerCharacter::StopAiming() {
+	Super::StopAiming();
+	InitDefaultCameraBehavior();
+}
 void APlayerCharacter::MoveForward(float Value)
 {
 	if ((GetBaseCharacterMovementComponent()->IsMovingOnGround() || GetBaseCharacterMovementComponent()->IsFalling())&& !FMath::IsNearlyZero(Value, 1e-6f)) {
@@ -211,15 +260,6 @@ void APlayerCharacter::RestoreStaminaProgressBar()
     }
 }
 
-void APlayerCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-	TimelineForCamera.TickTimeline(DeltaTime);
-	TimelineForStaminaProgressBar.TickTimeline(DeltaTime);
-	TimelineForAimCamera.TickTimeline(DeltaTime);
-	TickOxygen(DeltaTime);
-}
-
 void APlayerCharacter::TickOxygen(float DeltaTime)
 {
 	TimelineForOxygenProgressBar.TickTimeline(DeltaTime);
@@ -238,28 +278,7 @@ void APlayerCharacter::TickOxygen(float DeltaTime)
 	}
 }
 
-APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
-	:Super(ObjectInitializer)
-{
-	PrimaryActorTick.bCanEverTick = true;
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
-	bUseControllerRotationRoll = false;
-	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring arm"));
-	SpringArmComponent->SetupAttachment(RootComponent);
-	SpringArmComponent->bUsePawnControlRotation = true;
-	SpringArmComponent->TargetArmLength = DefaultSpringArmLenght;
-	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	CameraComponent->SetupAttachment(SpringArmComponent);
-	CameraComponent->bUsePawnControlRotation = false;
-	FVector StartLocation = FVector(0.0f, DefaultPositionOfCamera, 0.0f);
-	CameraComponent->SetRelativeLocation(StartLocation);
-	//GetBaseCharacterMovementComponent()->bOrientRotationToMovement=1;
-	GetBaseCharacterMovementComponent()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
-	InitTimelineCurveToStaminaProgressBar();
-	InitTimelineCurveToSprintCamera();
-	Team = ETeams::Player;
-}
+
 
 void APlayerCharacter::ChangeSpeedParamAfterFatigue()
 {

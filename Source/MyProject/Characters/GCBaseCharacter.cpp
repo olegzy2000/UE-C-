@@ -15,6 +15,46 @@
 #include <Widget/GCAttributeProgressBar.h>
 #include <Inventary/InventoryItem.h>
 //#include "Actors/Equipment/Weapons/MeleeWeaponItem.h"
+
+
+AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
+	:Super(ObjectInitializer.SetDefaultSubobjectClass<UGCBaseCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
+{
+	GCBaseCharacterMovementComponent = StaticCast<UGCBaseCharacterMovementComponent*>(GetCharacterMovement());
+	LegDetectorComponent = CreateDefaultSubobject<ULedgeDetectorComponent>(TEXT("LedgeDetector"));
+	GetMesh()->CastShadow = true;
+	GetMesh()->bCastDynamicShadow = true;
+	CharacterAttributesComponent = CreateDefaultSubobject<UCharacterAttributeComponent>(TEXT("CharacterAttributes"));
+	CharacterInventoryComponent = CreateDefaultSubobject<UCharacterInventoryComponent>(TEXT("CharacterInventory"));
+	CharacterEquipmentComponent = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("CharacterEquipment"));
+	HealthBarProgressComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarProgressComponent"));
+	HealthBarProgressComponent->SetupAttachment(GetCapsuleComponent());
+}
+void AGCBaseCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	if (GCBaseCharacterMovementComponent == nullptr) {
+		GCBaseCharacterMovementComponent = StaticCast<UGCBaseCharacterMovementComponent*>(GetCharacterMovement());
+		GCBaseCharacterMovementComponent->RotationRate.Pitch = 540.0f;
+	}
+	if (GetMesh()->SkeletalMesh) {
+		const FVector LeftFootBoneWorldLocation = GetMesh()->GetBoneLocation(LeftFootBoneName);
+		LeftFootBoneRelativeLocation = GetActorTransform().InverseTransformPosition(LeftFootBoneWorldLocation);
+		const FVector RightFootBoneWorldLocation = GetMesh()->GetBoneLocation(RightFootBoneName);
+		RightFootBoneRelativeLocation = GetActorTransform().InverseTransformPosition(RightFootBoneWorldLocation);
+		InitialMeshRalativeLocation = GetMesh()->GetRelativeTransform().GetLocation();
+	}
+	InitTimelineToIKFoot();
+	InitializeHealthProgress();
+	CharacterAttributesComponent->OnDeathEvent.AddUObject(this, &AGCBaseCharacter::OnDeath);
+}
+void AGCBaseCharacter::EndPlay(const EEndPlayReason::Type Reason)
+{
+	if (OnInteractableObjectFound.IsBound()) {
+		OnInteractableObjectFound.Unbind();
+	}
+	Super::EndPlay(Reason);
+}
 void AGCBaseCharacter::ChangeCrouchState()
 {
 	if (!GetBaseCharacterMovementComponent()->IsFalling() && !GetBaseCharacterMovementComponent()->IsSwimming() && !GetBaseCharacterMovementComponent()->IsSlide() && !GetBaseCharacterMovementComponent()->IsSprinting()) {
@@ -542,48 +582,11 @@ void AGCBaseCharacter::Landed(const FHitResult& Hit)
 	}
 }
 
-void AGCBaseCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-	if (GCBaseCharacterMovementComponent==nullptr) {
-		GCBaseCharacterMovementComponent = StaticCast<UGCBaseCharacterMovementComponent*>(GetCharacterMovement());
-		GCBaseCharacterMovementComponent->RotationRate.Pitch = 540.0f;
-	}
-	if (GetMesh()->SkeletalMesh) {
-		const FVector LeftFootBoneWorldLocation = GetMesh()->GetBoneLocation(LeftFootBoneName);
-		LeftFootBoneRelativeLocation = GetActorTransform().InverseTransformPosition(LeftFootBoneWorldLocation);
-		const FVector RightFootBoneWorldLocation = GetMesh()->GetBoneLocation(RightFootBoneName);
-		RightFootBoneRelativeLocation = GetActorTransform().InverseTransformPosition(RightFootBoneWorldLocation);
-		InitialMeshRalativeLocation = GetMesh()->GetRelativeTransform().GetLocation();
-	}
-	InitTimelineToIKFoot();
-	InitializeHealthProgress();
-	CharacterAttributesComponent->OnDeathEvent.AddUObject(this,&AGCBaseCharacter::OnDeath);
-}
-void AGCBaseCharacter::EndPlay(const EEndPlayReason::Type Reason)
-{
-	if (OnInteractableObjectFound.IsBound()) {
-		OnInteractableObjectFound.Unbind();
-	}
-	Super::EndPlay(Reason);
-}
 UGCBaseCharacterMovementComponent* AGCBaseCharacter::GetBaseCharacterMovementComponent() const
 {
 		return GCBaseCharacterMovementComponent;
 }
-AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
-	:Super(ObjectInitializer.SetDefaultSubobjectClass<UGCBaseCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
-{
-	GCBaseCharacterMovementComponent = StaticCast<UGCBaseCharacterMovementComponent*>(GetCharacterMovement());
-	LegDetectorComponent = CreateDefaultSubobject<ULedgeDetectorComponent>(TEXT("LedgeDetector"));
-	GetMesh()->CastShadow = true;
-	GetMesh()->bCastDynamicShadow = true;
-	CharacterAttributesComponent = CreateDefaultSubobject<UCharacterAttributeComponent>(TEXT("CharacterAttributes"));
-	CharacterInventoryComponent = CreateDefaultSubobject<UCharacterInventoryComponent>(TEXT("CharacterInventory"));
-	CharacterEquipmentComponent = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("CharacterEquipment"));
-	HealthBarProgressComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarProgressComponent"));
-	HealthBarProgressComponent->SetupAttachment(GetCapsuleComponent());
-}
+
 
 void AGCBaseCharacter::RegisterInteractiveActor(AInteractiveActor* InteractiveActor)
 {
