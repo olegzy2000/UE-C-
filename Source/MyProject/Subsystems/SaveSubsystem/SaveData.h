@@ -68,6 +68,8 @@ public:
 	virtual bool Serialize(FArchive& Archive) override;
 	TArray<FActorSaveData> ActorsSaveData;
 };
+
+
 USTRUCT()
 struct FGameSaveData : public FBaseSaveData
 {

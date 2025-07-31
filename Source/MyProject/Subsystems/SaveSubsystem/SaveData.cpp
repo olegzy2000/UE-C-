@@ -9,6 +9,7 @@ bool FBaseSaveData::Serialize(FArchive& Archive) {
 	Archive << Name;
 	return true;
 }
+
 FObjectSaveData::FObjectSaveData() {
 
 }
@@ -49,7 +50,9 @@ FActorSaveData::FActorSaveData()
 {
 
 }
+FLevelSaveData::FLevelSaveData() {
 
+}
 FLevelSaveData::FLevelSaveData(const FName& LevelName)
 {
 	Name = LevelName;
