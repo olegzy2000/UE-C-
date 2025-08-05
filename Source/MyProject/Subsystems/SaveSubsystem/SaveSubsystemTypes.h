@@ -3,11 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 /*
 /**
  * 
  */
-/*
+DECLARE_LOG_CATEGORY_EXTERN(LogSaveSubsystem, Log, All);
+
 const FName FileExtensionSave = TEXT("save");
 
 struct FSaveSubsystemArchive : public FObjectAndNameAsStringProxyArchive {
@@ -21,4 +23,13 @@ public:
 private:
 	TArray<int32>& SaveIds;
 };
-*/
+
+struct  BoolScopeWrapper
+{
+public:
+	BoolScopeWrapper(bool& bInValue, bool bNewValue);
+	~BoolScopeWrapper();
+private:
+	bool& bValue;
+	bool bInitialValue;
+};

@@ -2,14 +2,16 @@
 
 
 #include "SaveSubsystemTypes.h"
-/*
+DEFINE_LOG_CATEGORY(LogSaveSubsystem);
 FSaveSubsystemArchive::FSaveSubsystemArchive(FArchive& InInnerArchive, bool bInLoadIfFindFails)
+	:FObjectAndNameAsStringProxyArchive(InInnerArchive,bInLoadIfFindFails)
 {
 	ArIsSaveGame = true;
 	ArNoDelta = true;
 }
 
 FSaveDirectoryVisitor::FSaveDirectoryVisitor(TArray<int32>& InSaveIds)
+	:SaveIds(InSaveIds)
 {
 }
 
@@ -31,4 +33,16 @@ bool FSaveDirectoryVisitor::Visit(const TCHAR* FilenameOrDirectory, bool bIsDire
 	}
 	return true;
 }
-*/
+
+BoolScopeWrapper::BoolScopeWrapper(bool& bInValue, bool bNewValue)
+	:bValue(bInValue)
+	, bInitialValue(bInValue)
+{
+	bValue = bNewValue;
+}
+
+BoolScopeWrapper::~BoolScopeWrapper()
+{
+	bValue = bInitialValue;
+}
+
