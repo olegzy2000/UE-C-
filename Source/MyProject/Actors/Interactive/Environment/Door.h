@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "../../../Characters/GCBaseCharacter.h"
+#include "../../../Subsystems/SaveSubsystem/SaveSubsystemInterface.h"
 #include "../Interactive.h"
 #include "TimerManager.h"
 #include "Components/TimelineComponent.h"
@@ -8,7 +9,7 @@
 #include "Door.generated.h"
 
 UCLASS()
-class MYPROJECT_API ADoor : public AActor , public IInteractable{
+class MYPROJECT_API ADoor : public AActor , public IInteractable , public ISaveSubsystemInterface {
 	GENERATED_BODY()
 	
 public:
@@ -19,7 +20,7 @@ public:
 
 	virtual FName GetActionEventName() const override;
 	virtual void Tick(float DeltaTime) override;
-
+	virtual void OnLevelDeserialized_Implementation() override;
 	virtual bool HasOnInteractionCallback() const;
 	virtual FDelegateHandle AddOnInteractionUFunction(UObject* Object, const FName& FunctionName) override;
 	virtual void RemoveOnInteractionDelegate(FDelegateHandle DelegateHandle) override;
@@ -51,6 +52,7 @@ private:
 	UFUNCTION()
 		void OnDoorAnimationFinished();
 	FTimeline DoorOpenAnimTimeline;
+	UPROPERTY(SaveGame)
 	bool bIsOpened = false;
 	
 

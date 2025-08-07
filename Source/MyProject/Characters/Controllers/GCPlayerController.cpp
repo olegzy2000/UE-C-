@@ -3,6 +3,7 @@
 
 #include "GCPlayerController.h"
 #include "GameFramework/PlayerInput.h"
+#include <Subsystems/SaveSubsystem/SaveSubsystem.h>
 void AGCPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -276,6 +277,16 @@ void AGCPlayerController::UseInventory() {
 		CachedBaseCharacter->UseInventory(this);
 	}
 }
+void AGCPlayerController::QuickSaveGame()
+{
+	USaveSubsystem* SaveSubsystem = UGameplayStatics::GetGameInstance(GetWorld())->GetSubsystem<USaveSubsystem>();
+	SaveSubsystem->SaveGame();
+}
+void AGCPlayerController::QuickLoadGame()
+{
+	USaveSubsystem* SaveSubsystem = UGameplayStatics::GetGameInstance(GetWorld())->GetSubsystem<USaveSubsystem>();
+	SaveSubsystem->LoadLastGame();
+}
 void AGCPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -311,6 +322,9 @@ void AGCPlayerController::SetupInputComponent()
 	InputComponent->BindAction("SecondaryMeleeAttack", IE_Pressed, this, &AGCPlayerController::SecondaryMeleeAttack);
 	InputComponent->BindAction("Interact", IE_Pressed, this, &AGCPlayerController::Interact);
 	InputComponent->BindAction("UseInventory", IE_Pressed, this, &AGCPlayerController::UseInventory);
+
+	InputComponent->BindAction("QuickSaveGame", IE_Pressed, this, &AGCPlayerController::QuickSaveGame);
+	InputComponent->BindAction("QuickLoadGame", IE_Pressed, this, &AGCPlayerController::QuickLoadGame);
 
 	InputComponent->BindAxis("SwimForward", this, &AGCPlayerController::SwimForward);
 	InputComponent->BindAxis("SwimRight", this, &AGCPlayerController::SwimRight);

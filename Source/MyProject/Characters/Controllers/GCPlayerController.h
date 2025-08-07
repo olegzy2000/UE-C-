@@ -68,7 +68,8 @@ private:
 	void Interact();
 	void OnInteractableObjectFound(FName ActionName);
 	void UseInventory();
-
+	void QuickSaveGame();
+	void QuickLoadGame();
 public:
 	virtual void SetPawn(APawn* InPawn) override;
 	UPlayerHUD* GetPlayerHUD();

@@ -80,6 +80,13 @@ void ADoor::Tick(float DeltaTime)
 	DoorOpenAnimTimeline.TickTimeline(DeltaTime);
 }
 
+void ADoor::OnLevelDeserialized_Implementation()
+{
+
+	float YawAngle = bIsOpened? AngleOpened:AngleClosed;
+	DoorMesh->SetRelativeRotation(FRotator(0.0f, YawAngle, 0.0f));
+}
+
 bool ADoor::HasOnInteractionCallback() const
 {
 	return true;

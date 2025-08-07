@@ -1,11 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-
+#include "SaveData.h"
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "SaveSubsystem.generated.h"
-struct FGameSaveData;
 /**
  * 
  */
@@ -42,5 +41,7 @@ public:
 
 	void SerializeLevel(const ULevel* Level, const ULevelStreaming* StreamingLevel = nullptr);
 	void DeserializeLevel(ULevel* Level, const ULevelStreaming* StreamingLevel = nullptr);
+
+	void NotifyActorsAndComponents(AActor* Actor);
 
 };

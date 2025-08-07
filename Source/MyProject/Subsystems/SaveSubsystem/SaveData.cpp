@@ -43,6 +43,7 @@ bool FActorSaveData::Serialize(FArchive& Archive)
 {
 	Super::Serialize(Archive);
 	Archive << Transform;
+	Archive << ComponentsSaveData;
 	return true;
 }
 FActorSaveData::FActorSaveData()
@@ -72,11 +73,13 @@ bool FGameSaveData::Serialize(FArchive& Archive)
 	Archive << Level;
 	Archive << GameInstance;
 	Archive << StartTransform;
+	bIsSerialized = true;
 	return true;
 }
 FGameSaveData::FGameSaveData()
 	: Level(FName(TEXT("Persistent")))
 	, StartTransform(FTransform::Identity)
+	, bIsSerialized(false)
 {
 
 }

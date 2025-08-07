@@ -1,8 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "SaveData.h"
-#include "SaveSubsystemTypes.h"
 #include "SaveSubsystem.h"
+#include "SaveSubsystemTypes.h"
 #include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
 #include "SaveSubsystemInterface.h"
 #include "SaveSubsystemUtils.h"
@@ -78,15 +77,26 @@ void USaveSubsystem::SerializeLevel(const ULevel* Level, const ULevelStreaming* 
 		}
 		FActorSaveData& ActorSaveData = ActorsSaveData[ActorsSaveData.AddUnique(FActorSaveData(Actor))];
 		ActorSaveData.Transform = Actor->GetTransform();
+		TArray<FObjectSaveData>& ComponentsSaveData = ActorSaveData.ComponentsSaveData;
+		ComponentsSaveData.Empty();
+		for (UActorComponent* ActorComponent : Actor->GetComponents()) {
+			if (ActorComponent->Implements<USaveSubsystemInterface>()) {
+				FObjectSaveData& ComponentSaveData=ComponentsSaveData[ComponentsSaveData.Emplace(ActorComponent)];
+				FMemoryWriter MemoryWriter(ComponentSaveData.RawData, true);
+				FSaveSubsystemArchive Archive(MemoryWriter, false);
+				ActorComponent->Serialize(Archive);
+			}
+		}
 		FMemoryWriter MemoryWriter(ActorSaveData.RawData, true);
 		FSaveSubsystemArchive Archive(MemoryWriter, false);
 		Actor->Serialize(Archive);
+
 	}
 }
 
 void USaveSubsystem::DeserializeLevel(ULevel* Level, const ULevelStreaming* StreamingLevel)
 {
-	//UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s , Level: %s "), *GetNameSafe(this), *GetNameSafe(Level));
+	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s , Level: %s "), *GetNameSafe(this), *GetNameSafe(Level));
 	FLevelSaveData* LevelSaveData = nullptr;
 	LevelSaveData = &GameSaveData.Level;
 	if (LevelSaveData == nullptr) {
@@ -129,13 +139,13 @@ void USaveSubsystem::DeserializeLevel(ULevel* Level, const ULevelStreaming* Stre
 	ActorSpawnParameters.NameMode = FActorSpawnParameters::ESpawnActorNameMode::Requested;
 	ActorSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	for (FActorSaveData* ActorSaveData : ActorsSaveData) {
-		//UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s , Spawn new actor with name: %s"), *GetNameSafe(this), *GetNameSafe(ActorSaveData));
+		UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s , Spawn new actor with name: %s"), *GetNameSafe(this), *ActorSaveData->Name.ToString());
 		ActorSpawnParameters.Name = ActorSaveData->Name;
 
 		BoolScopeWrapper OnActorSpawnedHook(bIgnoreOnActorSpawnedCallback, true);
 		AActor* Actor = World->SpawnActor(ActorSaveData->Class.Get(), &ActorSaveData->Transform, ActorSpawnParameters);
 		if (!IsValid(Actor)) {
-			//UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s , Spawn new actor with name: %s"), *GetNameSafe(this), *GetNameSafe(ActorSaveData));
+			UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s , Spawn new actor with name: %s"), *GetNameSafe(this), *ActorSaveData->Name.ToString());
 			continue;
 		}
 		ActorSaveData->Name = Actor->GetFName();
@@ -146,14 +156,26 @@ void USaveSubsystem::DeserializeLevel(ULevel* Level, const ULevelStreaming* Stre
 	}
 
 	for (AActor* Actor : ActorsToNotify) {
-		ISaveSubsystemInterface::Execute_OnLevelDeserialized(Actor);
+		NotifyActorsAndComponents(Actor);
+	}
+}
+
+void USaveSubsystem::NotifyActorsAndComponents(AActor* Actor)
+{
+	ISaveSubsystemInterface::Execute_OnLevelDeserialized(Actor);
+	for (UActorComponent* ActorComponent : Actor->GetComponents()) {
+		if (ActorComponent->Implements<USaveSubsystemInterface>()) {
+			ISaveSubsystemInterface::Execute_OnLevelDeserialized(ActorComponent);
+		}
 	}
 }
 
 void USaveSubsystem::DeserializeGame()
 {
 	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeGame(): %s , Level: %s "), *GetNameSafe(this));
-
+	if (GameSaveData.bIsSerialized) {
+		return;
+	}
 	UGameInstance* GameInstance = GetGameInstance();
 	FMemoryReader MemoryReader(GameSaveData.GameInstance.RawData, true);
 	FSaveSubsystemArchive Archive(MemoryReader, false);
@@ -240,8 +262,21 @@ void USaveSubsystem::OnPostLoadMapWithWorld(UWorld* LoadedWorld)
 
 void USaveSubsystem::DeserializeActor(AActor* Actor, const FActorSaveData* ActorSaveData)
 {
-	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeActor(): %s"), *GetNameSafe(this));
+	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeActor(): %s , Actor name: %s"), *GetNameSafe(this), *Actor->GetName());
 	Actor->SetActorTransform(ActorSaveData->Transform);
+
+	const TArray<FObjectSaveData>& ComponentsSaveData = ActorSaveData->ComponentsSaveData;
+	for (UActorComponent* ActorComponent : Actor->GetComponents()) {
+		if (ActorComponent->Implements<USaveSubsystemInterface>()) {
+			const FObjectSaveData* ComponentSaveData = ComponentsSaveData.FindByPredicate([=](const FObjectSaveData& SaveData) {
+				return SaveData.Name == ActorComponent->GetFName(); });
+			FMemoryReader MemoryReader(ComponentSaveData->RawData, true);
+			FSaveSubsystemArchive Archive(MemoryReader, false);
+			ActorComponent->Serialize(Archive);
+		}
+	}
+
+
 	FMemoryReader MemoryReader(ActorSaveData->RawData, true);
 	FSaveSubsystemArchive Archive(MemoryReader, false);
 	Actor->Serialize(Archive);
@@ -262,7 +297,7 @@ int32 USaveSubsystem::GetNextSaveId() const
 
 void USaveSubsystem::OnActorSpawned(AActor* SpawnedActor)
 {
-	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::OnActorSpawned(): %s"), *GetNameSafe(this));
+	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::OnActorSpawned(): %s , Actor name %s"), *GetNameSafe(this), *SpawnedActor->GetName());
 	if (bIgnoreOnActorSpawnedCallback) {
 		UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::OnActorSpawned(): Skipped for actor"));
 		return;
@@ -270,5 +305,5 @@ void USaveSubsystem::OnActorSpawned(AActor* SpawnedActor)
 	if (!IsValid(SpawnedActor) || !SpawnedActor->Implements<USaveSubsystemInterface>()) {
 		return;
 	}
-	ISaveSubsystemInterface::Execute_OnLevelDeserialized(SpawnedActor);
+	NotifyActorsAndComponents(SpawnedActor);
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "../../Subsystems/SaveSubsystem/SaveSubsystemInterface.h"
 #include "Components/ActorComponent.h"
 #include "CharacterAttributeComponent.generated.h"
 
@@ -12,7 +13,7 @@ DECLARE_MULTICAST_DELEGATE(FOnHealthAddEvent);
 DECLARE_MULTICAST_DELEGATE(FOnRestoreStaminaEvent);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class MYPROJECT_API UCharacterAttributeComponent : public UActorComponent
+class MYPROJECT_API UCharacterAttributeComponent : public UActorComponent ,public ISaveSubsystemInterface
 {
 	GENERATED_BODY()
 
@@ -37,6 +38,9 @@ public:
 	UFUNCTION()
 	void AddHealth(float HealthToAdd);
 	void RestoreFullStamina();
+
+	virtual void OnLevelDeserialized_Implementation() override;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -61,6 +65,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Oxygen", meta = (ClampMin = 0.0f, ClampMax = 100.0f))
 		float SwimOxygenConsumptionVelocity = 20.0f;
 private:
+	UPROPERTY(SaveGame)
 	float Health = 0.0f;
 	float Stamina = 0.0f;
 #if UE_BUILD_DEBUG || UE_BUILD_DEVELOPMENT

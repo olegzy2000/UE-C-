@@ -228,6 +228,14 @@ void ARangeWeaponItem::ChangeFireMode()
 	WeaponBarell->ChangeCurrentProjectileClass();
 }
 
+void ARangeWeaponItem::OnLevelDeserialized_Implementation()
+{
+	SetActorRelativeTransform(FTransform(FRotator::ZeroRotator,FVector::ZeroVector));
+	if (OnAmmoChanged.IsBound()) {
+		OnAmmoChanged.Broadcast(GetCurrentAmmo());
+	}
+}
+
 void ARangeWeaponItem::BeginPlay()
 {
 	Super::BeginPlay();

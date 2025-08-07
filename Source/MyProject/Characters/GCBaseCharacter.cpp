@@ -761,6 +761,10 @@ void AGCBaseCharacter::Reload()
 	}
 }
 
+void AGCBaseCharacter::OnLevelDeserialized_Implementation()
+{
+}
+
 UCharacterAttributeComponent* AGCBaseCharacter::GetCharacterAttributesComponent() const
 {
 	return CharacterAttributesComponent;

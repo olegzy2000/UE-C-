@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "GameCodeTypes.h"
+#include "../../Subsystems/SaveSubsystem/SaveSubsystemInterface.h"
 #include <Actors/Equipment/Throwable/ThrowableItem.h>
 #include "Actors/Equipment/Weapons/RangeWeaponItem.h"
 #include "Actors/Equipment/Weapons/MeleeWeaponItem.h"
@@ -18,7 +19,7 @@ DECLARE_MULTICAST_DELEGATE_TwoParams(FOnCurrentWeaponAmmoChanged, int32, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquippedItemChanged, const AEquipableItem*);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class MYPROJECT_API UCharacterEquipmentComponent : public UActorComponent
+class MYPROJECT_API UCharacterEquipmentComponent : public UActorComponent , public ISaveSubsystemInterface
 {
 	GENERATED_BODY()
 public:
@@ -47,6 +48,8 @@ public:
 	bool IsViewVisible() const;
 	const TArray<AEquipableItem*> GetItems() const;
 	void AddAmunition(EAmunitionType AmunitionType, int32 Amount);
+
+	virtual void OnLevelDeserialized_Implementation() override;
 protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Loadout")
@@ -65,13 +68,20 @@ private:
 	bool bIsEquipping=false;
 	uint32 NextItemsArraySlotIndex(uint32 CurrentSlotIndex);
 	uint32 PreviousItemsArraySlotIndex(uint32 CurrentSlotIndex);
+	UPROPERTY(SaveGame)
 	AEquipableItem* CurrentEquippedItem;
+	UPROPERTY(SaveGame)
 	EEquipmentSlots CurrentEquippedSlot;
 	EEquipmentSlots PreviosEquippedSlot;
 	int32 GetAvailableAmunitionForCurrentWeapon();
-	TAmunitionArray AmunitionArray;
+	//UPROPERTY(SaveGame)
+	//TAmunitionArray AmunitionArray;
+	UPROPERTY(SaveGame)
+	TArray<int32> AmunitionArray;
+	UPROPERTY(SaveGame)
 	TArray<AEquipableItem*> ItemsArray;
 	void CreateLoadout();
+	UPROPERTY(SaveGame)
 	ARangeWeaponItem* CurrentEquippedWeapon;
 	AThrowableItem* CurrentThowableItem;
 	AMeleeWeaponItem* CurrentMeleeeWeaponItem;

@@ -64,6 +64,7 @@ bool AEquipableItem::IsSlotCompatable(EEquipmentSlots Slot) const
 {
 	return CompatableEquipmentSlots.Contains(Slot);
 }
+
 void AEquipableItem::SetOwner(AActor* NewOwner)
 {
 	Super::SetOwner(NewOwner);

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Runtime/Engine/Public/TimerManager.h"
 #include "Components/Weapon/WeaponBarellComponent.h"
+#include "Subsystems/SaveSubsystem/SaveSubsystemInterface.h"
 #include "Actors/Equipment/EquipableItem.h"
 #include "RangeWeaponItem.generated.h"
 
@@ -26,7 +27,7 @@ DECLARE_MULTICAST_DELEGATE(FOnReloadComplete)
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnAmmoChanged,int32)
 class UAnimMontage;
 UCLASS(Blueprintable)
-class MYPROJECT_API ARangeWeaponItem : public AEquipableItem
+class MYPROJECT_API ARangeWeaponItem : public AEquipableItem ,public ISaveSubsystemInterface
 {
 	GENERATED_BODY()
 public:
@@ -51,6 +52,7 @@ public:
 	FOnReloadComplete OnReloadComplete;
 	virtual EReticleType GetReticleType() const;
 	void ChangeFireMode();
+	virtual void OnLevelDeserialized_Implementation() override;
 protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Reticle")
@@ -95,7 +97,9 @@ protected:
 
 private:
 	int32 MaxAmmo;
+	UPROPERTY(SaveGame)
 	int32 CurrentDefaultAmmo;
+	UPROPERTY(SaveGame)
 	int32 CurrentAlternativeAmmo;
 	bool bIsFiring = false;
 	bool bIsReloading = false;

@@ -28,7 +28,7 @@ class MYPROJECT_API AEquipableItem : public AActor
 		  int32 MaxAmmo = 30;
 	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters | Ammo")
 		  EAmunitionType AmmoType;
-	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters | Ammo")
+	  UPROPERTY(EditDefaultsOnly, SaveGame , BlueprintReadOnly, Category = "Weapon | Parameters | Ammo")
 		  int32 CurrentAmmo = 0;
 	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipable item")
 		  UAnimMontage* CharacterEquipAnimMontage;
@@ -58,6 +58,7 @@ class MYPROJECT_API AEquipableItem : public AActor
 	  void SetMaxAmmo(int32 Ammo);
 	  FName GetDataTableID() const;
 	  bool IsSlotCompatable(EEquipmentSlots Slot) const;
+	
 private:
 	TWeakObjectPtr<AGCBaseCharacter> CharacterOwner;
 };

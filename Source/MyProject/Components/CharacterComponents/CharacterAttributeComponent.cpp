@@ -60,6 +60,11 @@ void UCharacterAttributeComponent::RestoreFullStamina()
 	}
 }
 
+void UCharacterAttributeComponent::OnLevelDeserialized_Implementation()
+{
+	OnHealthChangedEvent.Broadcast(Health / MaxHealth);
+}
+
 // Called when the game starts
 void UCharacterAttributeComponent::BeginPlay()
 {

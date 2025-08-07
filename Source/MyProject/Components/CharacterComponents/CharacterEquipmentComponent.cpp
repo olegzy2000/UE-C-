@@ -164,6 +164,10 @@ void UCharacterEquipmentComponent::CreateLoadout()
 void UCharacterEquipmentComponent::AddAmunition(EAmunitionType AmunitionType, int32 Amount) {
 	AmunitionArray[(uint32)AmunitionType] = AmunitionArray[(uint32)AmunitionType] + Amount;
 }
+void UCharacterEquipmentComponent::OnLevelDeserialized_Implementation()
+{
+	EquipItemInSlot(CurrentEquippedSlot);
+}
 void UCharacterEquipmentComponent::OnCurrentWeaponChanged(int32 Ammo)
 {
 	if (OnCurrentWeaponAmmoChanged.IsBound()) {

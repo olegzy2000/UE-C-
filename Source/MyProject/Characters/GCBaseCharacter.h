@@ -4,6 +4,7 @@
 #include "../Actors/Interactive/InteractiveActor.h"
 #include "../Actors/Interactive/Environment/Ladder.h"
 #include "../Actors/Interactive/Environment/Zipline.h"
+#include "../Subsystems/SaveSubsystem/SaveSubsystemInterface.h"
 #include "../Components/MovementComponents/GCBaseCharacterMovementComponent.h"
 #include "../Components/MovementComponents/LedgeDetectorComponent.h"
 #include "../Components/CharacterComponents/CharacterAttributeComponent.h"
@@ -54,7 +55,7 @@ struct FMantlingSettings
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnAminStateChanged,bool)
 
 UCLASS(Abstract,NotBlueprintable)
-class MYPROJECT_API AGCBaseCharacter : public ACharacter,public IGenericTeamAgentInterface
+class MYPROJECT_API AGCBaseCharacter : public ACharacter,public IGenericTeamAgentInterface , public ISaveSubsystemInterface
 {
 	GENERATED_BODY()
 
@@ -63,6 +64,13 @@ public:
 	void PreviousItem();
 	void NextItem();
 	void Reload() ;
+
+	//@ ISaveSubsystemInterface
+	virtual void OnLevelDeserialized_Implementation() override;
+
+
+
+	//
 	UCharacterAttributeComponent* GetCharacterAttributesComponent() const;
 	virtual void ChangeFireMode();
 	virtual void Falling() override;

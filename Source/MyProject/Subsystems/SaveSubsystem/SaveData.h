@@ -83,4 +83,5 @@ public:
 	FLevelSaveData Level;
 	FObjectSaveData GameInstance;
 	FTransform StartTransform;
+	bool bIsSerialized;
 };
