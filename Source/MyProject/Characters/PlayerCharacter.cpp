@@ -7,6 +7,7 @@
 #include <string>
 #include "Components/CharacterComponents/CharacterEquipmentComponent.h"
 #include "Actors/Equipment/Weapons/RangeWeaponItem.h"
+#include "Subsystems/StreamingSubsystem/StreamingSubsystemUtils.h"
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -18,6 +19,8 @@ void APlayerCharacter::BeginPlay()
 	InitStaminaParameters();
 	InitHealthParameters();
 	InitOxygenParameters();
+
+	UStreamingSubsystemUtils::CheckCharacterOverlapStreamingSubsystemVolume(this);
 }
 void APlayerCharacter::InitDefaultCameraBehavior()
 {
