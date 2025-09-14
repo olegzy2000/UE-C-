@@ -14,6 +14,8 @@
 #include "Components/WidgetComponent.h"
 #include <Widget/GCAttributeProgressBar.h>
 #include <Inventary/InventoryItem.h>
+#include "../AbilitySystem/GCAbilitySystemComponent.h"
+#include "Abilities/GameplayAbility.h"
 //#include "Actors/Equipment/Weapons/MeleeWeaponItem.h"
 
 
@@ -29,6 +31,8 @@ AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
 	CharacterEquipmentComponent = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("CharacterEquipment"));
 	HealthBarProgressComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarProgressComponent"));
 	HealthBarProgressComponent->SetupAttachment(GetCapsuleComponent());
+
+	AbilitySystemComponent = CreateDefaultSubobject<UGCAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 }
 void AGCBaseCharacter::BeginPlay()
 {
@@ -87,15 +91,17 @@ void AGCBaseCharacter::PossessedBy(AController* NewController)
 		FGenericTeamId TeamId((uint8)Team);
 		AIController->SetGenericTeamId(TeamId);
 	}
+	InitializeAbilitySystem(NewController);
 }
 void AGCBaseCharacter::StartSprint()
 {
-	if (!GetBaseCharacterMovementComponent()->IsFalling() && !GetBaseCharacterMovementComponent()->IsSlide()) {
+	//Comments for using GAS
+	//if (!GetBaseCharacterMovementComponent()->IsFalling() && !GetBaseCharacterMovementComponent()->IsSlide()) {
 		bIsSprintRequested = true;
-		if (GetBaseCharacterMovementComponent()->IsCrouched()) {
-			ChangeCrouchState();
-		}
-	}
+	//	if (GetBaseCharacterMovementComponent()->IsCrouched()) {
+	//		ChangeCrouchState();
+	//	}
+	//}
 }
 
 void AGCBaseCharacter::StopSprint()
@@ -478,6 +484,16 @@ void AGCBaseCharacter::OnDeath()
 	//ShowLoseText();
 	//GetWorld()->GetTimerManager().SetTimer(MyTimerHandle, this, &AGCBaseCharacter::restartCurrentLevel, 2.0f, false);
 }
+void AGCBaseCharacter::InitializeAbilitySystem(AController* NewController)
+{
+	AbilitySystemComponent->InitAbilityActorInfo(NewController, this);
+	if (!IsAbilitySystemInitialized) {
+		IsAbilitySystemInitialized = true;
+		for (TSubclassOf<UGameplayAbility>&AbilityClass : Abilities) {
+			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass));
+		}
+	}
+}
 void AGCBaseCharacter::ShowLoseText()
 {
 	if (GEngine) {
@@ -683,6 +699,11 @@ void AGCBaseCharacter::InitializeHealthProgress()
 	Widget->SetProgressPercantage(CharacterAttributesComponent->GetHealth()/CharacterAttributesComponent->GetMaxHealth());
 }
 
+UAbilitySystemComponent* AGCBaseCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
 void AGCBaseCharacter::OnStartAiming_Implementation()
 {
 	OnStartAimingInternal();
@@ -739,7 +760,7 @@ void AGCBaseCharacter::TraceOfSight()
 }
 bool AGCBaseCharacter::CanSprint()
 {
-	if (bIsCrouched || !bCanStartSrpint || GCBaseCharacterMovementComponent->IsProning())
+	if (!bCanStartSrpint)//(bIsCrouched || !bCanStartSrpint || GCBaseCharacterMovementComponent->IsProning())
 		return false;
 	return true;
 }
@@ -794,14 +815,20 @@ bool AGCBaseCharacter::CanMantle() const
 
 void AGCBaseCharacter::TryChangeSprintState()
 {
+	bool bIsSprintActive = AbilitySystemComponent->IsAbilityActive(SprintAbilityTag);
 	if (GetBaseCharacterMovementComponent() != nullptr) {
-		if (bIsSprintRequested && !GetBaseCharacterMovementComponent()->IsSprinting() && CanSprint()) {
-			GetBaseCharacterMovementComponent()->StartSprint();
-			OnSprintStart();
+		if (bIsSprintRequested && !bIsSprintActive/*!GetBaseCharacterMovementComponent()->IsSprinting()*/ && CanSprint()) {
+			//GetBaseCharacterMovementComponent()->StartSprint();
+			//OnSprintStart();
+			if (AbilitySystemComponent->TryActivateAbilityWithTag(SprintAbilityTag)) {
+				OnSprintStart();
+			}
 		}
-		if (!bIsSprintRequested && GetBaseCharacterMovementComponent()->IsSprinting()) {
-			GetBaseCharacterMovementComponent()->StopSprint();
-			OnSprintEnd();
+		if (!bIsSprintRequested && bIsSprintActive/*GetBaseCharacterMovementComponent()->IsSprinting()*/) {
+			//GetBaseCharacterMovementComponent()->StopSprint();
+			if (AbilitySystemComponent->TryCancelAbilityWithTag(SprintAbilityTag)) {
+				OnSprintEnd();
+			}
 		}
 	}
 }

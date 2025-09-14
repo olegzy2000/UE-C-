@@ -21,6 +21,7 @@
 #include "GameFramework/Character.h"
 #include <Actors/Interactive/Interactive.h>
 #include <Runtime/AIModule/Classes/GenericTeamAgentInterface.h>
+#include "AbilitySystemInterface.h"
 #include "CoreMinimal.h"
 #include "GCBaseCharacter.generated.h"
 
@@ -30,6 +31,8 @@ class UWidgetComponent;
 class AEquipableItem;
 class UInventoryItem;
 class UCharacterInventoryComponent;
+class UGCAbilitySystemComponent;
+class UGameplayAbility;
 USTRUCT(BlueprintType)
 struct FMantlingSettings
 {
@@ -55,7 +58,7 @@ struct FMantlingSettings
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnAminStateChanged,bool)
 
 UCLASS(Abstract,NotBlueprintable)
-class MYPROJECT_API AGCBaseCharacter : public ACharacter,public IGenericTeamAgentInterface , public ISaveSubsystemInterface
+class MYPROJECT_API AGCBaseCharacter : public ACharacter,public IGenericTeamAgentInterface , public ISaveSubsystemInterface, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -87,6 +90,7 @@ public:
 	virtual void LookUpAtRate(float Value) {};
 	virtual void SwitchCameraPosition() {};
 	virtual void ChangeCrouchState();
+	bool CanCrouch();
 	virtual void StartSprint();
 	virtual void StopSprint();
 	virtual void Slide();
@@ -169,7 +173,9 @@ public:
 	FOnInteractableObjectFound OnInteractableObjectFound;
 
 	void AddEquipmentItem(const TSubclassOf<AEquipableItem>EquipableItemClass);
-
+	//AbilitySystemInterface
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	//~AbilitySystemInterface
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Controls")
 		float BaseTurnRate = 45.0f;
@@ -261,7 +267,18 @@ protected:
 	void TraceOfSight();
 	UPROPERTY()
 		TScriptInterface<IInteractable> LineOfSightObject;
+	//GameplayAbilities
+	UGCAbilitySystemComponent* AbilitySystemComponent;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "Abilities")
+	TArray<TSubclassOf<UGameplayAbility>>Abilities;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	FGameplayTag SprintAbilityTag;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	FGameplayTag CrouchAbilityTag;
+	//~GameplayAbilities
+	bool IsAbilitySystemInitialized = false;
 private:
+	void InitializeAbilitySystem(AController* NewController);
 	float CurrentAimingMovementSpeed;
 	void ShowLoseText();
 	FTimerHandle MyTimerHandle;
@@ -274,7 +291,6 @@ private:
 	void EnableRagdoll();
 	void TryChangeSprintState();
 	const FMantlingSettings& GetMantlingSettings(float LedgeHeight) const;
-	bool CanCrouch();
 	void ChangeCapsuleParamFromProneToCrouched();
 	float IKRightFootOffset = 0.0f;
 	float IKLeftFootOffset = 0.0f;
