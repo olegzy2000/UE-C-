@@ -12,8 +12,15 @@
 				"Engine",
 				"UMG",
 				"AIModule",
-				"CoreUObject"
+				"CoreUObject",
+				"GameplayAbilities"
 			]
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "GameplayAbilities",
+			"Enabled": true
 		}
 	]
 }

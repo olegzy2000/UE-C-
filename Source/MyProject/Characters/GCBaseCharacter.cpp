@@ -61,24 +61,28 @@ void AGCBaseCharacter::EndPlay(const EEndPlayReason::Type Reason)
 }
 void AGCBaseCharacter::ChangeCrouchState()
 {
-	if (!GetBaseCharacterMovementComponent()->IsFalling() && !GetBaseCharacterMovementComponent()->IsSwimming() && !GetBaseCharacterMovementComponent()->IsSlide() && !GetBaseCharacterMovementComponent()->IsSprinting()) {
-		if (CanCrouch()) {
-			GetBaseCharacterMovementComponent()->ChangeCrouchState();
-			if (GetBaseCharacterMovementComponent()->IsProning()) {
-				GetBaseCharacterMovementComponent()->ChangeProneState();
-				ChangeCapsuleParamFromProneToCrouched();
-				ChangeMaxSpeedOfPlayer(300.0f);
-			}
-			else {
-				if (GetBaseCharacterMovementComponent()->IsCrouched()) {
-					ChangeCapsuleParamFromIdleWalkStateToCrouch();
-					ChangeMaxSpeedOfPlayer(300.0f);
-				}
-				else {
-					ChangeCapsuleParamFromCrouchedToIdleWalk();
-					ChangeMaxSpeedOfPlayer(600.0f);
-				}
-			}
+	//bool IsCrouchActive=AbilitySystemComponent->IsAbilityActive(CrouchAbilityTag);
+		//if (CanCrouch()) {
+			AbilitySystemComponent->TryActivateAbilityWithTag(CrouchAbilityTag);
+			OnChangeCrouchState();
+		//}
+}
+
+void AGCBaseCharacter::OnChangeCrouchState()
+{
+	if (GetBaseCharacterMovementComponent()->IsProning()) {
+		GetBaseCharacterMovementComponent()->ChangeProneState();
+		ChangeCapsuleParamFromProneToCrouched();
+		ChangeMaxSpeedOfPlayer(300.0f);
+	}
+	else {
+		if (GetBaseCharacterMovementComponent()->IsCrouched()) {
+			ChangeCapsuleParamFromIdleWalkStateToCrouch();
+			ChangeMaxSpeedOfPlayer(300.0f);
+		}
+		else {
+			ChangeCapsuleParamFromCrouchedToIdleWalk();
+			ChangeMaxSpeedOfPlayer(600.0f);
 		}
 	}
 }
@@ -848,7 +852,10 @@ bool AGCBaseCharacter::CanCrouch()
 	const FVector RightFootLocation = GetTransform().TransformPosition(RightFootBoneRelativeLocation);
 	bool bIsHit = UKismetSystemLibrary::SphereTraceSingle(this, GetCapsuleComponent()->GetRelativeLocation(),
 		GetCapsuleComponent()->GetRelativeLocation()+FVector(0.0f,0.0f,GetDefaultCapsuleHeight()+45), 10, ETraceTypeQuery::TraceTypeQuery1, false, ActorsToIgnore, EDrawDebugTrace::None, TraceHit, true);
-	return !bIsHit && !GetBaseCharacterMovementComponent()->IsSlide() && !GetBaseCharacterMovementComponent()->IsSprinting();
+	return !bIsHit && !GetBaseCharacterMovementComponent()->IsFalling()
+		&& !GetBaseCharacterMovementComponent()->IsSwimming()
+		&& !GetBaseCharacterMovementComponent()->IsSlide()
+		&& !GetBaseCharacterMovementComponent()->IsSprinting();
 }
 
 void AGCBaseCharacter::ChangeCapsuleParamFromProneToCrouched()

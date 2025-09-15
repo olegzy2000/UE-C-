@@ -91,6 +91,7 @@ public:
 	virtual void LookUpAtRate(float Value) {};
 	virtual void SwitchCameraPosition() {};
 	virtual void ChangeCrouchState();
+	void OnChangeCrouchState();
 	bool CanCrouch();
 	virtual void StartSprint();
 	virtual void StopSprint();
