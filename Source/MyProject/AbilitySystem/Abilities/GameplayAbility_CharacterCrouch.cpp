@@ -23,7 +23,7 @@ void UGameplayAbility_CharacterCrouch::CancelAbility(const FGameplayAbilitySpecH
 	AGCBaseCharacter* BaseCharacter = StaticCast<AGCBaseCharacter*>(ActorInfo->AvatarActor.Get());
 	BaseCharacter->GetBaseCharacterMovementComponent()->ChangeCrouchState();
 }
-bool UGameplayAbility_CharacterCrouch::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const {
+bool UGameplayAbility_CharacterCrouch::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags , const FGameplayTagContainer* TargetTags , OUT FGameplayTagContainer* OptionalRelevantTags) const {
 	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags)) {
 		return false;
 	}

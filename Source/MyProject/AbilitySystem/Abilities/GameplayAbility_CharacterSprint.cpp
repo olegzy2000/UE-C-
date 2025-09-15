@@ -24,7 +24,7 @@ void UGameplayAbility_CharacterSprint::CancelAbility(const FGameplayAbilitySpecH
 	AGCBaseCharacter* BaseCharacter = StaticCast<AGCBaseCharacter*>(ActorInfo->AvatarActor.Get());
 	BaseCharacter->GetBaseCharacterMovementComponent()->StopSprint();
 }
-bool UGameplayAbility_CharacterSprint::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const {
+bool UGameplayAbility_CharacterSprint::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags , const FGameplayTagContainer* TargetTags , OUT FGameplayTagContainer* OptionalRelevantTags) const {
 	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags)) {
 		return false;
 	}
