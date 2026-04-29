@@ -93,7 +93,6 @@ void USaveSubsystem::SerializeLevel(const ULevel* Level, const ULevelStreaming* 
 
 	}
 }
-
 void USaveSubsystem::DeserializeLevel(ULevel* Level, const ULevelStreaming* StreamingLevel)
 {
 	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s , Level: %s "), *GetNameSafe(this), *GetNameSafe(Level));
@@ -103,27 +102,33 @@ void USaveSubsystem::DeserializeLevel(ULevel* Level, const ULevelStreaming* Stre
 		USaveSubsystemUtils::BroadcastOnLevelDeserialized(Level);
 		return;
 	}
-	TArray<AActor*>ActorsToNotify;
+	TArray<AActor*> ActorsToNotify;
 	TArray<FActorSaveData*> ActorsSaveData;
 	ActorsSaveData.Reserve(LevelSaveData->ActorsSaveData.Num());
 	for (FActorSaveData& ActorSaveData : LevelSaveData->ActorsSaveData) {
 		ActorsSaveData.Add(&ActorSaveData);
 	}
-	for (TArray<AActor*>::TIterator ActorIterator = Level->Actors.CreateIterator(); ActorIterator; ++ActorIterator) {
-		AActor* Actor = *ActorIterator;
+
+	// Исправленный цикл - используем стандартный for вместо TIterator
+	for (int32 i = 0; i < Level->Actors.Num(); ++i) {
+		AActor* Actor = Level->Actors[i];
 		if (!IsValid(Actor) || !Actor->Implements<USaveSubsystemInterface>()) {
 			continue;
 		}
 		FActorSaveData* ActorSaveData = nullptr;
-		for (TArray<FActorSaveData*>::TIterator ActorSaveDataIterator = ActorsSaveData.CreateIterator(); ActorSaveDataIterator;++ActorSaveDataIterator) {
-			if ((*ActorSaveDataIterator)->Name == Actor->GetFName()) {
-				ActorSaveData = *ActorSaveDataIterator;
-				ActorSaveDataIterator.RemoveCurrent();
+
+		// Исправленный поиск
+		for (int32 j = 0; j < ActorsSaveData.Num(); ++j) {
+			if (ActorsSaveData[j]->Name == Actor->GetFName()) {
+				ActorSaveData = ActorsSaveData[j];
+				ActorsSaveData.RemoveAt(j);
 				break;
 			}
 		}
+
+		// Исправленный вызов UE_LOG - убраны лишние параметры
 		if (ActorSaveData == nullptr) {
-			UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s, ActorSaveData not found!"));
+			UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s, ActorSaveData not found!"), *GetNameSafe(this));
 			Actor->Destroy();
 		}
 		else {
@@ -133,11 +138,13 @@ void USaveSubsystem::DeserializeLevel(ULevel* Level, const ULevelStreaming* Stre
 			}
 		}
 	}
+
 	UWorld* const World = GetWorld();
 	FActorSpawnParameters ActorSpawnParameters;
 	ActorSpawnParameters.OverrideLevel = Level;
 	ActorSpawnParameters.NameMode = FActorSpawnParameters::ESpawnActorNameMode::Requested;
 	ActorSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
 	for (FActorSaveData* ActorSaveData : ActorsSaveData) {
 		UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s , Spawn new actor with name: %s"), *GetNameSafe(this), *ActorSaveData->Name.ToString());
 		ActorSpawnParameters.Name = ActorSaveData->Name;
@@ -145,7 +152,7 @@ void USaveSubsystem::DeserializeLevel(ULevel* Level, const ULevelStreaming* Stre
 		BoolScopeWrapper OnActorSpawnedHook(bIgnoreOnActorSpawnedCallback, true);
 		AActor* Actor = World->SpawnActor(ActorSaveData->Class.Get(), &ActorSaveData->Transform, ActorSpawnParameters);
 		if (!IsValid(Actor)) {
-			UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s , Spawn new actor with name: %s"), *GetNameSafe(this), *ActorSaveData->Name.ToString());
+			UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s , Failed to spawn actor with name: %s"), *GetNameSafe(this), *ActorSaveData->Name.ToString());
 			continue;
 		}
 		ActorSaveData->Name = Actor->GetFName();
@@ -172,7 +179,7 @@ void USaveSubsystem::NotifyActorsAndComponents(AActor* Actor)
 
 void USaveSubsystem::DeserializeGame()
 {
-	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeGame(): %s , Level: %s "), *GetNameSafe(this));
+	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeGame(): %s  "), *GetNameSafe(this));
 	if (GameSaveData.bIsSerialized) {
 		return;
 	}

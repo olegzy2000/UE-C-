@@ -34,6 +34,7 @@ class UInventoryItem;
 class UCharacterInventoryComponent;
 class UGCAbilitySystemComponent;
 class UGameplayAbility;
+class UGCCharacterAttributeSet;
 USTRUCT(BlueprintType)
 struct FMantlingSettings
 {
@@ -178,6 +179,7 @@ public:
 	//AbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	//~AbilitySystemInterface
+	UGCCharacterAttributeSet* GetCharacterAttributeSet() const;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Controls")
 		float BaseTurnRate = 45.0f;
@@ -270,7 +272,10 @@ protected:
 	UPROPERTY()
 		TScriptInterface<IInteractable> LineOfSightObject;
 	//GameplayAbilities
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
 	UGCAbilitySystemComponent* AbilitySystemComponent;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	UGCCharacterAttributeSet* CharacterAttributeSet;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "Abilities")
 	TArray<TSubclassOf<UGameplayAbility>>Abilities;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")

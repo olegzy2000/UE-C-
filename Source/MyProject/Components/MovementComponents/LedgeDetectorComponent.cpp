@@ -92,7 +92,7 @@ bool ULedgeDetectorComponent::DetectLedge(OUT FLedgeDescription& LedgeDescriptio
 	LedgeDescription.Rotation = (ForwardCheckHitResult.ImpactNormal*FVector(-1.0f,-1.0f,0)).ToOrientationRotator();
 	LedgeDescription.LedgeNormal = ForwardCheckHitResult.ImpactNormal;
 	//if (DownwardCheckHitResult.Actor->IsA<ABasePlatform>())
-		LedgeDescription.HitObject = StaticCast<ABasePlatform*>(DownwardCheckHitResult.Actor.Get());
+		LedgeDescription.HitObject = StaticCast<ABasePlatform*>(DownwardCheckHitResult.GetActor());
 	//else
 		LedgeDescription.HitObject = NULL;
 	return true;

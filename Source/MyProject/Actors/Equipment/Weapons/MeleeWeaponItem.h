@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Actors/Equipment/EquipableItem.h"
+#include "Engine/DamageEvents.h"
 #include <Components/Weapon/MeleeHitRegistrator.h>
 #include "Runtime/Engine/Public/TimerManager.h"
 #include "GameCodeTypes.h"

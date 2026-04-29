@@ -85,7 +85,7 @@ bool UStreamingSubsystem::CanUseSubsystem() const
 
 void UStreamingSubsystem::CreateStreamingLevelManagers(UWorld* World)
 {
-	UE_LOG(LogStreamingSubsystem, Display, TEXT("UStreamingSubsystem::CreateStreamingLevelManagers(): %s , World: %s"), *GetNameSafe(this), World);
+	UE_LOG(LogStreamingSubsystem, Display, TEXT("UStreamingSubsystem::CreateStreamingLevelManagers(): %s , World: %s"), *GetNameSafe(this), *World->GetName());
 	RemoveStreammingLevelManagers();
 	if (!IsValid(World)) {
 		return;

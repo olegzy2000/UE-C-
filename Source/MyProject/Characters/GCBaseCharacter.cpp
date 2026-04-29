@@ -11,12 +11,12 @@
 #include "DrawDebugHelpers.h"
 #include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
 #include "AIController.h"
+#include <AbilitySystem/AttributeSets/GCCharacterAttributeSet.h>
 #include "Components/WidgetComponent.h"
 #include <Widget/GCAttributeProgressBar.h>
 #include <Inventary/InventoryItem.h>
 #include "../AbilitySystem/GCAbilitySystemComponent.h"
 #include "Abilities/GameplayAbility.h"
-//#include "Actors/Equipment/Weapons/MeleeWeaponItem.h"
 
 
 AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
@@ -33,6 +33,8 @@ AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
 	HealthBarProgressComponent->SetupAttachment(GetCapsuleComponent());
 
 	AbilitySystemComponent = CreateDefaultSubobject<UGCAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+
+	CharacterAttributeSet = CreateDefaultSubobject<UGCCharacterAttributeSet>(TEXT("Attribute set"));
 }
 void AGCBaseCharacter::BeginPlay()
 {
@@ -174,7 +176,6 @@ void AGCBaseCharacter::StopAiming()
 	if (IsValid(CurrentRangeWeapon)) {
 		CurrentRangeWeapon->StopAim();
 	}
-
 
 	bIsAiming = false;
 	CurrentAimingMovementSpeed = 0.0f;
@@ -598,7 +599,7 @@ void AGCBaseCharacter::Landed(const FHitResult& Hit)
 	float FallHeight = (CurrentFallApex-GetActorLocation()).Z/100;
 	if (IsValid(FallDamageCurve)) {
 		float DamageAmount = FallDamageCurve->GetFloatValue(FallHeight);
-		TakeDamage(DamageAmount, FDamageEvent(), GetController(), Hit.Actor.Get());
+		TakeDamage(DamageAmount, FDamageEvent(), GetController(), Hit.GetActor());
 	}
 }
 
@@ -699,13 +700,18 @@ void AGCBaseCharacter::InitializeHealthProgress()
 	}
 	//CharacterAttributesComponent->OnHealthChangedEvent.AddUObject(Widget,&UGCAttributeProgressBar::SetProgressPercantage);
 	CharacterAttributesComponent->OnHealthChangedEvent.AddUObject(Widget, &UGCAttributeProgressBar::SetProgressPercantage);
-	CharacterAttributesComponent->OnDeathEvent.AddLambda([=]() {HealthBarProgressComponent->SetVisibility(false); });
+	CharacterAttributesComponent->OnDeathEvent.AddLambda([this]() {HealthBarProgressComponent->SetVisibility(false); });
 	Widget->SetProgressPercantage(CharacterAttributesComponent->GetHealth()/CharacterAttributesComponent->GetMaxHealth());
 }
 
 UAbilitySystemComponent* AGCBaseCharacter::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+UGCCharacterAttributeSet* AGCBaseCharacter::GetCharacterAttributeSet() const
+{
+	return CharacterAttributeSet;
 }
 
 void AGCBaseCharacter::OnStartAiming_Implementation()
@@ -745,8 +751,8 @@ void AGCBaseCharacter::TraceOfSight()
 	GetWorld()->LineTraceSingleByChannel(HitResult, ViewLocation, TraceEnd, ECC_Visibility);
 	FCollisionQueryParams ParamsCollision;
 	//GCTraceUtils::LineTraceSingleByChannel(GetWorld(), HitResult, ViewLocation, TraceEnd, ECollisionChannel::ECC_Visibility, ParamsCollision, true, 1, FColor::Green);
-	if (HitResult.Actor!=nullptr) {
-			LineOfSightObject = HitResult.Actor.Get();
+	if (HitResult.GetActor() != nullptr) {
+			LineOfSightObject = HitResult.GetActor();
 			FName ActionName;
 			if (LineOfSightObject.GetInterface()) {
 				ActionName = LineOfSightObject->GetActionEventName();
