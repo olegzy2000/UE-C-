@@ -15,34 +15,26 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Настройка вращения
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	// Настройка SpringArm
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring arm"));
 	SpringArmComponent->SetupAttachment(RootComponent);
 	SpringArmComponent->bUsePawnControlRotation = true;
 	SpringArmComponent->TargetArmLength = DefaultSpringArmLength;
 
-	// Настройка камеры
-	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	CameraComponent->SetupAttachment(SpringArmComponent);
-	FVector StartLocation = FVector(0.0f, DefaultPositionOfCamera, 0.0f);
-	CameraComponent->SetRelativeLocation(StartLocation);
-
-	// Настройка движения
-	GetBaseCharacterMovementComponent()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
-
-	// Создание компонента поведения камеры
 	CameraBehaviorComponent = CreateDefaultSubobject<UCameraBehaviorComponent>(TEXT("CameraBehavior"));
 
-	// Инициализация кривых
+	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	CameraComponent->SetupAttachment(SpringArmComponent);
+
+	GetBaseCharacterMovementComponent()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
+
+
 	InitTimelineCurveToStaminaProgressBar();
 	InitTimelineCurveToOxygenProgressBar();
 
-	// Команда
 	Team = ETeams::Player;
 }
 
@@ -50,22 +42,18 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Кешируем контроллер
 	PlayerController = Cast<AGCPlayerController>(GetController());
 
-	// Инициализируем компонент камеры
 	if (CameraBehaviorComponent)
 	{
 		CameraBehaviorComponent->Initialize(SpringArmComponent, CameraComponent);
 		CameraBehaviorComponent->InitDefaultBehavior();
 	}
 
-	// Инициализация параметров
 	InitStaminaParameters();
 	InitHealthParameters();
 	InitOxygenParameters();
 
-	// Проверка StreamingSubsystem
 	UStreamingSubsystemUtils::CheckCharacterOverlapStreamingSubsystemVolume(this);
 }
 
@@ -73,7 +61,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// Тики кислорода и стамины (временно, пока не вынесено)
 	TickOxygen(DeltaTime);
 	TimelineForStaminaProgressBar.TickTimeline(DeltaTime);
 }
@@ -183,9 +170,7 @@ void APlayerCharacter::SwimRight(float Value)
 void APlayerCharacter::SwitchCameraPosition()
 {
 	if (!CameraBehaviorComponent) return;
-
-	bIsCameraOnRightPosition = !bIsCameraOnRightPosition;
-	CameraBehaviorComponent->SwitchShoulderPosition(DefaultPositionOfCamera, bIsCameraOnRightPosition);
+	CameraBehaviorComponent->SwitchShoulderPosition();
 }
 
 // ==================== ПРИЦЕЛИВАНИЕ И СТРЕЛЬБА ====================
@@ -301,6 +286,9 @@ void APlayerCharacter::StopSprint()
 
 void APlayerCharacter::OnSprintStart_Implementation()
 {
+	if (IsAming()) {
+		StopAiming();
+	}
 	StartResizeProgressBarPercent();
 	if (CameraBehaviorComponent)
 	{
@@ -578,7 +566,7 @@ void APlayerCharacter::OnStartAimingInternal()
 		{
 			float TargetFOV = CurrentRangeWeapon->GetAimFOV(); // Например, 50.0f
 			// Начинаем интерполяцию FOV к прицельному значению
-			CameraBehaviorComponent->StartAimFOVTransition(TargetFOV, TimeToAim);
+			CameraBehaviorComponent->StartAimFOVTransition(TargetFOV);
 		}
 	}
 }
@@ -598,10 +586,8 @@ void APlayerCharacter::OnStopAimingInternal()
 		ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
 		if (IsValid(CurrentRangeWeapon))
 		{
-			float TimeToExitAim = 0.3; // Можно добавить в оружие, или использовать 0.3f
-
 			// Плавно возвращаем FOV к исходному значению
-			CameraBehaviorComponent->StopAimFOVTransition(TimeToExitAim);
+			CameraBehaviorComponent->StopAimFOVTransition();
 		}
 	}
 }

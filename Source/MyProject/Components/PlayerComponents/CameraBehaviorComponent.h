@@ -28,7 +28,7 @@ public:
 	void InitDefaultBehavior();
 	void InitAimBehavior();
 
-	void SwitchShoulderPosition(float DefaultPosition, bool bIsOnRightSide);
+	void SwitchShoulderPosition();
 
 	// ћетоды дл€ спринта
 	void StartSprintCameraTransition(float SprintLength);
@@ -37,10 +37,15 @@ public:
 	void UpdateDefaultSpringArmLength(float NewDefaultLength);
 
 	// ћетоды дл€ FOV интерпол€ции
-	void StartAimFOVTransition(float TargetFOV, float Duration);
-	void StopAimFOVTransition(float Duration);
+	void StartAimFOVTransition(float TargetFOV);
+	void StopAimFOVTransition();
 
 	void UpdateBaseFOV(float NewBaseFOV);
+
+	float getDefaultPositionOfCamera();
+
+	UFUNCTION()
+	void OnShoulderPositionUpdate(float Alpha);
 
 	bool IsAiming() const { return bIsAiming; }
 	bool IsFOVTransitioning() const { return FOVTimeline.IsPlaying(); }
@@ -69,11 +74,13 @@ private:
 	// Timeline
 	FTimeline SpringArmTimeline;
 	FTimeline FOVTimeline;
+	FTimeline ShoulderTimeline;
 
 	// ѕараметры интерпол€ции спринта
 	float OriginalSpringArmLength = 350.0f;  // ќ–»√»ЌјЋ№Ќјя длина (сохран€етс€ при инициализации)
 	float StartSpringArmLength = 350.0f;     // —“ј–“ќ¬јя длина дл€ текущей интерпол€ции
 	float TargetSpringArmLength = 350.0f;    // ÷елева€ длина дл€ интерпол€ции
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Camera", meta = (AllowPrivateAccess = "true"))
 	float DefaultSpringArmDuration = 0.3f;   // ƒлительность интерпол€ции спринта
 
 	// ѕараметры интерпол€ции FOV
@@ -81,6 +88,25 @@ private:
 	float StartFOV = 90.0f;          // —тартовый FOV дл€ текущей интерпол€ции
 	float TargetFOV = 90.0f;         // ÷елевой FOV дл€ текущей интерпол€ции
 	float CurrentFOV = 90.0f;        // “екущий FOV
+
+	// ѕараметры интерпол€ции дл€ плеча
+	FVector StartShoulderOffset;
+	FVector TargetShoulderOffset;
+
+	float ShoulderSwitchDuration = 0.2f;
+	
+	FVector CurrentShoulderOffset;
+	bool bIsRightShoulder = true;
+	FVector OriginalCameraOffset;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Camera", meta = (AllowPrivateAccess = "true"))
+	float DefaultPositionOfCamera = 50.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Camera", meta = (AllowPrivateAccess = "true"))
+	float TimeToAim = 1.f;
+
+
 
 	// —осто€ни€
 	bool bIsAiming = false;

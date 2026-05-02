@@ -92,16 +92,6 @@ private:
 	UPROPERTY()
 	AGCPlayerController* PlayerController;
 
-	// Параметры камеры
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Camera", meta = (AllowPrivateAccess = "true"))
-	bool bIsCameraOnRightPosition = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Camera", meta = (AllowPrivateAccess = "true"))
-	float DefaultPositionOfCamera = 50.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Camera", meta = (AllowPrivateAccess = "true"))
-	float TimeToAim = 1.f;
-
 	// Параметры движения
 	UPROPERTY(EditInstanceOnly, Category = "Character | Movement", meta = (AllowPrivateAccess = "true"))
 	float SpringArmLengthInSprint = 140.0f;

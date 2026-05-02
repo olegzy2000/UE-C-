@@ -56,8 +56,8 @@ void AZipline::OnConstruction(const FTransform& Transform)
 void AZipline::BeginPlay()
 {
 	Super::BeginPlay();
-	InteractionVolume->OnComponentBeginOverlap.AddDynamic(this, &AZipline::OnInterationVolumeOverlapBegin);
-	InteractionVolume->OnComponentEndOverlap.AddDynamic(this, &AZipline::OnInterationVolumeOverlapEnd);
+	//InteractionVolume->OnComponentBeginOverlap.AddDynamic(this, &AZipline::OnInterationVolumeOverlapBegin);
+	//InteractionVolume->OnComponentEndOverlap.AddDynamic(this, &AZipline::OnInterationVolumeOverlapEnd);
 }
 
 float AZipline::GetZiplineLenght()const
@@ -71,7 +71,7 @@ UCapsuleComponent* AZipline::GetZiplineInteractionCapsule() const
 	return StaticCast<UCapsuleComponent*>(InteractionVolume);
 }
 
-void AZipline::OnInterationVolumeOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AZipline::OnInterationVolumeOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) 
 {
 	Super::OnInterationVolumeOverlapBegin(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	if (!IsOverlappingCharacterCapsule(OtherActor, OtherComp))
