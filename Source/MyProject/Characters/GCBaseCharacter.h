@@ -168,8 +168,8 @@ public:
 	virtual FGenericTeamId GetGenericTeamId() const override;
 	void Interact();
 
-	UPROPERTY(EditAnywhere, Category = "Character | Components")
-	UWidgetComponent* HealthBarProgressComponent;
+	//UPROPERTY(EditAnywhere, Category = "Character | Components")
+	//UWidgetComponent* HealthBarProgressComponent;
 
 	void InitializeHealthProgress();
 

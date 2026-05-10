@@ -29,8 +29,8 @@ AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
 	CharacterAttributesComponent = CreateDefaultSubobject<UCharacterAttributeComponent>(TEXT("CharacterAttributes"));
 	CharacterInventoryComponent = CreateDefaultSubobject<UCharacterInventoryComponent>(TEXT("CharacterInventory"));
 	CharacterEquipmentComponent = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("CharacterEquipment"));
-	HealthBarProgressComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarProgressComponent"));
-	HealthBarProgressComponent->SetupAttachment(GetCapsuleComponent());
+	//HealthBarProgressComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarProgressComponent"));
+	//HealthBarProgressComponent->SetupAttachment(GetCapsuleComponent());
 
 	AbilitySystemComponent = CreateDefaultSubobject<UGCAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 
@@ -689,7 +689,7 @@ void AGCBaseCharacter::Interact()
 }
 void AGCBaseCharacter::InitializeHealthProgress()
 {
-	UGCAttributeProgressBar* Widget = Cast<UGCAttributeProgressBar>(HealthBarProgressComponent->GetUserWidgetObject());
+	/*UGCAttributeProgressBar* Widget = Cast<UGCAttributeProgressBar>(HealthBarProgressComponent->GetUserWidgetObject());
 	if (!IsValid(Widget)) {
 		HealthBarProgressComponent->SetVisibility(true);
 		return;
@@ -698,10 +698,9 @@ void AGCBaseCharacter::InitializeHealthProgress()
 	if (IsPlayerControlled() && IsLocallyControlled()) {
 		HealthBarProgressComponent->SetVisibility(false);
 	}
-	//CharacterAttributesComponent->OnHealthChangedEvent.AddUObject(Widget,&UGCAttributeProgressBar::SetProgressPercantage);
 	CharacterAttributesComponent->OnHealthChangedEvent.AddUObject(Widget, &UGCAttributeProgressBar::SetProgressPercantage);
 	CharacterAttributesComponent->OnDeathEvent.AddLambda([this]() {HealthBarProgressComponent->SetVisibility(false); });
-	Widget->SetProgressPercantage(CharacterAttributesComponent->GetHealth()/CharacterAttributesComponent->GetMaxHealth());
+	Widget->SetProgressPercantage(CharacterAttributesComponent->GetHealth()/CharacterAttributesComponent->GetMaxHealth());*/
 }
 
 UAbilitySystemComponent* AGCBaseCharacter::GetAbilitySystemComponent() const

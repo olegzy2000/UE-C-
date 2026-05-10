@@ -3,28 +3,118 @@
 
 #include "GCPlayerController.h"
 #include "GameFramework/PlayerInput.h"
+#include "Components/CharacterComponents/CharacterAttributeComponent.h"
+#include "Components/PlayerComponents/OxygenManagerComponent.h"
+#include "Components/PlayerComponents/StaminaManagerComponent.h"
 #include <Subsystems/SaveSubsystem/SaveSubsystem.h>
 void AGCPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	if (IsValid(UserInterface) && CachedBaseCharacter.IsValid()) {
-		PlayerHUD = CreateWidget<UPlayerHUD>(GetWorld(), UserInterface);
-		PlayerHUD->AddToViewport();
-		UCharacterEquipmentComponent* CharacterEquipment = CachedBaseCharacter->GetCharacterEquipmentComponent_Mutable();
-		UReticleWidget* ReticleWidget = PlayerHUD->GetReticleWidget();
-		ReticleWidget->SetupCurrentReticle();
-		if (IsValid(ReticleWidget)) {
-			CachedBaseCharacter->OnAmingStateChanged.AddUFunction(ReticleWidget,FName("OnAimingStateChange"));
-			CharacterEquipment->OnEquippedItemChanged.AddUFunction(ReticleWidget, FName("OnEquippedItemChanged"));
-		}
-		UAmmoWidget* AmmoWidget = PlayerHUD->GetAmmoWidget();
-		if (IsValid(AmmoWidget)) {
-			CharacterEquipment->OnCurrentWeaponAmmoChanged.AddUFunction(AmmoWidget, FName("UpdateAmmoCount"));
-		}
-		CachedBaseCharacter->OnInteractableObjectFound.BindUObject(this, &AGCPlayerController::OnInteractableObjectFound);
+	CreateAndInitializeHUD();
+}
+
+void AGCPlayerController::CreateAndInitializeHUD()
+{
+	if (!IsValid(UserInterface) || !CachedBaseCharacter.IsValid())
+	{
+		return;
 	}
 
+	PlayerHUD = CreateWidget<UPlayerHUD>(GetWorld(), UserInterface);
+	if (!IsValid(PlayerHUD))
+	{
+		return;
+	}
+
+	PlayerHUD->AddToViewport();
+	BindHUDToCharacter();
 }
+
+void AGCPlayerController::BindHUDToCharacter()
+{
+	BindHUDToCharacterAttributes();
+	BindHUDToCharacterComponents();
+	BindHUDToEquipment();
+	BindInteractableEvents();
+}
+
+void AGCPlayerController::BindHUDToCharacterAttributes()
+{
+	if (!CachedBaseCharacter.IsValid() || !IsValid(PlayerHUD))
+	{
+		return;
+	}
+
+	UCharacterAttributeComponent* Attributes = CachedBaseCharacter->GetCharacterAttributesComponent();
+	if (!IsValid(Attributes))
+	{
+		return;
+	}
+
+	Attributes->OnHealthChangedEvent.AddUObject(PlayerHUD, &UPlayerHUD::SetHealthPercent);
+	Attributes->OnStaminaChangedEvent.AddUObject(PlayerHUD, &UPlayerHUD::SetStaminaPercent);
+	Attributes->OnOxygenChangedEvent.AddUObject(PlayerHUD, &UPlayerHUD::SetOxygenPercent);
+
+	PlayerHUD->SetHealthPercent(Attributes->GetHealthPercent());
+	PlayerHUD->SetStaminaPercent(Attributes->GetStaminaPercent());
+	PlayerHUD->SetOxygenPercent(Attributes->GetOxygenPercent());
+	PlayerHUD->SetHealthBarColor(FLinearColor::Green);
+}
+
+void AGCPlayerController::BindHUDToCharacterComponents()
+{
+	if (!CachedBaseCharacter.IsValid() || !IsValid(PlayerHUD))
+	{
+		return;
+	}
+
+	if (UStaminaManagerComponent* StaminaManager = CachedBaseCharacter->FindComponentByClass<UStaminaManagerComponent>())
+	{
+		PlayerHUD->SetStaminaBarColor(StaminaManager->GetNormalStaminaColor());
+	}
+
+	if (UOxygenManagerComponent* OxygenManager = CachedBaseCharacter->FindComponentByClass<UOxygenManagerComponent>())
+	{
+		PlayerHUD->SetOxygenBarColor(OxygenManager->GetNormalOxygenColor());
+	}
+}
+
+void AGCPlayerController::BindHUDToEquipment()
+{
+	if (!CachedBaseCharacter.IsValid() || !IsValid(PlayerHUD))
+	{
+		return;
+	}
+
+	UCharacterEquipmentComponent* CharacterEquipment = CachedBaseCharacter->GetCharacterEquipmentComponent_Mutable();
+	if (!IsValid(CharacterEquipment))
+	{
+		return;
+	}
+
+	UReticleWidget* ReticleWidget = PlayerHUD->GetReticleWidget();
+	if (IsValid(ReticleWidget))
+	{
+		ReticleWidget->SetupCurrentReticle();
+		CachedBaseCharacter->OnAmingStateChanged.AddUFunction(ReticleWidget, FName("OnAimingStateChange"));
+		CharacterEquipment->OnEquippedItemChanged.AddUFunction(ReticleWidget, FName("OnEquippedItemChanged"));
+	}
+
+	UAmmoWidget* AmmoWidget = PlayerHUD->GetAmmoWidget();
+	if (IsValid(AmmoWidget))
+	{
+		CharacterEquipment->OnCurrentWeaponAmmoChanged.AddUFunction(AmmoWidget, FName("UpdateAmmoCount"));
+	}
+}
+
+void AGCPlayerController::BindInteractableEvents()
+{
+	if (CachedBaseCharacter.IsValid())
+	{
+		CachedBaseCharacter->OnInteractableObjectFound.BindUObject(this, &AGCPlayerController::OnInteractableObjectFound);
+	}
+}
+
 UPlayerHUD* AGCPlayerController::GetPlayerHUD()
 {
 	return PlayerHUD;
@@ -115,7 +205,7 @@ void AGCPlayerController::EquipPrimaryItem()
 
 void AGCPlayerController::ChangeProneState()
 {
-	if(CachedBaseCharacter.IsValid()) {
+	if (CachedBaseCharacter.IsValid()) {
 		CachedBaseCharacter->ChangeProneState();
 	}
 }
@@ -301,7 +391,7 @@ void AGCPlayerController::SetupInputComponent()
 	InputComponent->BindAction("InteractWithLadder", IE_Pressed, this, &AGCPlayerController::InteractionWithLadder);
 	InputComponent->BindAction("Mantle", IE_Pressed, this, &AGCPlayerController::Mantle);
 	InputComponent->BindAction("RunWall", IE_Pressed, this, &AGCPlayerController::RunWall);
-	InputComponent->BindAction("Jump",IE_Pressed, this, &AGCPlayerController::Jump);
+	InputComponent->BindAction("Jump", IE_Pressed, this, &AGCPlayerController::Jump);
 	InputComponent->BindAction("Slide", IE_Released, this, &AGCPlayerController::Slide);
 	InputComponent->BindAction("Crouch", IE_Pressed, this, &AGCPlayerController::ChangeCrouchState);
 	InputComponent->BindAction("Sprint", IE_Pressed, this, &AGCPlayerController::StartSprint);
@@ -310,8 +400,8 @@ void AGCPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Prone", IE_Released, this, &AGCPlayerController::ChangeProneState);
 	InputComponent->BindAction("Fire", IE_Pressed, this, &AGCPlayerController::StartFireCustom);
 	InputComponent->BindAction("Fire", IE_Released, this, &AGCPlayerController::StopFireCustom);
-	InputComponent->BindAction("Aim", IE_Pressed,this, &AGCPlayerController::StartAiming);
-	InputComponent->BindAction("Aim", IE_Released,this, &AGCPlayerController::StopAiming);
+	InputComponent->BindAction("Aim", IE_Pressed, this, &AGCPlayerController::StartAiming);
+	InputComponent->BindAction("Aim", IE_Released, this, &AGCPlayerController::StopAiming);
 	InputComponent->BindAction("Reload", IE_Pressed, this, &AGCPlayerController::Reload);
 	InputComponent->BindAction("NextItem", IE_Pressed, this, &AGCPlayerController::NexItem);
 	InputComponent->BindAction("PreviousItem", IE_Pressed, this, &AGCPlayerController::PreviousItem);

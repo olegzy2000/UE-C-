@@ -9,7 +9,7 @@
 #include "PlayerHUD.generated.h"
 
 /**
- * 
+ *
  */
 class UHighglightInteractable;
 UCLASS()
@@ -19,19 +19,32 @@ class MYPROJECT_API UPlayerHUD : public UUserWidget
 	virtual void NativeConstruct() override;
 protected:
 	UPROPERTY(meta = (BindWidget))
-		class UProgressBar* HealthProgressBar;
+	class UProgressBar* HealthProgressBar;
 	UPROPERTY(meta = (BindWidget))
-		class UProgressBar* OxygenProgressBar;
+	class UProgressBar* OxygenProgressBar;
 	UPROPERTY(meta = (BindWidget))
-		class UProgressBar* StaminaProgressBar;
+	class UProgressBar* StaminaProgressBar;
 	UPROPERTY(meta = (BindWidget))
-		UReticleWidget* ReticleWidget;
+	UReticleWidget* ReticleWidget;
 	UPROPERTY(meta = (BindWidget))
-		UAmmoWidget* AmmoWidget;
+	UAmmoWidget* AmmoWidget;
 	UPROPERTY(meta = (BindWidget))
-		UHighglightInteractable* InteractableKey;
+	UHighglightInteractable* InteractableKey;
 
 public:
+	UFUNCTION()
+	void SetHealthPercent(float Percent);
+
+	UFUNCTION()
+	void SetStaminaPercent(float Percent);
+
+	UFUNCTION()
+	void SetOxygenPercent(float Percent);
+
+	void SetHealthBarColor(const FLinearColor& Color);
+	void SetStaminaBarColor(const FLinearColor& Color);
+	void SetOxygenBarColor(const FLinearColor& Color);
+
 	class UProgressBar* GetHealthProgressBar();
 	class UProgressBar* GetOxygenProgressBar();
 	class UProgressBar* GetStaminaProgressBar();

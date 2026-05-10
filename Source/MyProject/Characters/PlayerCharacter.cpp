@@ -1,13 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PlayerCharacter.h"
-#include "GameMode/PayerGameModeBaseSecondVersion.h"
-#include "Components/ProgressBar.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include <string>
-#include "Components/CharacterComponents/CharacterEquipmentComponent.h"
+
 #include "Actors/Equipment/Weapons/RangeWeaponItem.h"
+#include "Camera/CameraComponent.h"
+#include "Characters/Controllers/GCPlayerController.h"
+#include "Components/CharacterComponents/CharacterEquipmentComponent.h"
+#include "Components/PlayerComponents/CameraBehaviorComponent.h"
+#include "Components/PlayerComponents/OxygenManagerComponent.h"
+#include "Components/PlayerComponents/StaminaManagerComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Subsystems/StreamingSubsystem/StreamingSubsystemUtils.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -31,9 +34,9 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	GetBaseCharacterMovementComponent()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
 
+	StaminaManagerComponent = CreateDefaultSubobject<UStaminaManagerComponent>(TEXT("StaminaManager"));
 
-	InitTimelineCurveToStaminaProgressBar();
-	InitTimelineCurveToOxygenProgressBar();
+	OxygenManagerComponent = CreateDefaultSubobject<UOxygenManagerComponent>(TEXT("OxygenManager"));
 
 	Team = ETeams::Player;
 }
@@ -50,22 +53,34 @@ void APlayerCharacter::BeginPlay()
 		CameraBehaviorComponent->InitDefaultBehavior();
 	}
 
-	InitStaminaParameters();
-	InitHealthParameters();
-	InitOxygenParameters();
+	if (StaminaManagerComponent)
+	{
+		StaminaManagerComponent->OnStaminaDepleted.AddDynamic(this, &APlayerCharacter::OnStaminaDepleted);
+		StaminaManagerComponent->OnStaminaRestored.AddDynamic(this, &APlayerCharacter::OnStaminaRestored);
+	}
+	if (OxygenManagerComponent)
+	{
+		OxygenManagerComponent->OnOxygenDepleted.AddDynamic(this, &APlayerCharacter::OnOxygenDepleted);
+		OxygenManagerComponent->OnOxygenRestored.AddDynamic(this, &APlayerCharacter::OnOxygenRestored);
+	}
 
+	bWasSwimmingLastFrame = GetBaseCharacterMovementComponent()->IsSwimming();
 	UStreamingSubsystemUtils::CheckCharacterOverlapStreamingSubsystemVolume(this);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	TickOxygen(DeltaTime);
-	TimelineForStaminaProgressBar.TickTimeline(DeltaTime);
+	CheckUnderwaterState(DeltaTime);
 }
 
-// ==================== ÄÂÈÆÅÍÈÅ ====================
+
+
+
+
+
+
+// ====================  ====================
 
 void APlayerCharacter::MoveForward(float Value)
 {
@@ -133,7 +148,7 @@ void APlayerCharacter::LookUpAtRate(float Value)
 	AddControllerPitchInput(Value * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
-// ==================== ÏËÀÂÀÍÈÅ ====================
+// ====================  ====================
 
 void APlayerCharacter::SwimForward(float Value)
 {
@@ -165,7 +180,7 @@ void APlayerCharacter::SwimRight(float Value)
 	}
 }
 
-// ==================== ÊÀÌÅÐÀ ====================
+// ====================  ====================
 
 void APlayerCharacter::SwitchCameraPosition()
 {
@@ -173,7 +188,7 @@ void APlayerCharacter::SwitchCameraPosition()
 	CameraBehaviorComponent->SwitchShoulderPosition();
 }
 
-// ==================== ÏÐÈÖÅËÈÂÀÍÈÅ È ÑÒÐÅËÜÁÀ ====================
+// ====================    ====================
 
 void APlayerCharacter::StartAiming()
 {
@@ -222,7 +237,7 @@ void APlayerCharacter::StopFire()
 	Super::StopFire();
 }
 
-// ==================== ÏÐÈÑÅÄÀÍÈÅ ====================
+// ====================  ====================
 
 void APlayerCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
 {
@@ -236,7 +251,7 @@ void APlayerCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeigh
 	SpringArmComponent->TargetOffset -= FVector(0.0f, 0.0f, HalfHeightAdjust);
 }
 
-// ==================== ÏÐÛÆÊÈ ====================
+// ====================  ====================
 
 bool APlayerCharacter::CanJumpInternal_Implementation() const
 {
@@ -270,7 +285,7 @@ void APlayerCharacter::Jump()
 	}
 }
 
-// ==================== ÑÏÐÈÍÒ ====================
+// ====================  ====================
 
 void APlayerCharacter::StartSprint()
 {
@@ -283,13 +298,23 @@ void APlayerCharacter::StopSprint()
 	Super::StopSprint();
 	OnSprintEnd_Implementation();
 }
-
 void APlayerCharacter::OnSprintStart_Implementation()
 {
-	if (IsAming()) {
+	if (IsAming())
+	{
 		StopAiming();
 	}
-	StartResizeProgressBarPercent();
+
+	if (StaminaManagerComponent && StaminaManagerComponent->CanSprint())
+	{
+		StaminaManagerComponent->StartStaminaDrain();
+	}
+	else
+	{
+		StopSprint();
+		return;
+	}
+
 	if (CameraBehaviorComponent)
 	{
 		CameraBehaviorComponent->StartSprintCameraTransition(SpringArmLengthInSprint);
@@ -298,12 +323,17 @@ void APlayerCharacter::OnSprintStart_Implementation()
 
 void APlayerCharacter::OnSprintEnd_Implementation()
 {
-	ReverseResizeProgressBarPercent();
+	if (StaminaManagerComponent)
+	{
+		StaminaManagerComponent->StopStaminaDrain();
+	}
+
 	if (CameraBehaviorComponent)
 	{
 		CameraBehaviorComponent->StopSprintCameraTransition();
 	}
 }
+
 
 void APlayerCharacter::Slide()
 {
@@ -313,242 +343,85 @@ void APlayerCharacter::Slide()
 		Super::Slide();
 	}
 }
+// ====================  ====================
+void APlayerCharacter::OnStaminaDepleted()
+{
+	if (GetBaseCharacterMovementComponent())
+	{
+		GetBaseCharacterMovementComponent()->MaxWalkSpeed = StaminaManagerComponent->GetFatiguedWalkSpeed();
+	}
 
-// ==================== ËÅÆÀÍÈÅ ====================
+	bCanStartSrpint = false;
+	StopSprint();
+}
+
+void APlayerCharacter::OnStaminaRestored()
+{
+	if (GetBaseCharacterMovementComponent() && !GetBaseCharacterMovementComponent()->IsProning())
+	{
+		GetBaseCharacterMovementComponent()->MaxWalkSpeed = StaminaManagerComponent->GetNormalWalkSpeed();
+	}
+
+	bCanStartSrpint = true;
+}
+
+// ====================  ====================
 
 void APlayerCharacter::ChangeProneState()
 {
 	Super::ChangeProneState();
 }
 
-// ==================== ÓÐÎÍ È ÇÄÎÐÎÂÜÅ ====================
+// ====================    ====================
 
 float APlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	float DamageAmount = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
-	UpdateHealthBar();
-	return DamageAmount;
+	return Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 }
 
-void APlayerCharacter::UpdateHealthBar()
+
+// ====================  ====================
+void APlayerCharacter::CheckUnderwaterState(float DeltaTime)
 {
-	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetHealthProgressBar() != nullptr)
+	if (!OxygenManagerComponent || !GetBaseCharacterMovementComponent())
 	{
-		PlayerController->GetPlayerHUD()->GetHealthProgressBar()->SetPercent(CharacterAttributesComponent->GetHealth() / 100);
+		return;
 	}
+
+	const bool bIsSwimming = GetBaseCharacterMovementComponent()->IsSwimming();
+	if (bIsSwimming == bWasSwimmingLastFrame)
+	{
+		return;
+	}
+
+	if (bIsSwimming)
+	{
+		UE_LOG(LogTemp, Verbose, TEXT("Entered water - Starting oxygen drain"));
+		OxygenManagerComponent->StartOxygenDrain();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Verbose, TEXT("Exited water - Starting oxygen restoration"));
+		OxygenManagerComponent->StopOxygenDrain();
+	}
+
+	bWasSwimmingLastFrame = bIsSwimming;
 }
 
-// ==================== ÑÒÀÌÈÍÀ ====================
-
-void APlayerCharacter::InitStaminaParameters()
+void APlayerCharacter::OnOxygenDepleted()
 {
-	TimeStamina = CharacterAttributesComponent->GetMaxStamina() / CharacterAttributesComponent->GetSpeedDownStamina();
-	InitTimelineCurveToStaminaProgressBar();
-	InitTimelineToStaminaProgressBar();
-	CharacterAttributesComponent->OnRestoreStaminaEvent.AddUObject(this, &APlayerCharacter::RestoreStaminaProgressBar);
-	RestoreStaminaProgressBar();
+	float DamageAmount = OxygenManagerComponent->GetOxygenDepletionDamage();
+	TakeDamage(DamageAmount, FDamageEvent(), GetController(), this);
+	UE_LOG(LogDamage, Warning, TEXT("APlayerCharacter::OnOxygenDepleted - Applied %f damage"), DamageAmount);
 }
 
-void APlayerCharacter::RestoreStaminaProgressBar()
+void APlayerCharacter::OnOxygenRestored()
 {
-	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetStaminaProgressBar())
-	{
-		TimelineForStaminaProgressBar.Stop();
-		ChangeSpeedParamAfterFatigue();
-		PlayerController->GetPlayerHUD()->GetStaminaProgressBar()->SetPercent(CharacterAttributesComponent->GetMaxStamina() / 100);
-	}
+	UE_LOG(LogDamage, Warning, TEXT("APlayerCharacter::OnOxygenRestored"));
 }
 
-void APlayerCharacter::ChangeSpeedParamAfterFatigue()
-{
-	if (!GetBaseCharacterMovementComponent()->IsProning())
-	{
-		GetBaseCharacterMovementComponent()->MaxWalkSpeed = 600.0f;
-	}
-	bCanStartSrpint = true;
-	ChangeColorOfProgressBar();
-}
 
-void APlayerCharacter::ChangeColorOfProgressBar()
-{
-	FLinearColor linerColor = FLinearColor(0.066792f, 0.484279f, 1.0f, 1.0f);
-	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetStaminaProgressBar() != nullptr)
-	{
-		PlayerController->GetPlayerHUD()->GetStaminaProgressBar()->SetFillColorAndOpacity(linerColor);
-	}
-}
-
-void APlayerCharacter::InitTimelineCurveToStaminaProgressBar()
-{
-	TimeStamina = CharacterAttributesComponent->GetMaxStamina() / CharacterAttributesComponent->GetSpeedDownStamina();
-	TimelineCurveForStaminaProgressBar = NewObject<UCurveFloat>();
-	FKeyHandle KeyHandleForProgressBar = TimelineCurveForStaminaProgressBar->FloatCurve.AddKey(0.f, 0.f);
-	TimelineCurveForStaminaProgressBar->FloatCurve.AddKey(TimeStamina, CharacterAttributesComponent->GetMaxStamina() / 100);
-	TimelineCurveForStaminaProgressBar->FloatCurve.SetKeyInterpMode(KeyHandleForProgressBar, ERichCurveInterpMode::RCIM_Linear, true);
-}
-
-void APlayerCharacter::InitTimelineToStaminaProgressBar()
-{
-	FOnTimelineFloatStatic ProgressBarTimeLineUpdate;
-	ProgressBarTimeLineUpdate.BindUObject(this, &APlayerCharacter::StaminaProgressBarUpdate);
-	TimelineForStaminaProgressBar.AddInterpFloat(TimelineCurveForStaminaProgressBar, ProgressBarTimeLineUpdate);
-	TimelineForStaminaProgressBar.SetTimelineLength(TimeStamina);
-	TimelineForStaminaProgressBar.SetLooping(false);
-}
-
-void APlayerCharacter::StaminaProgressBarUpdate(float Alpha)
-{
-	float StaminaPercent = FMath::Lerp(CharacterAttributesComponent->GetMaxStamina() / 100, 0.0f, Alpha);
-	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetStaminaProgressBar() != nullptr)
-	{
-		PlayerController->GetPlayerHUD()->GetStaminaProgressBar()->SetPercent(StaminaPercent);
-	}
-
-	if (StaminaPercent <= 0.0f)
-	{
-		GetBaseCharacterMovementComponent()->MaxWalkSpeed = 300.0f;
-		if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetStaminaProgressBar() != nullptr)
-		{
-			PlayerController->GetPlayerHUD()->GetStaminaProgressBar()->SetFillColorAndOpacity(FLinearColor::Red);
-		}
-		bCanStartSrpint = false;
-		StopSprint();
-		GetWorld()->GetTimerManager().SetTimer(FuzeTimerHandle, this, &APlayerCharacter::ChangeSpeedParamAfterFatigue, TimeStamina, false);
-	}
-
-	if (StaminaPercent == 0.0f || !GetBaseCharacterMovementComponent()->IsSprinting())
-	{
-		StopSprint();
-	}
-}
-
-void APlayerCharacter::StartResizeProgressBarPercent()
-{
-	if (TimelineForStaminaProgressBar.IsReversing())
-	{
-		TimelineForStaminaProgressBar.Stop();
-	}
-	TimelineForStaminaProgressBar.Play();
-}
-
-void APlayerCharacter::ReverseResizeProgressBarPercent()
-{
-	if (TimelineForStaminaProgressBar.IsPlaying())
-	{
-		TimelineForStaminaProgressBar.Stop();
-	}
-	TimelineForStaminaProgressBar.Reverse();
-}
-
-// ==================== ÊÈÑËÎÐÎÄ ====================
-
-void APlayerCharacter::InitHealthParameters()
-{
-	CharacterAttributesComponent->OnHealthAddEvent.AddUObject(this, &APlayerCharacter::UpdateHealthBar);
-	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetHealthProgressBar() != nullptr)
-	{
-		PlayerController->GetPlayerHUD()->GetHealthProgressBar()->SetPercent(CharacterAttributesComponent->GetMaxHealth() / 100);
-	}
-}
-
-void APlayerCharacter::InitOxygenParameters()
-{
-	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetOxygenProgressBar() != nullptr)
-	{
-		PlayerController->GetPlayerHUD()->GetOxygenProgressBar()->SetPercent(CharacterAttributesComponent->GetMaxOxygen() / 100);
-	}
-	InitTimelineCurveToOxygenProgressBar();
-	InitTimelineToOxygenProgressBar();
-}
-
-void APlayerCharacter::TickOxygen(float DeltaTime)
-{
-	TimelineForOxygenProgressBar.TickTimeline(DeltaTime);
-
-	if (GetBaseCharacterMovementComponent()->IsSwimming())
-	{
-		FVector HeadPosition = GetMesh()->GetSocketLocation(FName("head"));
-		APhysicsVolume* Volume = GetCharacterMovement()->GetPhysicsVolume();
-		float VolumeTopPlane = (Volume->GetActorLocation().Z + Volume->GetBounds().BoxExtent.Z * Volume->GetActorScale3D().Z);
-
-		if (!IsStartUseOxygen && HeadPosition.Z < VolumeTopPlane)
-		{
-			IsStartUseOxygen = true;
-			StartProgressBarOxygenPercent();
-		}
-	}
-	else if (IsStartUseOxygen)
-	{
-		IsStartUseOxygen = false;
-		ReverseProgressBarOxygenPercent();
-	}
-}
-
-void APlayerCharacter::InitTimelineToOxygenProgressBar()
-{
-	FOnTimelineFloatStatic ProgressBarTimeLineUpdate;
-	ProgressBarTimeLineUpdate.BindUObject(this, &APlayerCharacter::OxygenProgressBarUpdate);
-	TimelineForOxygenProgressBar.AddInterpFloat(TimelineCurveForOxygenProgressBar, ProgressBarTimeLineUpdate);
-	TimelineForOxygenProgressBar.SetTimelineLength(TimeOxygen);
-	TimelineForOxygenProgressBar.SetLooping(false);
-}
-
-void APlayerCharacter::InitTimelineCurveToOxygenProgressBar()
-{
-	TimeOxygen = CharacterAttributesComponent->GetMaxOxygen() / CharacterAttributesComponent->GetOxygenRestoreVelocity();
-	TimelineCurveForOxygenProgressBar = NewObject<UCurveFloat>();
-	FKeyHandle KeyHandleForProgressBar = TimelineCurveForOxygenProgressBar->FloatCurve.AddKey(0.f, 0.f);
-	TimelineCurveForOxygenProgressBar->FloatCurve.AddKey(TimeOxygen, CharacterAttributesComponent->GetMaxOxygen() / 100);
-	TimelineCurveForOxygenProgressBar->FloatCurve.SetKeyInterpMode(KeyHandleForProgressBar, ERichCurveInterpMode::RCIM_Linear, true);
-}
-
-void APlayerCharacter::OxygenProgressBarUpdate(float alpha)
-{
-	UE_LOG(LogDamage, Warning, TEXT("APlayerCharacter::OxygenProgressBarUpdate"));
-	float OxygenPercent = FMath::Lerp(CharacterAttributesComponent->GetMaxOxygen() / 100, 0.0f, alpha);
-	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetOxygenProgressBar() != nullptr)
-	{
-		PlayerController->GetPlayerHUD()->GetOxygenProgressBar()->SetPercent(OxygenPercent);
-	}
-
-	if (OxygenPercent <= 0.0f)
-	{
-		TakeDamage(CharacterAttributesComponent->GetMaxHealth(), FDamageEvent(), GetController(), this);
-		UE_LOG(LogDamage, Warning, TEXT("APlayerCharacter::OxygenProgressBarUpdate FINISH"));
-	}
-}
-
-void APlayerCharacter::StartProgressBarOxygenPercent()
-{
-	UE_LOG(LogDamage, Warning, TEXT("APlayerCharacter::StartProgressBarOxygenPercent()"));
-	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetOxygenProgressBar() != nullptr)
-	{
-		PlayerController->GetPlayerHUD()->GetOxygenProgressBar()->SetVisibility(ESlateVisibility::Visible);
-	}
-
-	if (TimelineForOxygenProgressBar.IsReversing())
-	{
-		TimelineForOxygenProgressBar.Stop();
-	}
-	TimelineForOxygenProgressBar.Play();
-}
-
-void APlayerCharacter::ReverseProgressBarOxygenPercent()
-{
-	UE_LOG(LogDamage, Warning, TEXT("APlayerCharacter::ReverseProgressBarOxygenPercent()"));
-	if (IsValid(PlayerController) && PlayerController->GetPlayerHUD() != nullptr && PlayerController->GetPlayerHUD()->GetOxygenProgressBar() != nullptr)
-	{
-		PlayerController->GetPlayerHUD()->GetOxygenProgressBar()->SetVisibility(ESlateVisibility::Visible);
-	}
-
-	if (TimelineForOxygenProgressBar.IsPlaying())
-	{
-		TimelineForOxygenProgressBar.Stop();
-	}
-	TimelineForOxygenProgressBar.Reverse();
-}
-
-// ==================== ÂÍÓÒÐÅÍÍÈÅ ÊÎËÁÝÊÈ ÄËß ÊÀÌÅÐÛ ====================
+// ====================     ====================
 void APlayerCharacter::OnStartAimingInternal()
 {
 	Super::OnStartAimingInternal();
@@ -564,8 +437,7 @@ void APlayerCharacter::OnStartAimingInternal()
 		ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
 		if (IsValid(CurrentRangeWeapon))
 		{
-			float TargetFOV = CurrentRangeWeapon->GetAimFOV(); // Íàïðèìåð, 50.0f
-			// Íà÷èíàåì èíòåðïîëÿöèþ FOV ê ïðèöåëüíîìó çíà÷åíèþ
+			float TargetFOV = CurrentRangeWeapon->GetAimFOV();
 			CameraBehaviorComponent->StartAimFOVTransition(TargetFOV);
 		}
 	}
@@ -586,7 +458,6 @@ void APlayerCharacter::OnStopAimingInternal()
 		ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
 		if (IsValid(CurrentRangeWeapon))
 		{
-			// Ïëàâíî âîçâðàùàåì FOV ê èñõîäíîìó çíà÷åíèþ
 			CameraBehaviorComponent->StopAimFOVTransition();
 		}
 	}

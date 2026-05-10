@@ -2,6 +2,7 @@
 
 
 #include "TrapBlock.h"
+#include "Engine/DamageEvents.h"
 #include <MyProject/GameCodeTypes.h>
 ATrapBlock::ATrapBlock()
 {

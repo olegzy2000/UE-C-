@@ -14,21 +14,21 @@
 #include "GCPlayerController.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class MYPROJECT_API AGCPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-		virtual void BeginPlay() override;
+	virtual void BeginPlay() override;
 protected:
 	virtual void SetupInputComponent() override;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "User interface | setting")
-		TSubclassOf<class UUserWidget> UserInterface;
+	TSubclassOf<class UUserWidget> UserInterface;
 	UPROPERTY()
-		UPlayerHUD* PlayerHUD;
+	UPlayerHUD* PlayerHUD;
 
-	
+
 
 private:
 	UPROPERTY()
@@ -70,6 +70,13 @@ private:
 	void UseInventory();
 	void QuickSaveGame();
 	void QuickLoadGame();
+
+	void CreateAndInitializeHUD();
+	void BindHUDToCharacter();
+	void BindHUDToCharacterAttributes();
+	void BindHUDToCharacterComponents();
+	void BindHUDToEquipment();
+	void BindInteractableEvents();
 public:
 	virtual void SetPawn(APawn* InPawn) override;
 	UPlayerHUD* GetPlayerHUD();
