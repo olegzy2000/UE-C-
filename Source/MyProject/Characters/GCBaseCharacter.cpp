@@ -2,21 +2,14 @@
 #include "GCBaseCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include <MyProject/Subsystems/DebugSubsystem.h>
-#include <MyProject/Utils/GCTraceUtils.h>
 #include <MyProject/GameCodeTypes.h>
 #include "Components/CharacterComponents/CharacterEquipmentComponent.h"
 #include "Components/CharacterComponents/CharacterAttributeComponent.h"
 #include "Components/CharacterComponents/CharacterInventoryComponent.h"
-#include "Runtime/Engine/Classes/Components/TextRenderComponent.h"
 #include "DrawDebugHelpers.h"
 #include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
 #include "AIController.h"
-#include <AbilitySystem/AttributeSets/GCCharacterAttributeSet.h>
-#include "Components/WidgetComponent.h"
-#include <Widget/GCAttributeProgressBar.h>
 #include <Inventary/InventoryItem.h>
-#include "../AbilitySystem/GCAbilitySystemComponent.h"
-#include "Abilities/GameplayAbility.h"
 
 
 AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
@@ -29,12 +22,6 @@ AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
 	CharacterAttributesComponent = CreateDefaultSubobject<UCharacterAttributeComponent>(TEXT("CharacterAttributes"));
 	CharacterInventoryComponent = CreateDefaultSubobject<UCharacterInventoryComponent>(TEXT("CharacterInventory"));
 	CharacterEquipmentComponent = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("CharacterEquipment"));
-	//HealthBarProgressComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarProgressComponent"));
-	//HealthBarProgressComponent->SetupAttachment(GetCapsuleComponent());
-
-	AbilitySystemComponent = CreateDefaultSubobject<UGCAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-
-	CharacterAttributeSet = CreateDefaultSubobject<UGCCharacterAttributeSet>(TEXT("Attribute set"));
 }
 void AGCBaseCharacter::BeginPlay()
 {
@@ -43,7 +30,7 @@ void AGCBaseCharacter::BeginPlay()
 		GCBaseCharacterMovementComponent = StaticCast<UGCBaseCharacterMovementComponent*>(GetCharacterMovement());
 		GCBaseCharacterMovementComponent->RotationRate.Pitch = 540.0f;
 	}
-	if (GetMesh()->SkeletalMesh) {
+	if (GetMesh()->GetSkeletalMeshAsset()) {
 		const FVector LeftFootBoneWorldLocation = GetMesh()->GetBoneLocation(LeftFootBoneName);
 		LeftFootBoneRelativeLocation = GetActorTransform().InverseTransformPosition(LeftFootBoneWorldLocation);
 		const FVector RightFootBoneWorldLocation = GetMesh()->GetBoneLocation(RightFootBoneName);
@@ -63,11 +50,10 @@ void AGCBaseCharacter::EndPlay(const EEndPlayReason::Type Reason)
 }
 void AGCBaseCharacter::ChangeCrouchState()
 {
-	//bool IsCrouchActive=AbilitySystemComponent->IsAbilityActive(CrouchAbilityTag);
-		//if (CanCrouch()) {
-			AbilitySystemComponent->TryActivateAbilityWithTag(CrouchAbilityTag);
+		if (CanCrouch()) {
+			GetBaseCharacterMovementComponent()->ChangeCrouchState();
 			OnChangeCrouchState();
-		//}
+		}
 }
 
 void AGCBaseCharacter::OnChangeCrouchState()
@@ -89,6 +75,19 @@ void AGCBaseCharacter::OnChangeCrouchState()
 	}
 }
 
+bool AGCBaseCharacter::CanCrouch() const
+{
+	TArray<AActor*>ActorsToIgnore;
+	FHitResult TraceHit;
+	const FVector RightFootLocation = GetTransform().TransformPosition(RightFootBoneRelativeLocation);
+	bool bIsHit = UKismetSystemLibrary::SphereTraceSingle(this, GetCapsuleComponent()->GetRelativeLocation(),
+		GetCapsuleComponent()->GetRelativeLocation() + FVector(0.0f, 0.0f, GetDefaultCapsuleHeight() + 45), 10, ETraceTypeQuery::TraceTypeQuery1, false, ActorsToIgnore, EDrawDebugTrace::None, TraceHit, true);
+	return !bIsHit && !GetBaseCharacterMovementComponent()->IsFalling()
+		&& !GetBaseCharacterMovementComponent()->IsSwimming()
+		&& !GetBaseCharacterMovementComponent()->IsSlide()
+		&& !GetBaseCharacterMovementComponent()->IsSprinting();
+}
+
 void AGCBaseCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -97,17 +96,15 @@ void AGCBaseCharacter::PossessedBy(AController* NewController)
 		FGenericTeamId TeamId((uint8)Team);
 		AIController->SetGenericTeamId(TeamId);
 	}
-	InitializeAbilitySystem(NewController);
 }
 void AGCBaseCharacter::StartSprint()
 {
-	//Comments for using GAS
-	//if (!GetBaseCharacterMovementComponent()->IsFalling() && !GetBaseCharacterMovementComponent()->IsSlide()) {
+	if (!GetBaseCharacterMovementComponent()->IsFalling() && !GetBaseCharacterMovementComponent()->IsSlide()) {
 		bIsSprintRequested = true;
-	//	if (GetBaseCharacterMovementComponent()->IsCrouched()) {
-	//		ChangeCrouchState();
-	//	}
-	//}
+		if (GetBaseCharacterMovementComponent()->IsCrouched()) {
+			ChangeCrouchState();
+		}
+	}
 }
 
 void AGCBaseCharacter::StopSprint()
@@ -293,16 +290,16 @@ void AGCBaseCharacter::ChangeCapsuleParamFromProneStateToCrouch(float Radius, fl
 	GetCapsuleComponent()->MoveComponent(FVector(0.f, 0.f, -(GetCapsuleComponent()->GetRelativeLocation().Z - ProneCapsuleHalfHeight) / 2), GetCapsuleComponent()->GetComponentQuat()
 		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
 	ChangeSkeletalMeshPosition(InitialMeshRalativeLocation + FVector(0.f, 0.f, fabs(ProneCapsuleHalfHeight)));
-	SpringArmComponent->MoveComponent(FVector(0.f, 0.f, GetBaseCharacterMovementComponent()->CrouchedHalfHeight - ProneCapsuleHalfHeight), GetCapsuleComponent()->GetComponentQuat()
+	SpringArmComponent->MoveComponent(FVector(0.f, 0.f, GetBaseCharacterMovementComponent()->GetCrouchedHalfHeight() - ProneCapsuleHalfHeight), GetCapsuleComponent()->GetComponentQuat()
 		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
 }
 
 void AGCBaseCharacter::AddHealth(float Health)
 {
-	CharacterAttributesComponent->AddHealth(Health);
-	//if (CharacterAttributesComponent->OnHealthChangedEvent.IsBound()) {
-	//	CharacterAttributesComponent->OnHealthChangedEvent.Broadcast(Health/CharacterAttributesComponent->GetMaxHealth());
-	//}
+	//CharacterAttributesComponent->AddHealth(Health);
+	if (CharacterAttributesComponent->OnHealthChangedEvent.IsBound()) {
+		CharacterAttributesComponent->OnHealthChangedEvent.Broadcast(Health/CharacterAttributesComponent->GetMaxHealth());
+	}
 }
 
 const UCharacterEquipmentComponent* AGCBaseCharacter::GetCharacterEquipmentComponent() const
@@ -489,7 +486,7 @@ void AGCBaseCharacter::OnDeath()
 	//ShowLoseText();
 	//GetWorld()->GetTimerManager().SetTimer(MyTimerHandle, this, &AGCBaseCharacter::restartCurrentLevel, 2.0f, false);
 }
-void AGCBaseCharacter::InitializeAbilitySystem(AController* NewController)
+/*void AGCBaseCharacter::InitializeAbilitySystem(AController* NewController)
 {
 	AbilitySystemComponent->InitAbilityActorInfo(NewController, this);
 	if (!IsAbilitySystemInitialized) {
@@ -498,7 +495,7 @@ void AGCBaseCharacter::InitializeAbilitySystem(AController* NewController)
 			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass));
 		}
 	}
-}
+}*/
 void AGCBaseCharacter::ShowLoseText()
 {
 	if (GEngine) {
@@ -703,15 +700,6 @@ void AGCBaseCharacter::InitializeHealthProgress()
 	Widget->SetProgressPercantage(CharacterAttributesComponent->GetHealth()/CharacterAttributesComponent->GetMaxHealth());*/
 }
 
-UAbilitySystemComponent* AGCBaseCharacter::GetAbilitySystemComponent() const
-{
-	return AbilitySystemComponent;
-}
-
-UGCCharacterAttributeSet* AGCBaseCharacter::GetCharacterAttributeSet() const
-{
-	return CharacterAttributeSet;
-}
 
 void AGCBaseCharacter::OnStartAiming_Implementation()
 {
@@ -824,20 +812,13 @@ bool AGCBaseCharacter::CanMantle() const
 
 void AGCBaseCharacter::TryChangeSprintState()
 {
-	bool bIsSprintActive = AbilitySystemComponent->IsAbilityActive(SprintAbilityTag);
 	if (GetBaseCharacterMovementComponent() != nullptr) {
-		if (bIsSprintRequested && !bIsSprintActive/*!GetBaseCharacterMovementComponent()->IsSprinting()*/ && CanSprint()) {
-			//GetBaseCharacterMovementComponent()->StartSprint();
-			//OnSprintStart();
-			if (AbilitySystemComponent->TryActivateAbilityWithTag(SprintAbilityTag)) {
-				OnSprintStart();
-			}
+		if (bIsSprintRequested && !GetBaseCharacterMovementComponent()->IsSprinting() && CanSprint()) {
+			GetBaseCharacterMovementComponent()->StartSprint();
+			OnSprintStart();
 		}
-		if (!bIsSprintRequested && bIsSprintActive/*GetBaseCharacterMovementComponent()->IsSprinting()*/) {
-			//GetBaseCharacterMovementComponent()->StopSprint();
-			if (AbilitySystemComponent->TryCancelAbilityWithTag(SprintAbilityTag)) {
-				OnSprintEnd();
-			}
+		if (!bIsSprintRequested && GetBaseCharacterMovementComponent()->IsSprinting()) {
+			GetBaseCharacterMovementComponent()->StopSprint();
 		}
 	}
 }
@@ -848,19 +829,6 @@ const FMantlingSettings& AGCBaseCharacter::GetMantlingSettings(float LedgeHeight
 		return LedgeHeight > LowMantleMaxHeight ? SwimmingMantleSettings : LowMantleSettings;
 	}
 	return LedgeHeight > LowMantleMaxHeight ? HighMantleSettings : LowMantleSettings;
-}
-
-bool AGCBaseCharacter::CanCrouch()
-{
-	TArray<AActor*>ActorsToIgnore;
-	FHitResult TraceHit;
-	const FVector RightFootLocation = GetTransform().TransformPosition(RightFootBoneRelativeLocation);
-	bool bIsHit = UKismetSystemLibrary::SphereTraceSingle(this, GetCapsuleComponent()->GetRelativeLocation(),
-		GetCapsuleComponent()->GetRelativeLocation()+FVector(0.0f,0.0f,GetDefaultCapsuleHeight()+45), 10, ETraceTypeQuery::TraceTypeQuery1, false, ActorsToIgnore, EDrawDebugTrace::None, TraceHit, true);
-	return !bIsHit && !GetBaseCharacterMovementComponent()->IsFalling()
-		&& !GetBaseCharacterMovementComponent()->IsSwimming()
-		&& !GetBaseCharacterMovementComponent()->IsSlide()
-		&& !GetBaseCharacterMovementComponent()->IsSprinting();
 }
 
 void AGCBaseCharacter::ChangeCapsuleParamFromProneToCrouched()

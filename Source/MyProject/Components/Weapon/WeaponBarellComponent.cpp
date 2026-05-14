@@ -6,8 +6,11 @@
 #include "Subsystems/DebugSubsystem.h"
 #include "../../Actors/Projectile/GCProjectile.h"
 #include "../../Actors/Equipment/Weapons/RangeWeaponItem.h"
+#include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/Controller.h"
 #include "Components/DecalComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
@@ -177,16 +180,24 @@ FVector UWeaponBarellComponent::GetBulletSpreadOffset(float Angle, FRotator Shot
 
 APawn* UWeaponBarellComponent::GetOwningPawn() const
 {
-	APawn* PawnOwner = Cast<APawn>(GetOwner());
-	if (IsValid(PawnOwner)) {
-		PawnOwner = Cast<APawn>(GetOwner()->GetOwner());
+	AActor* OwnerActor = GetOwner();
+	if (!IsValid(OwnerActor))
+	{
+		return nullptr;
 	}
-	return PawnOwner;
+
+	APawn* PawnOwner = Cast<APawn>(OwnerActor);
+	if (IsValid(PawnOwner))
+	{
+		return PawnOwner;
+	}
+
+	return Cast<APawn>(OwnerActor->GetOwner());
 }
 
 AController* UWeaponBarellComponent::GetController() const
 {
-	APawn* PawnOwner=GetOwningPawn();
+	APawn* PawnOwner = GetOwningPawn();
 	return IsValid(PawnOwner) ? PawnOwner->GetController() : nullptr;
 }
 

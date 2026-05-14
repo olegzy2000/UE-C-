@@ -24,7 +24,7 @@ public:
 	void AddUnloadRequest(AStreamingSubsystemVolum* SubsystemVolume);
 	void RemoveUnloadRequest(AStreamingSubsystemVolum* SubsystemVolume);
 
-	ULevelStreaming::ECurrentState GetStreamingLevelState() const;
+	ELevelStreamingState GetStreamingLevelState() const;
 private:
 	UFUNCTION()
 	void OnLevelLoaded();
@@ -37,7 +37,7 @@ private:
 
 
 	FString LevelName;
-	ULevelStreaming::ECurrentState StreamingLevelState = ULevelStreaming::ECurrentState::Unloaded;
+	ELevelStreamingState StreamingLevelState = ELevelStreamingState::Unloaded;
 	TWeakObjectPtr<ULevelStreaming> StreamingLevel;
 	TArray<TWeakObjectPtr<AStreamingSubsystemVolum>> LoadRequests;
 	TArray<TWeakObjectPtr<AStreamingSubsystemVolum>> UnLoadRequests;

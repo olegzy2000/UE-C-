@@ -13,7 +13,9 @@ UCLASS()
 class MYPROJECT_API UAnimNotify_SetMeleeHitRegEnable : public UAnimNotify
 {
 	GENERATED_BODY()
-		virtual void Notify(USkeletalMeshComponent* Mesh, UAnimSequenceBase* AnimSequence)override;
+		virtual void Notify(USkeletalMeshComponent* MeshComp,
+			UAnimSequenceBase* Animation,
+			const FAnimNotifyEventReference& EventReference) override;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Melee weapon")
 		bool bIsHitRegistrationEnabled=false;

@@ -393,10 +393,10 @@ void UGCBaseCharacterMovementComponent::OnMovementModeChanged(EMovementMode Prev
 		CharacterOwner->GetCapsuleComponent()->SetCapsuleSize(DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleRadius()
 			, DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
 	}
-	if (PreviousCustomMode== MOVE_Custom && PreviousCustomMode == (uint8)ECustomMovementMode::CMOVE_Ladder) {
+	if (PreviusMovementMode == MOVE_Custom && PreviousCustomMode == (uint8)ECustomMovementMode::CMOVE_Ladder) {
 		CurrentLadder = nullptr;
 	}
-	if (PreviousCustomMode == MOVE_Custom && PreviousCustomMode == (uint8)ECustomMovementMode::CMOVE_Zipline) {
+	if (PreviusMovementMode == MOVE_Custom && PreviousCustomMode == (uint8)ECustomMovementMode::CMOVE_Zipline) {
 		CurrentZipline = nullptr;
 	}
 	if (MovementMode == MOVE_Custom) {

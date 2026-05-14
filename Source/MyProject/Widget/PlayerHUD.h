@@ -45,9 +45,6 @@ public:
 	void SetStaminaBarColor(const FLinearColor& Color);
 	void SetOxygenBarColor(const FLinearColor& Color);
 
-	class UProgressBar* GetHealthProgressBar();
-	class UProgressBar* GetOxygenProgressBar();
-	class UProgressBar* GetStaminaProgressBar();
 	UReticleWidget* GetReticleWidget();
 	UAmmoWidget* GetAmmoWidget();
 

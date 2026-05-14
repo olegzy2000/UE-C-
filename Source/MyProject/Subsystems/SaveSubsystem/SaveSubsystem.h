@@ -6,7 +6,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "SaveSubsystem.generated.h"
 /**
- * 
+ *
  */
 UCLASS()
 class MYPROJECT_API USaveSubsystem : public UGameInstanceSubsystem
@@ -16,7 +16,7 @@ private:
 	void SerializeGame();
 	void DeserializeGame();
 	void WriteSaveToFile();
-	void LoadSaveFromFile(int32 SaveId);
+	bool LoadSaveFromFile(int32 SaveId);
 	void OnPostLoadMapWithWorld(UWorld* LoadedWorld);
 	void DeserializeActor(AActor* Actor, const FActorSaveData* ActorSaveData);
 	FString GetSaveFilePath(int32 SaveId) const;
@@ -31,11 +31,11 @@ private:
 public:
 	const FGameSaveData& GetGameSaveData() const;
 	UFUNCTION(BlueprintCallable, Category = "Save Subsystem")
-		void SaveGame();
+	void SaveGame();
 	UFUNCTION(BlueprintCallable, Category = "Save Subsystem")
-		void LoadLastGame();
+	void LoadLastGame();
 	UFUNCTION(BlueprintCallable, Category = "Save Subsystem")
-		void LoadGame(int32 SaveId);
+	void LoadGame(int32 SaveId);
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 

@@ -71,12 +71,16 @@ private:
 	void QuickSaveGame();
 	void QuickLoadGame();
 
-	void CreateAndInitializeHUD();
-	void BindHUDToCharacter();
+	void CreateHUDIfNeeded();
+	void BindHUDToCurrentPawn();
+	void UnbindHUDFromCurrentPawn();
 	void BindHUDToCharacterAttributes();
+	void UnbindHUDFromCharacterAttributes();
 	void BindHUDToCharacterComponents();
 	void BindHUDToEquipment();
+	void UnbindHUDFromEquipment();
 	void BindInteractableEvents();
+	void UnbindInteractableEvents();
 public:
 	virtual void SetPawn(APawn* InPawn) override;
 	UPlayerHUD* GetPlayerHUD();

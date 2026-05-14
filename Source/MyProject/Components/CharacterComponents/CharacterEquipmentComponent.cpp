@@ -30,7 +30,7 @@ bool UCharacterEquipmentComponent::AddEquipmentItemToSlot(const TSubclassOf<AEqu
 	else if(EquipableItem->IsA<ARangeWeaponItem>()){
 		ARangeWeaponItem* RangeWeaponObject = StaticCast<ARangeWeaponItem*>(EquipableItem);
 		int32 AmmoSlotIndex = (int32)RangeWeaponObject->GetAmmoType();
-		AmunitionArray[SlotIndex] += RangeWeaponObject->GetMaxAmmo();
+		AmunitionArray[AmmoSlotIndex] += RangeWeaponObject->GetMaxAmmo();
 	}
 	return true;
 }

@@ -8,21 +8,13 @@
 #include "../Components/MovementComponents/GCBaseCharacterMovementComponent.h"
 #include "../Components/MovementComponents/LedgeDetectorComponent.h"
 #include "../Components/CharacterComponents/CharacterAttributeComponent.h"
-#include "math.h"
 #include "Animations/GCBaseCharacterAnimInstance.h"
-#include "Components/SphereComponent.h"
-#include "Components/CapsuleComponent.h"
-#include "Components/SkeletalMeshComponent.h"
-#include "Engine/CollisionProfile.h"
-#include "Kismet/KismetSystemLibrary.h"
-#include "GameplayTagContainer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Character.h"
 #include <Actors/Interactive/Interactive.h>
 #include <Runtime/AIModule/Classes/GenericTeamAgentInterface.h>
-#include "AbilitySystemInterface.h"
 #include "CoreMinimal.h"
 #include "GCBaseCharacter.generated.h"
 
@@ -32,9 +24,7 @@ class UWidgetComponent;
 class AEquipableItem;
 class UInventoryItem;
 class UCharacterInventoryComponent;
-class UGCAbilitySystemComponent;
-class UGameplayAbility;
-class UGCCharacterAttributeSet;
+
 USTRUCT(BlueprintType)
 struct FMantlingSettings
 {
@@ -60,7 +50,7 @@ struct FMantlingSettings
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnAminStateChanged,bool)
 
 UCLASS(Abstract,NotBlueprintable)
-class MYPROJECT_API AGCBaseCharacter : public ACharacter,public IGenericTeamAgentInterface , public ISaveSubsystemInterface, public IAbilitySystemInterface
+class MYPROJECT_API AGCBaseCharacter : public ACharacter,public IGenericTeamAgentInterface , public ISaveSubsystemInterface
 {
 	GENERATED_BODY()
 
@@ -93,7 +83,7 @@ public:
 	virtual void SwitchCameraPosition() {};
 	virtual void ChangeCrouchState();
 	void OnChangeCrouchState();
-	bool CanCrouch();
+	virtual bool CanCrouch() const override;
 	virtual void StartSprint();
 	virtual void StopSprint();
 	virtual void Slide();
@@ -130,7 +120,7 @@ public:
 	float GetDefaultCapsuleRadius() {
 		return DefaultCapsuleRadius;
 	}
-	float GetDefaultCapsuleHeight() {
+	float GetDefaultCapsuleHeight() const {
 		return DefaultCapsuleHeight;
 	}
 	bool IsAming();
@@ -176,10 +166,7 @@ public:
 	FOnInteractableObjectFound OnInteractableObjectFound;
 
 	void AddEquipmentItem(const TSubclassOf<AEquipableItem>EquipableItemClass);
-	//AbilitySystemInterface
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	//~AbilitySystemInterface
-	UGCCharacterAttributeSet* GetCharacterAttributeSet() const;
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Controls")
 		float BaseTurnRate = 45.0f;
@@ -271,21 +258,8 @@ protected:
 	void TraceOfSight();
 	UPROPERTY()
 		TScriptInterface<IInteractable> LineOfSightObject;
-	//GameplayAbilities
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
-	UGCAbilitySystemComponent* AbilitySystemComponent;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
-	UGCCharacterAttributeSet* CharacterAttributeSet;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "Abilities")
-	TArray<TSubclassOf<UGameplayAbility>>Abilities;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
-	FGameplayTag SprintAbilityTag;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
-	FGameplayTag CrouchAbilityTag;
-	//~GameplayAbilities
-	bool IsAbilitySystemInitialized = false;
+	
 private:
-	void InitializeAbilitySystem(AController* NewController);
 	float CurrentAimingMovementSpeed;
 	void ShowLoseText();
 	FTimerHandle MyTimerHandle;

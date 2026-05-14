@@ -10,7 +10,7 @@ void UStreamingSubsystemManager::OnLevelUnLoaded()
 	if (!StreamingLevel.IsValid()) {
 		return;
 	}
-	StreamingLevelState = StreamingLevel->GetCurrentState();
+	StreamingLevelState = StreamingLevel->GetLevelStreamingState();
 }
 void UStreamingSubsystemManager::OnLevelLoaded()
 {
@@ -18,7 +18,7 @@ void UStreamingSubsystemManager::OnLevelLoaded()
 	if (!StreamingLevel.IsValid()) {
 		return;
 	}
-	StreamingLevelState = StreamingLevel->GetCurrentState();
+	StreamingLevelState = StreamingLevel->GetLevelStreamingState();
 
 }
 
@@ -53,7 +53,7 @@ void UStreamingSubsystemManager::Initialize(ULevelStreaming* InStreamingLevel, c
 	}
 	LevelName = InLevelName;
 	StreamingLevel = InStreamingLevel;
-	StreamingLevelState = StreamingLevel->GetCurrentState();
+	StreamingLevelState = StreamingLevel->GetLevelStreamingState();
 
 	StreamingLevel->OnLevelShown.AddUniqueDynamic(this, &UStreamingSubsystemManager::OnLevelLoaded);
 	StreamingLevel->OnLevelHidden.AddUniqueDynamic(this, &UStreamingSubsystemManager::OnLevelUnLoaded);
@@ -122,7 +122,7 @@ void UStreamingSubsystemManager::RemoveUnloadRequest(AStreamingSubsystemVolum* S
 	}
 }
 
-ULevelStreaming::ECurrentState UStreamingSubsystemManager::GetStreamingLevelState() const
+ELevelStreamingState UStreamingSubsystemManager::GetStreamingLevelState() const
 {
-	return ULevelStreaming::ECurrentState();
+	return StreamingLevelState;
 }

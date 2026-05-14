@@ -10,12 +10,14 @@
 void AGCPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	CreateAndInitializeHUD();
+
+	CreateHUDIfNeeded();
+	BindHUDToCurrentPawn();
 }
 
-void AGCPlayerController::CreateAndInitializeHUD()
+void AGCPlayerController::CreateHUDIfNeeded()
 {
-	if (!IsValid(UserInterface) || !CachedBaseCharacter.IsValid())
+	if (IsValid(PlayerHUD) || !IsValid(UserInterface) || !IsLocalController())
 	{
 		return;
 	}
@@ -27,15 +29,31 @@ void AGCPlayerController::CreateAndInitializeHUD()
 	}
 
 	PlayerHUD->AddToViewport();
-	BindHUDToCharacter();
 }
 
-void AGCPlayerController::BindHUDToCharacter()
+void AGCPlayerController::BindHUDToCurrentPawn()
 {
+	if (!CachedBaseCharacter.IsValid() || !IsValid(PlayerHUD))
+	{
+		return;
+	}
+
 	BindHUDToCharacterAttributes();
 	BindHUDToCharacterComponents();
 	BindHUDToEquipment();
 	BindInteractableEvents();
+}
+
+void AGCPlayerController::UnbindHUDFromCurrentPawn()
+{
+	if (!CachedBaseCharacter.IsValid())
+	{
+		return;
+	}
+
+	UnbindHUDFromCharacterAttributes();
+	UnbindHUDFromEquipment();
+	UnbindInteractableEvents();
 }
 
 void AGCPlayerController::BindHUDToCharacterAttributes()
@@ -51,6 +69,10 @@ void AGCPlayerController::BindHUDToCharacterAttributes()
 		return;
 	}
 
+	Attributes->OnHealthChangedEvent.RemoveAll(PlayerHUD);
+	Attributes->OnStaminaChangedEvent.RemoveAll(PlayerHUD);
+	Attributes->OnOxygenChangedEvent.RemoveAll(PlayerHUD);
+
 	Attributes->OnHealthChangedEvent.AddUObject(PlayerHUD, &UPlayerHUD::SetHealthPercent);
 	Attributes->OnStaminaChangedEvent.AddUObject(PlayerHUD, &UPlayerHUD::SetStaminaPercent);
 	Attributes->OnOxygenChangedEvent.AddUObject(PlayerHUD, &UPlayerHUD::SetOxygenPercent);
@@ -59,6 +81,24 @@ void AGCPlayerController::BindHUDToCharacterAttributes()
 	PlayerHUD->SetStaminaPercent(Attributes->GetStaminaPercent());
 	PlayerHUD->SetOxygenPercent(Attributes->GetOxygenPercent());
 	PlayerHUD->SetHealthBarColor(FLinearColor::Green);
+}
+
+void AGCPlayerController::UnbindHUDFromCharacterAttributes()
+{
+	if (!CachedBaseCharacter.IsValid() || !IsValid(PlayerHUD))
+	{
+		return;
+	}
+
+	UCharacterAttributeComponent* Attributes = CachedBaseCharacter->GetCharacterAttributesComponent();
+	if (!IsValid(Attributes))
+	{
+		return;
+	}
+
+	Attributes->OnHealthChangedEvent.RemoveAll(PlayerHUD);
+	Attributes->OnStaminaChangedEvent.RemoveAll(PlayerHUD);
+	Attributes->OnOxygenChangedEvent.RemoveAll(PlayerHUD);
 }
 
 void AGCPlayerController::BindHUDToCharacterComponents()
@@ -95,6 +135,9 @@ void AGCPlayerController::BindHUDToEquipment()
 	UReticleWidget* ReticleWidget = PlayerHUD->GetReticleWidget();
 	if (IsValid(ReticleWidget))
 	{
+		CachedBaseCharacter->OnAmingStateChanged.RemoveAll(ReticleWidget);
+		CharacterEquipment->OnEquippedItemChanged.RemoveAll(ReticleWidget);
+
 		ReticleWidget->SetupCurrentReticle();
 		CachedBaseCharacter->OnAmingStateChanged.AddUFunction(ReticleWidget, FName("OnAimingStateChange"));
 		CharacterEquipment->OnEquippedItemChanged.AddUFunction(ReticleWidget, FName("OnEquippedItemChanged"));
@@ -103,7 +146,33 @@ void AGCPlayerController::BindHUDToEquipment()
 	UAmmoWidget* AmmoWidget = PlayerHUD->GetAmmoWidget();
 	if (IsValid(AmmoWidget))
 	{
+		CharacterEquipment->OnCurrentWeaponAmmoChanged.RemoveAll(AmmoWidget);
 		CharacterEquipment->OnCurrentWeaponAmmoChanged.AddUFunction(AmmoWidget, FName("UpdateAmmoCount"));
+	}
+}
+
+void AGCPlayerController::UnbindHUDFromEquipment()
+{
+	if (!CachedBaseCharacter.IsValid() || !IsValid(PlayerHUD))
+	{
+		return;
+	}
+
+	UCharacterEquipmentComponent* CharacterEquipment = CachedBaseCharacter->GetCharacterEquipmentComponent_Mutable();
+
+	if (UReticleWidget* ReticleWidget = PlayerHUD->GetReticleWidget(); IsValid(ReticleWidget))
+	{
+		CachedBaseCharacter->OnAmingStateChanged.RemoveAll(ReticleWidget);
+
+		if (IsValid(CharacterEquipment))
+		{
+			CharacterEquipment->OnEquippedItemChanged.RemoveAll(ReticleWidget);
+		}
+	}
+
+	if (UAmmoWidget* AmmoWidget = PlayerHUD->GetAmmoWidget(); IsValid(AmmoWidget) && IsValid(CharacterEquipment))
+	{
+		CharacterEquipment->OnCurrentWeaponAmmoChanged.RemoveAll(AmmoWidget);
 	}
 }
 
@@ -111,7 +180,16 @@ void AGCPlayerController::BindInteractableEvents()
 {
 	if (CachedBaseCharacter.IsValid())
 	{
+		CachedBaseCharacter->OnInteractableObjectFound.Unbind();
 		CachedBaseCharacter->OnInteractableObjectFound.BindUObject(this, &AGCPlayerController::OnInteractableObjectFound);
+	}
+}
+
+void AGCPlayerController::UnbindInteractableEvents()
+{
+	if (CachedBaseCharacter.IsValid())
+	{
+		CachedBaseCharacter->OnInteractableObjectFound.Unbind();
 	}
 }
 
@@ -253,12 +331,14 @@ void AGCPlayerController::SwimUp(float Value)
 
 void AGCPlayerController::SetPawn(APawn* InPawn)
 {
+	UnbindHUDFromCurrentPawn();
+
 	Super::SetPawn(InPawn);
+
 	CachedBaseCharacter = Cast<AGCBaseCharacter>(InPawn);
-	//if (CachedBaseCharacter.IsValid() && IsLocalController()) {
-		//CreateAndInitializeWidgets();
-	//	CachedBaseCharacter->OnInteractableObjectFound.BindUObject(this, &AGCPlayerController::OnInteractableObjectFound);
-	//}
+
+	CreateHUDIfNeeded();
+	BindHUDToCurrentPawn();
 }
 void AGCPlayerController::ClimbLadderUp(float Value)
 {

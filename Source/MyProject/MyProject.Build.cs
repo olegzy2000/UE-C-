@@ -17,7 +17,8 @@ public class MyProject : ModuleRules
 			"GameplayTasks",
 			"NavigationSystem" ,
 			"Slate",
-	        "SlateCore",
+            "AnimGraphRuntime",
+            "SlateCore",
 		    "GameplayTags",
 		    "GameplayAbilities"});
 

@@ -55,11 +55,6 @@ void UPlayerHUD::SetOxygenBarColor(const FLinearColor& Color)
     }
 }
 
-UProgressBar* UPlayerHUD::GetStaminaProgressBar()
-{
-    return StaminaProgressBar;
-}
-
 UReticleWidget* UPlayerHUD::GetReticleWidget()
 {
     return ReticleWidget;
@@ -86,16 +81,6 @@ void UPlayerHUD::SetHighlightInteractableVisibility(bool bIsVisible)
     }
 
     InteractableKey->SetVisibility(bIsVisible ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
-}
-
-UProgressBar* UPlayerHUD::GetOxygenProgressBar()
-{
-    return OxygenProgressBar;
-}
-
-UProgressBar* UPlayerHUD::GetHealthProgressBar()
-{
-    return HealthProgressBar;
 }
 
 void UPlayerHUD::NativeConstruct()

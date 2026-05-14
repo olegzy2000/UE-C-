@@ -35,10 +35,16 @@ void USaveSubsystem::LoadGame(int32 SaveId)
 {
 	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::LoadGame()"));
 	if (!SaveIds.Contains(SaveId)) {
-		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::LoadGame(): Failed!"));
+		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::LoadGame(): Failed! SaveId %d not found."), SaveId);
 		return;
 	}
-	LoadSaveFromFile(SaveId);
+
+	if (!LoadSaveFromFile(SaveId))
+	{
+		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::LoadGame(): Failed to read save file for SaveId %d."), SaveId);
+		return;
+	}
+
 	UGameplayStatics::OpenLevel(this, GameSaveData.LevelName);
 }
 
@@ -67,6 +73,12 @@ void USaveSubsystem::Deinitialize()
 void USaveSubsystem::SerializeLevel(const ULevel* Level, const ULevelStreaming* StreamingLevel)
 {
 	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::SerializeLevel(): %s , Level: %s "), *GetNameSafe(this), *GetNameSafe(Level));
+	if (!IsValid(Level))
+	{
+		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::SerializeLevel(): Failed. Level is not valid."));
+		return;
+	}
+
 	FLevelSaveData* LevelSaveData = nullptr;
 	LevelSaveData = &GameSaveData.Level;
 	TArray<FActorSaveData>& ActorsSaveData = LevelSaveData->ActorsSaveData;
@@ -80,8 +92,8 @@ void USaveSubsystem::SerializeLevel(const ULevel* Level, const ULevelStreaming* 
 		TArray<FObjectSaveData>& ComponentsSaveData = ActorSaveData.ComponentsSaveData;
 		ComponentsSaveData.Empty();
 		for (UActorComponent* ActorComponent : Actor->GetComponents()) {
-			if (ActorComponent->Implements<USaveSubsystemInterface>()) {
-				FObjectSaveData& ComponentSaveData=ComponentsSaveData[ComponentsSaveData.Emplace(ActorComponent)];
+			if (IsValid(ActorComponent) && ActorComponent->Implements<USaveSubsystemInterface>()) {
+				FObjectSaveData& ComponentSaveData = ComponentsSaveData[ComponentsSaveData.Emplace(ActorComponent)];
 				FMemoryWriter MemoryWriter(ComponentSaveData.RawData, true);
 				FSaveSubsystemArchive Archive(MemoryWriter, false);
 				ActorComponent->Serialize(Archive);
@@ -96,6 +108,12 @@ void USaveSubsystem::SerializeLevel(const ULevel* Level, const ULevelStreaming* 
 void USaveSubsystem::DeserializeLevel(ULevel* Level, const ULevelStreaming* StreamingLevel)
 {
 	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s , Level: %s "), *GetNameSafe(this), *GetNameSafe(Level));
+	if (!IsValid(Level))
+	{
+		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::DeserializeLevel(): Failed. Level is not valid."));
+		return;
+	}
+
 	FLevelSaveData* LevelSaveData = nullptr;
 	LevelSaveData = &GameSaveData.Level;
 	if (LevelSaveData == nullptr) {
@@ -140,12 +158,24 @@ void USaveSubsystem::DeserializeLevel(ULevel* Level, const ULevelStreaming* Stre
 	}
 
 	UWorld* const World = GetWorld();
+	if (!IsValid(World))
+	{
+		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::DeserializeLevel(): Failed. World is not valid."));
+		return;
+	}
+
 	FActorSpawnParameters ActorSpawnParameters;
 	ActorSpawnParameters.OverrideLevel = Level;
 	ActorSpawnParameters.NameMode = FActorSpawnParameters::ESpawnActorNameMode::Requested;
 	ActorSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	for (FActorSaveData* ActorSaveData : ActorsSaveData) {
+		if (ActorSaveData == nullptr || !ActorSaveData->Class.IsValid())
+		{
+			UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::DeserializeLevel(): Skipped actor spawn. Save data or class is not valid."));
+			continue;
+		}
+
 		UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s , Spawn new actor with name: %s"), *GetNameSafe(this), *ActorSaveData->Name.ToString());
 		ActorSpawnParameters.Name = ActorSaveData->Name;
 
@@ -169,9 +199,14 @@ void USaveSubsystem::DeserializeLevel(ULevel* Level, const ULevelStreaming* Stre
 
 void USaveSubsystem::NotifyActorsAndComponents(AActor* Actor)
 {
+	if (!IsValid(Actor) || !Actor->Implements<USaveSubsystemInterface>())
+	{
+		return;
+	}
+
 	ISaveSubsystemInterface::Execute_OnLevelDeserialized(Actor);
 	for (UActorComponent* ActorComponent : Actor->GetComponents()) {
-		if (ActorComponent->Implements<USaveSubsystemInterface>()) {
+		if (IsValid(ActorComponent) && ActorComponent->Implements<USaveSubsystemInterface>()) {
 			ISaveSubsystemInterface::Execute_OnLevelDeserialized(ActorComponent);
 		}
 	}
@@ -183,22 +218,42 @@ void USaveSubsystem::DeserializeGame()
 	if (GameSaveData.bIsSerialized) {
 		return;
 	}
+
 	UGameInstance* GameInstance = GetGameInstance();
+	if (!IsValid(GameInstance))
+	{
+		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::DeserializeGame(): Failed. GameInstance is not valid."));
+		return;
+	}
+
 	FMemoryReader MemoryReader(GameSaveData.GameInstance.RawData, true);
 	FSaveSubsystemArchive Archive(MemoryReader, false);
 	GameInstance->Serialize(Archive);
-	const UWorld* World = GetWorld();
+
+	UWorld* World = GetWorld();
+	if (!IsValid(World) || !IsValid(World->PersistentLevel))
+	{
+		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::DeserializeGame(): Failed. World or PersistentLevel is not valid."));
+		return;
+	}
+
 	DeserializeLevel(World->PersistentLevel);
 }
 void USaveSubsystem::SerializeGame() {
 	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::SerializeGame(): %s"), *GetNameSafe(this));
 	UGameInstance* GameInstance = GetGameInstance();
+	UWorld* World = GetWorld();
+	if (!IsValid(GameInstance) || !IsValid(World) || !IsValid(World->PersistentLevel))
+	{
+		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::SerializeGame(): Failed. GameInstance, World, or PersistentLevel is not valid."));
+		return;
+	}
+
 	GameSaveData.GameInstance = FObjectSaveData(GetGameInstance());
 	FMemoryWriter MemoryWriter(GameSaveData.GameInstance.RawData, true);
 	FSaveSubsystemArchive Archive(MemoryWriter, false);
 	GameInstance->Serialize(Archive);
 
-	const UWorld* World = GetWorld();
 	FString LevelName = UGameplayStatics::GetCurrentLevelName(GetWorld());
 	if (World->IsPlayInEditor()) {
 		LevelName = UWorld::RemovePIEPrefix(LevelName);
@@ -213,19 +268,35 @@ void USaveSubsystem::SerializeGame() {
 void USaveSubsystem::WriteSaveToFile()
 {
 	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::WriteSaveToFile(): %s"), *GetNameSafe(this));
+
+	IFileManager::Get().MakeDirectory(*SaveDirectoryName, true);
+
 	const int32 SaveId = GetNextSaveId();
-	SaveIds.AddUnique(SaveId);
-	TArray<uint8>SaveBytes;
+	TArray<uint8> SaveBytes;
 	FMemoryWriter MemoryWriter(SaveBytes);
 	FObjectAndNameAsStringProxyArchive WriterArchive(MemoryWriter, false);
 	GameSaveData.Serialize(WriterArchive);
+
 	FArchive* FileWriter = IFileManager::Get().CreateFileWriter(*GetSaveFilePath(SaveId));
+	if (FileWriter == nullptr)
+	{
+		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::WriteSaveToFile(): Failed to create file writer for %s"), *GetSaveFilePath(SaveId));
+		return;
+	}
 
 	if (bUseCompressedSaves) {
 		TArray<uint8> CompressedSaveBytes;
 		FArchiveSaveCompressedProxy CompressedArchive(CompressedSaveBytes, NAME_Zlib);
 		CompressedArchive << SaveBytes;
 		CompressedArchive.Flush();
+		if (CompressedArchive.GetError())
+		{
+			UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::WriteSaveToFile(): Failed to compress save data."));
+			FileWriter->Close();
+			delete FileWriter;
+			return;
+		}
+
 		*FileWriter << CompressedSaveBytes;
 	}
 	else {
@@ -234,13 +305,20 @@ void USaveSubsystem::WriteSaveToFile()
 
 	FileWriter->Close();
 	delete FileWriter;
+	SaveIds.AddUnique(SaveId);
 }
 
-void USaveSubsystem::LoadSaveFromFile(int32 SaveId)
+bool USaveSubsystem::LoadSaveFromFile(int32 SaveId)
 {
 	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::LoadSaveFromFile(): %s"), *GetNameSafe(this));
 
 	FArchive* FileReader = IFileManager::Get().CreateFileReader(*GetSaveFilePath(SaveId));
+	if (FileReader == nullptr)
+	{
+		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::LoadSaveFromFile(): Failed to create file reader for %s"), *GetSaveFilePath(SaveId));
+		return false;
+	}
+
 	TArray<uint8> SaveBytes;
 	if (bUseCompressedSaves) {
 		TArray<uint8> CompressedSaveBytes;
@@ -248,6 +326,13 @@ void USaveSubsystem::LoadSaveFromFile(int32 SaveId)
 		FArchiveLoadCompressedProxy DecompressedArchive(CompressedSaveBytes, NAME_Zlib);
 		DecompressedArchive << SaveBytes;
 		DecompressedArchive.Flush();
+		if (DecompressedArchive.GetError())
+		{
+			UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::LoadSaveFromFile(): Failed to decompress save data."));
+			FileReader->Close();
+			delete FileReader;
+			return false;
+		}
 	}
 	else {
 		*FileReader << SaveBytes;
@@ -255,34 +340,66 @@ void USaveSubsystem::LoadSaveFromFile(int32 SaveId)
 	FileReader->Close();
 	delete FileReader;
 
+	if (SaveBytes.Num() == 0)
+	{
+		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::LoadSaveFromFile(): Save file is empty."));
+		return false;
+	}
+
 	FMemoryReader MemoryReader(SaveBytes, true);
 	FObjectAndNameAsStringProxyArchive ReaderArchive(MemoryReader, true);
 	GameSaveData = FGameSaveData();
 	GameSaveData.Serialize(ReaderArchive);
+
+	if (MemoryReader.IsError())
+	{
+		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::LoadSaveFromFile(): Failed to deserialize save data."));
+		GameSaveData = FGameSaveData();
+		return false;
+	}
+
+	return true;
 }
 
 void USaveSubsystem::OnPostLoadMapWithWorld(UWorld* LoadedWorld)
 {
 	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::OnPostLoadMapWithWorld(): %s"), *GetNameSafe(this));
+	if (!IsValid(LoadedWorld))
+	{
+		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::OnPostLoadMapWithWorld(): LoadedWorld is not valid."));
+		return;
+	}
+
 	DeserializeGame();
 }
 
 void USaveSubsystem::DeserializeActor(AActor* Actor, const FActorSaveData* ActorSaveData)
 {
+	if (!IsValid(Actor) || ActorSaveData == nullptr)
+	{
+		UE_LOG(LogSaveSubsystem, Warning, TEXT("USaveSubsystem::DeserializeActor(): Failed. Actor or ActorSaveData is not valid."));
+		return;
+	}
+
 	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeActor(): %s , Actor name: %s"), *GetNameSafe(this), *Actor->GetName());
 	Actor->SetActorTransform(ActorSaveData->Transform);
 
 	const TArray<FObjectSaveData>& ComponentsSaveData = ActorSaveData->ComponentsSaveData;
 	for (UActorComponent* ActorComponent : Actor->GetComponents()) {
-		if (ActorComponent->Implements<USaveSubsystemInterface>()) {
+		if (IsValid(ActorComponent) && ActorComponent->Implements<USaveSubsystemInterface>()) {
 			const FObjectSaveData* ComponentSaveData = ComponentsSaveData.FindByPredicate([=](const FObjectSaveData& SaveData) {
 				return SaveData.Name == ActorComponent->GetFName(); });
+			if (ComponentSaveData == nullptr)
+			{
+				UE_LOG(LogSaveSubsystem, Verbose, TEXT("USaveSubsystem::DeserializeActor(): Component save data not found. Actor: %s, Component: %s"), *GetNameSafe(Actor), *GetNameSafe(ActorComponent));
+				continue;
+			}
+
 			FMemoryReader MemoryReader(ComponentSaveData->RawData, true);
 			FSaveSubsystemArchive Archive(MemoryReader, false);
 			ActorComponent->Serialize(Archive);
 		}
 	}
-
 
 	FMemoryReader MemoryReader(ActorSaveData->RawData, true);
 	FSaveSubsystemArchive Archive(MemoryReader, false);
@@ -291,7 +408,7 @@ void USaveSubsystem::DeserializeActor(AActor* Actor, const FActorSaveData* Actor
 
 FString USaveSubsystem::GetSaveFilePath(int32 SaveId) const
 {
-	return SaveDirectoryName/FString::Printf(TEXT("%i.save"),SaveId);
+	return SaveDirectoryName / FString::Printf(TEXT("%i.save"), SaveId);
 }
 
 int32 USaveSubsystem::GetNextSaveId() const
@@ -299,11 +416,16 @@ int32 USaveSubsystem::GetNextSaveId() const
 	if (SaveIds.Num() == 0) {
 		return 1;
 	}
-	return SaveIds[SaveIds.Num()-1]+1;
+	return SaveIds[SaveIds.Num() - 1] + 1;
 }
 
 void USaveSubsystem::OnActorSpawned(AActor* SpawnedActor)
 {
+	if (!IsValid(SpawnedActor))
+	{
+		return;
+	}
+
 	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::OnActorSpawned(): %s , Actor name %s"), *GetNameSafe(this), *SpawnedActor->GetName());
 	if (bIgnoreOnActorSpawnedCallback) {
 		UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::OnActorSpawned(): Skipped for actor"));

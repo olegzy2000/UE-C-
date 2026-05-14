@@ -5,9 +5,11 @@
 #include <Characters/GCBaseCharacter.h>
 #include <Components/CharacterComponents/CharacterEquipmentComponent.h>
 
-void UAnimNotify_AttachEquippedItem::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
+void UAnimNotify_AttachEquippedItem::Notify(USkeletalMeshComponent* MeshComp,
+	UAnimSequenceBase* Animation,
+	const FAnimNotifyEventReference& EventReference)
 {
-	Super::Notify(MeshComp, Animation);
+	Super::Notify(MeshComp, Animation, EventReference);
 	AGCBaseCharacter* CharacterOwner = Cast<AGCBaseCharacter>(MeshComp->GetOwner());
 	if (!IsValid(CharacterOwner)) {
 		return;

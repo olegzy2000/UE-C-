@@ -31,7 +31,7 @@ EBTNodeResult::Type UBTTask_RandomPointAroundTarget::ExecuteTask(UBehaviorTreeCo
     }
     FNavLocation NavLocation; 
     bool bIsFound = NavSys->GetRandomReachablePointInRadius(TargetActor->GetActorLocation(),Radius,NavLocation);
-    if (bIsFound) {
+    if (!bIsFound) {
         return EBTNodeResult::Failed;
     }
     Blackboard->SetValueAsVector(LOcationKey.SelectedKeyName, NavLocation.Location);
