@@ -2,8 +2,9 @@
 
 
 #include "CharacterInventoryComponent.h"
-#include "../../Widget/Inventory/InventoryViewWidget.h"
 #include "../../Inventary/InventoryItem.h"
+#include "CharacterEquipmentComponent.h"
+#include "../../Actors/Equipment/Weapons/RangeWeaponItem.h"
 #include "../../Utils/GCSpawner.h"
 #include <Characters/PlayerCharacter.h>
 #include <Inventary/Items/Ammo/UInventoryAmmoItem.h>
@@ -26,27 +27,13 @@ void UCharacterInventoryComponent::BeginPlay()
 	InventorySlots.AddDefaulted(Capacity);
 }
 void UCharacterInventoryComponent::UpdateInventoryAmmoComponentAmount() {
-	EAmunitionType AmmoType=BaseCharacterOwner->GetCharacterEquipmentComponent()->GetCurrentRangeWeaponItem()->GetAmmoType();
+	EAmunitionType AmmoType = BaseCharacterOwner->GetCharacterEquipmentComponent()->GetCurrentRangeWeaponItem()->GetAmmoType();
 	int32 Amount = BaseCharacterOwner->GetCharacterEquipmentComponent()->GetCurrentRangeWeaponItem()->GetCurrentAmmo();
 	UpdateAmountAmmoInSlot(AmmoType, Amount);
 }
-void UCharacterInventoryComponent::CreateViewWidget(APlayerController* PlayerController)
-{
-	if (IsValid(InventoryViewWidget)) {
-		return;
-	}
-	if (!IsValid(PlayerController) || !IsValid(InventoryViewWidgetClass)) {
-		return;
-	}
-	InventoryViewWidget = CreateWidget<UInventoryViewWidget>(PlayerController, InventoryViewWidgetClass);
-	InventoryViewWidget->SetVisibility(ESlateVisibility::Visible);
-	InventoryViewWidget->InitializeViewWidget(InventorySlots);
-
-}
-
 FInventorySlot* UCharacterInventoryComponent::FindItemSlot(FName ItemID)
 {
-	return InventorySlots.FindByPredicate([=](const FInventorySlot& Slot){ return Slot.Item->GetDataTableID()==ItemID; });
+	return InventorySlots.FindByPredicate([=](const FInventorySlot& Slot) { return Slot.Item->GetDataTableID() == ItemID; });
 }
 
 FInventorySlot* UCharacterInventoryComponent::FindFreeSlot()
@@ -56,7 +43,7 @@ FInventorySlot* UCharacterInventoryComponent::FindFreeSlot()
 
 FInventorySlot* UCharacterInventoryComponent::FindSlotWithCustomAmmoItem(EAmunitionType AmmoType)
 {
-	FInventorySlot* InventorySlotResult=InventorySlots.FindByPredicate([=](const FInventorySlot& Slot) {
+	FInventorySlot* InventorySlotResult = InventorySlots.FindByPredicate([=](const FInventorySlot& Slot) {
 		TWeakObjectPtr<UInventoryItem> CurrentInventoryItem = Slot.Item;
 		if (CurrentInventoryItem.IsValid() && CurrentInventoryItem->IsA<UInventoryAmmoItem>()) {
 			UInventoryAmmoItem* CurrentInventoryAmmoItem = Cast<UInventoryAmmoItem>(CurrentInventoryItem);
@@ -65,7 +52,7 @@ FInventorySlot* UCharacterInventoryComponent::FindSlotWithCustomAmmoItem(EAmunit
 			}
 		}
 		return false;
-	});
+		});
 	return InventorySlotResult;
 }
 
@@ -92,33 +79,6 @@ void FInventorySlot::ClearSlot()
 	UpdateSlotState();
 }
 
-void UCharacterInventoryComponent::OpenViewInventory(APlayerController* Controller)
-{
-	if (!IsValid(InventoryViewWidget)) {
-		CreateViewWidget(Controller);
-	}
-	//if (InventoryViewWidget->IsVisible()) {
-		InventoryViewWidget->AddToViewport();
-	//}
-
-}
-
-void UCharacterInventoryComponent::CloseViewInventory()
-{
-	if (InventoryViewWidget->IsVisible()) {
-		InventoryViewWidget->RemoveFromParent();
-	}
-}
-
-bool UCharacterInventoryComponent::IsViewVisible()
-{
-	bool Result = false;
-	if (IsValid(InventoryViewWidget)) {
-		Result = InventoryViewWidget->IsVisible();
-	}
-	return Result;
-}
-
 int32 UCharacterInventoryComponent::GetCapacity() const
 {
 	return Capacity;
@@ -126,10 +86,15 @@ int32 UCharacterInventoryComponent::GetCapacity() const
 
 bool UCharacterInventoryComponent::HasFreeSlot()
 {
-	return ItemsInInventory<Capacity;
+	return ItemsInInventory < Capacity;
 }
 
 TArray<FInventorySlot> UCharacterInventoryComponent::GetAllItemsCopy() const
+{
+	return InventorySlots;
+}
+
+TArray<FInventorySlot>& UCharacterInventoryComponent::GetInventorySlots_Mutable()
 {
 	return InventorySlots;
 }
@@ -147,24 +112,20 @@ TArray<FText> UCharacterInventoryComponent::GetAllItemsNames() const
 
 bool UCharacterInventoryComponent::AddItem(TWeakObjectPtr<UInventoryItem> ItemToAdd, int32 Count)
 {
-	if (!ItemToAdd.IsValid() || Count<0) {
+	if (!ItemToAdd.IsValid() || Count < 0) {
 		return false;
 	}
-	bool Result = false;
+
+	if (ItemToAdd->IsA<UInventoryAmmoItem>()) {
+		UInventoryAmmoItem* CurrentInventoryAmmoItem = Cast<UInventoryAmmoItem>(ItemToAdd);
+		return AddAmmo(CurrentInventoryAmmoItem->GetAmmoType(), CurrentInventoryAmmoItem->GetAmount());
+	}
+
 	if (ItemToAdd->IsA<UWeaponInventoryItem>()) {
 		//Result = UpdateInventoryAmmoSlotByWeaponAmmo(ItemToAdd);
 	}
-	if (ItemToAdd->IsA<UInventoryAmmoItem>()) {
-		UInventoryAmmoItem* CurrentInventoryAmmoItem = Cast<UInventoryAmmoItem>(ItemToAdd);
-		Result = UpdateAmountAmmoInSlot(CurrentInventoryAmmoItem->GetAmmoType(), CurrentInventoryAmmoItem->GetAmount());
-		if(!Result)
-			Result = CreateNewInventorySlot(ItemToAdd, Count);
-		UpdateAmunition(CurrentInventoryAmmoItem->GetAmmoType(), CurrentInventoryAmmoItem->GetAmount());
-	}
-	if(!Result) {
-		Result=CreateNewInventorySlot(ItemToAdd, Count);
-	}
-	return Result;
+
+	return CreateNewInventorySlot(ItemToAdd, Count);
 }
 
 bool UCharacterInventoryComponent::CreateNewInventorySlot(TWeakObjectPtr<UInventoryItem> ItemToAdd, const int32 Count)
@@ -181,22 +142,89 @@ bool UCharacterInventoryComponent::CreateNewInventorySlot(TWeakObjectPtr<UInvent
 	return Result;
 }
 
-bool UCharacterInventoryComponent::UpdateAmountAmmoInSlot(EAmunitionType AmunitionType,int32 Amount)
+
+namespace
+{
+	FName GetAmmoDataTableId(EAmunitionType AmunitionType)
+	{
+		switch (AmunitionType)
+		{
+		case EAmunitionType::Pistol:
+			return FName(TEXT("Pistol"));
+		case EAmunitionType::Rifle:
+			return FName(TEXT("Rifle"));
+		case EAmunitionType::ShotgunShells:
+			return FName(TEXT("ShotgunShells"));
+		case EAmunitionType::Sniper:
+			return FName(TEXT("Sniper"));
+		default:
+			return NAME_None;
+		}
+	}
+}
+
+int32 UCharacterInventoryComponent::GetAmmoAmount(EAmunitionType AmunitionType) const
+{
+	for (const FInventorySlot& Slot : InventorySlots) {
+		if (!Slot.Item.IsValid() || !Slot.Item->IsA<UInventoryAmmoItem>()) {
+			continue;
+		}
+
+		const UInventoryAmmoItem* InventoryAmmoItem = Cast<UInventoryAmmoItem>(Slot.Item);
+		if (InventoryAmmoItem && InventoryAmmoItem->GetAmmoType() == AmunitionType) {
+			return InventoryAmmoItem->GetAmount();
+		}
+	}
+
+	return 0;
+}
+
+bool UCharacterInventoryComponent::AddAmmo(EAmunitionType AmunitionType, int32 Amount)
+{
+	if (Amount <= 0) {
+		return false;
+	}
+
+	if (UpdateAmountAmmoInSlot(AmunitionType, Amount)) {
+		return true;
+	}
+
+	const FName AmmoDataTableId = GetAmmoDataTableId(AmunitionType);
+	if (AmmoDataTableId.IsNone() || !IsValid(BaseCharacterOwner)) {
+		return false;
+	}
+
+	TWeakObjectPtr<UInventoryAmmoItem> AmmoItem = GCSpawner::SpawnInventoryAmmoItem(BaseCharacterOwner, AmmoDataTableId, Amount);
+	return AmmoItem.IsValid() && CreateNewInventorySlot(AmmoItem, 1);
+}
+
+int32 UCharacterInventoryComponent::ConsumeAmmo(EAmunitionType AmunitionType, int32 Amount)
+{
+	if (Amount <= 0) {
+		return 0;
+	}
+
+	const int32 AvailableAmmo = GetAmmoAmount(AmunitionType);
+	const int32 ConsumedAmmo = FMath::Min(AvailableAmmo, Amount);
+	if (ConsumedAmmo > 0) {
+		UpdateAmountAmmoInSlot(AmunitionType, -ConsumedAmmo);
+	}
+
+	return ConsumedAmmo;
+}
+
+bool UCharacterInventoryComponent::UpdateAmountAmmoInSlot(EAmunitionType AmunitionType, int32 Amount)
 {
 	bool Result = false;
 	FInventorySlot* InventorySlot = FindSlotWithCustomAmmoItem(AmunitionType);
 	if (InventorySlot != nullptr) {
 		UInventoryAmmoItem* InventoryAmmoItemInInventory = Cast<UInventoryAmmoItem>(InventorySlot->Item);
-		int32 ResultAmount = InventoryAmmoItemInInventory->GetAmount() + Amount;
+		int32 ResultAmount = FMath::Max(InventoryAmmoItemInInventory->GetAmount() + Amount, 0);
 		InventoryAmmoItemInInventory->SetAmount(ResultAmount);
 		InventorySlot->UpdateSlotState();
 		Result = true;
 	}
 	return Result;
-}
-void UCharacterInventoryComponent::UpdateAmunition(EAmunitionType AmunitionType, const int32& Amount)
-{
-	BaseCharacterOwner->GetCharacterEquipmentComponent_Mutable()->AddAmunition(AmunitionType, Amount);
 }
 // TO REMOVE
 bool UCharacterInventoryComponent::UpdateInventoryAmmoSlotByWeaponAmmo(TWeakObjectPtr<UInventoryItem> ItemToAdd)
@@ -204,34 +232,34 @@ bool UCharacterInventoryComponent::UpdateInventoryAmmoSlotByWeaponAmmo(TWeakObje
 	UWeaponInventoryItem* WeaponInventoryItem = Cast<UWeaponInventoryItem>(ItemToAdd);
 	AEquipableItem* EquipableItem = WeaponInventoryItem->GetEquipWeaponClass()->GetDefaultObject<AEquipableItem>();
 	if (EquipableItem->IsA<ARangeWeaponItem>()) {
-	  ARangeWeaponItem* RangeWeaponObject = StaticCast<ARangeWeaponItem*>(EquipableItem);
-	  FName AmmoType=NAME_None;
-	  switch (RangeWeaponObject->GetAmmoType())
-	  {
-	  case EAmunitionType::Pistol :{
-		  AmmoType= FName(TEXT("Pistol"));
-		  break;
-	  }
-	  case EAmunitionType::Rifle: {
-		  AmmoType = FName(TEXT("Rifle"));
-		  break;
-	  }
-	  case EAmunitionType::ShotgunShells: {
-		  AmmoType = FName(TEXT("ShotgunShells"));
-		  break;
-	  }
-	  case EAmunitionType::Sniper: {
-		  AmmoType = FName(TEXT("Sniper"));
-		  break;
-	  }
-	  default:
-		  break;
-	  }
-	  if (!AmmoType.IsNone()) {
-		  TWeakObjectPtr<UInventoryAmmoItem> AmmoItem = GCSpawner::SpawnInventoryAmmoItem(Cast<AGCBaseCharacter>(GetOwner()), AmmoType, RangeWeaponObject->GetMaxAmmo());
-		  AddItem(AmmoItem, 1);
-	  }
-	  //AmunitionArray[SlotIndex] += RangeWeaponObject->GetMaxAmmo();
+		ARangeWeaponItem* RangeWeaponObject = StaticCast<ARangeWeaponItem*>(EquipableItem);
+		FName AmmoType = NAME_None;
+		switch (RangeWeaponObject->GetAmmoType())
+		{
+		case EAmunitionType::Pistol: {
+			AmmoType = FName(TEXT("Pistol"));
+			break;
+		}
+		case EAmunitionType::Rifle: {
+			AmmoType = FName(TEXT("Rifle"));
+			break;
+		}
+		case EAmunitionType::ShotgunShells: {
+			AmmoType = FName(TEXT("ShotgunShells"));
+			break;
+		}
+		case EAmunitionType::Sniper: {
+			AmmoType = FName(TEXT("Sniper"));
+			break;
+		}
+		default:
+			break;
+		}
+		if (!AmmoType.IsNone()) {
+			TWeakObjectPtr<UInventoryAmmoItem> AmmoItem = GCSpawner::SpawnInventoryAmmoItem(Cast<AGCBaseCharacter>(GetOwner()), AmmoType, RangeWeaponObject->GetMaxAmmo());
+			AddItem(AmmoItem, 1);
+		}
+		//AmunitionArray[SlotIndex] += RangeWeaponObject->GetMaxAmmo();
 	}
 	return false;
 }

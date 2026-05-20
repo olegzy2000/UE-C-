@@ -7,6 +7,9 @@
 #include "Components/PlayerComponents/OxygenManagerComponent.h"
 #include "Components/PlayerComponents/StaminaManagerComponent.h"
 #include <Subsystems/SaveSubsystem/SaveSubsystem.h>
+#include "Widget/Inventory/InventoryViewWidget.h"
+#include "Widget/Equipment/EquipmentViewWidget.h"
+#include "Components/CharacterComponents/CharacterInventoryComponent.h"
 void AGCPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -331,6 +334,9 @@ void AGCPlayerController::SwimUp(float Value)
 
 void AGCPlayerController::SetPawn(APawn* InPawn)
 {
+	CloseInventoryUI();
+	InventoryViewWidget = nullptr;
+	EquipmentViewWidget = nullptr;
 	UnbindHUDFromCurrentPawn();
 
 	Super::SetPawn(InPawn);
@@ -442,10 +448,95 @@ void AGCPlayerController::OnInteractableObjectFound(FName ActionName)
 	}
 	PlayerHUD->SetHighlightInteractableVisibility(HasAnyKeys);
 }
-void AGCPlayerController::UseInventory() {
-	if (CachedBaseCharacter.IsValid()) {
-		CachedBaseCharacter->UseInventory(this);
+
+bool AGCPlayerController::IsInventoryUIOpen() const
+{
+	return IsValid(InventoryViewWidget) && InventoryViewWidget->IsInViewport();
+}
+
+void AGCPlayerController::CreateInventoryUIIfNeeded()
+{
+	if (!CachedBaseCharacter.IsValid() || !IsLocalController())
+	{
+		return;
 	}
+
+	if (!IsValid(InventoryViewWidget) && IsValid(InventoryViewWidgetClass))
+	{
+		UCharacterInventoryComponent* InventoryComponent = CachedBaseCharacter->GetCharacterInventoryComponent();
+		if (IsValid(InventoryComponent))
+		{
+			InventoryViewWidget = CreateWidget<UInventoryViewWidget>(this, InventoryViewWidgetClass);
+			if (IsValid(InventoryViewWidget))
+			{
+				InventoryViewWidget->InitializeViewWidget(InventoryComponent->GetInventorySlots_Mutable());
+			}
+		}
+	}
+
+	if (!IsValid(EquipmentViewWidget) && IsValid(EquipmentViewWidgetClass))
+	{
+		UCharacterEquipmentComponent* EquipmentComponent = CachedBaseCharacter->GetCharacterEquipmentComponent_Mutable();
+		if (IsValid(EquipmentComponent))
+		{
+			EquipmentViewWidget = CreateWidget<UEquipmentViewWidget>(this, EquipmentViewWidgetClass);
+			if (IsValid(EquipmentViewWidget))
+			{
+				EquipmentViewWidget->InitializeEquipmentWidget(EquipmentComponent);
+			}
+		}
+	}
+}
+
+void AGCPlayerController::OpenInventoryUI()
+{
+	CreateInventoryUIIfNeeded();
+
+	if (IsValid(InventoryViewWidget) && !InventoryViewWidget->IsInViewport())
+	{
+		InventoryViewWidget->AddToViewport();
+	}
+
+	if (IsValid(EquipmentViewWidget) && !EquipmentViewWidget->IsInViewport())
+	{
+		EquipmentViewWidget->AddToViewport();
+	}
+
+	SetInputMode(FInputModeGameAndUI{});
+	bShowMouseCursor = true;
+}
+
+void AGCPlayerController::CloseInventoryUI()
+{
+	if (IsValid(InventoryViewWidget) && InventoryViewWidget->IsInViewport())
+	{
+		InventoryViewWidget->RemoveFromParent();
+	}
+
+	if (IsValid(EquipmentViewWidget) && EquipmentViewWidget->IsInViewport())
+	{
+		EquipmentViewWidget->RemoveFromParent();
+	}
+
+	SetInputMode(FInputModeGameOnly{});
+	bShowMouseCursor = false;
+}
+
+void AGCPlayerController::ToggleInventoryUI()
+{
+	if (IsInventoryUIOpen())
+	{
+		CloseInventoryUI();
+	}
+	else
+	{
+		OpenInventoryUI();
+	}
+}
+
+void AGCPlayerController::UseInventory()
+{
+	ToggleInventoryUI();
 }
 void AGCPlayerController::QuickSaveGame()
 {

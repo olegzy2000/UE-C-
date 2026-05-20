@@ -21,16 +21,18 @@ bool UCharacterEquipmentComponent::AddEquipmentItemToSlot(const TSubclassOf<AEqu
 	}
 	if (!IsValid(ItemsArray[SlotIndex])) {
 		AEquipableItem* Item = GetWorld()->SpawnActor<AEquipableItem>(EquipableItemClass);
-		Item->AttachToComponent(CachedBaseCharacter->GetMesh(),FAttachmentTransformRules::KeepRelativeTransform, Item->GetUnEquppedSocketName());
+		Item->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, Item->GetUnEquppedSocketName());
 		Item->SetOwner(CachedBaseCharacter.Get());
 		Item->SetAmmo(StartedAmmo);
 		Item->UnEquip();
 		ItemsArray[SlotIndex] = Item;
 	}
-	else if(EquipableItem->IsA<ARangeWeaponItem>()){
+	else if (EquipableItem->IsA<ARangeWeaponItem>()) {
 		ARangeWeaponItem* RangeWeaponObject = StaticCast<ARangeWeaponItem*>(EquipableItem);
-		int32 AmmoSlotIndex = (int32)RangeWeaponObject->GetAmmoType();
-		AmunitionArray[AmmoSlotIndex] += RangeWeaponObject->GetMaxAmmo();
+		UCharacterInventoryComponent* InventoryComponent = CachedBaseCharacter->GetCharacterInventoryComponent();
+		if (IsValid(InventoryComponent)) {
+			InventoryComponent->AddAmmo(RangeWeaponObject->GetAmmoType(), RangeWeaponObject->GetMaxAmmo());
+		}
 	}
 	return true;
 }
@@ -44,51 +46,15 @@ void UCharacterEquipmentComponent::RemoveItemFromSlot(int32 SlotIndex)
 	ItemsArray[SlotIndex]->Destroy();
 	ItemsArray[SlotIndex] = nullptr;
 }
-void UCharacterEquipmentComponent::OpenViewEquipment(APlayerController* PlayerController)
-{
-	if (!IsValid(ViewWidget)) {
-		CreateViewWidget(PlayerController);
-	}
-	
-	if (!ViewWidget->IsVisible()) {
-		ViewWidget->AddToViewport();
-	}
-}
-void UCharacterEquipmentComponent::CloseViewEquipment()
-{
-	if (ViewWidget->IsVisible()) {
-		ViewWidget->RemoveFromParent();
-	}
-}
-bool UCharacterEquipmentComponent::IsViewVisible() const
-{
-	bool Result = false;
-	if (IsValid(ViewWidget)) {
-		Result = ViewWidget->IsVisible();
-	}
-	return Result;
-}
 const TArray<AEquipableItem*> UCharacterEquipmentComponent::GetItems() const
 {
 	return ItemsArray;
 }
-void UCharacterEquipmentComponent::CreateViewWidget(APlayerController* PlayerController)
-{
-	checkf(IsValid(ViewWidgetClass), TEXT("UCharacterEqui[mentComponent::CreateViewWidget view widget class not valid"))
-
-	if (!IsValid(PlayerController)) {
-		return;
-	}
-
-	ViewWidget = CreateWidget<UEquipmentViewWidget>(PlayerController, ViewWidgetClass);
-	ViewWidget->InitializeEquipmentWidget(this);
-}
-
 void UCharacterEquipmentComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	checkf(GetOwner()->IsA<AGCBaseCharacter>(), TEXT("UCharacterEquipmentComponent::BeginPlay() UCharacterEquipmentComponent can be used only with AGCBaseCharacter"))
-	CachedBaseCharacter = StaticCast<AGCBaseCharacter*>(GetOwner());
+		CachedBaseCharacter = StaticCast<AGCBaseCharacter*>(GetOwner());
 	CreateLoadout();
 	AutoEquip();
 }
@@ -116,53 +82,26 @@ uint32 UCharacterEquipmentComponent::PreviousItemsArraySlotIndex(uint32 CurrentS
 int32 UCharacterEquipmentComponent::GetAvailableAmunitionForCurrentWeapon()
 {
 	check(IsValid(GetCurrentRangeWeaponItem()))
-	return AmunitionArray[(uint32)GetCurrentRangeWeaponItem()->GetAmmoType()];
+		UCharacterInventoryComponent* InventoryComponent = CachedBaseCharacter->GetCharacterInventoryComponent();
+	return IsValid(InventoryComponent) ? InventoryComponent->GetAmmoAmount(GetCurrentRangeWeaponItem()->GetAmmoType()) : 0;
 }
 void UCharacterEquipmentComponent::CreateLoadout()
 {
-	AmunitionArray.AddZeroed((uint32)EAmunitionType::MAX);
 	UCharacterInventoryComponent* InventoryComponent = CachedBaseCharacter->GetCharacterInventoryComponent();
 	for (const TPair<EAmunitionType, int32>& AmmoPair : MaxAmunitionAmount) {
-		//AmunitionArray[(uint32)AmmoPair.Key] = FMath::Max(AmmoPair.Value, 0);
 		int32 LoadoutValue = FMath::Max(AmmoPair.Value, 0);
-		FName AmmoType = NAME_None;
-		switch (AmmoPair.Key)
-		{
-		case EAmunitionType::Pistol: {
-			AmmoType = FName(TEXT("Pistol"));
-			break;
-		}
-		case EAmunitionType::Rifle: {
-			AmmoType = FName(TEXT("Rifle"));
-			break;
-		}
-		case EAmunitionType::ShotgunShells: {
-			AmmoType = FName(TEXT("ShotgunShells"));
-			break;
-		}
-		case EAmunitionType::Sniper: {
-			AmmoType = FName(TEXT("Sniper"));
-			break;
-		}
-		default:
-			break;
-		}
-		if (!AmmoType.IsNone()) {
-			TWeakObjectPtr<UInventoryAmmoItem> AmmoItem = GCSpawner::SpawnInventoryAmmoItem(Cast<AGCBaseCharacter>(GetOwner()), AmmoType, LoadoutValue);
-			InventoryComponent->AddItem(AmmoItem, 1);
+		if (LoadoutValue > 0 && IsValid(InventoryComponent)) {
+			InventoryComponent->AddAmmo(AmmoPair.Key, LoadoutValue);
 		}
 	}
 
 	ItemsArray.AddZeroed((uint32)EEquipmentSlots::MAX);
-	for (const TPair <EEquipmentSlots, TSubclassOf<AEquipableItem>>&ItemPair : ItemsLodout) {
+	for (const TPair <EEquipmentSlots, TSubclassOf<AEquipableItem>>& ItemPair : ItemsLodout) {
 		if (!IsValid(ItemPair.Value)) {
 			continue;
 		}
-		AddEquipmentItemToSlot(ItemPair.Value,(int32)ItemPair.Key,0);
+		AddEquipmentItemToSlot(ItemPair.Value, (int32)ItemPair.Key, 0);
 	}
-}
-void UCharacterEquipmentComponent::AddAmunition(EAmunitionType AmunitionType, int32 Amount) {
-	AmunitionArray[(uint32)AmunitionType] = AmunitionArray[(uint32)AmunitionType] + Amount;
 }
 void UCharacterEquipmentComponent::OnLevelDeserialized_Implementation()
 {
@@ -171,7 +110,7 @@ void UCharacterEquipmentComponent::OnLevelDeserialized_Implementation()
 void UCharacterEquipmentComponent::OnCurrentWeaponChanged(int32 Ammo)
 {
 	if (OnCurrentWeaponAmmoChanged.IsBound()) {
-		OnCurrentWeaponAmmoChanged.Broadcast(Ammo,AmunitionArray[(uint32)GetCurrentRangeWeaponItem()->GetAmmoType()]);
+		OnCurrentWeaponAmmoChanged.Broadcast(Ammo, GetAvailableAmunitionForCurrentWeapon());
 	}
 }
 void UCharacterEquipmentComponent::OnCurrentItemChanged(int32 Ammo)
@@ -195,11 +134,11 @@ void UCharacterEquipmentComponent::ReloadAmmoInCurrentWeapon(int32 NumberOfAmmo,
 		ReloadedAmmo = FMath::Min(ReloadedAmmo, NumberOfAmmo);
 	}
 
-	AmunitionArray[(uint32)CurrentEquippedWeapon->GetAmmoType()] -= ReloadedAmmo;
-	CachedBaseCharacter->GetCharacterInventoryComponent()->UpdateAmountAmmoInSlot(CurrentEquippedWeapon->GetAmmoType(),-ReloadedAmmo);
+	UCharacterInventoryComponent* InventoryComponent = CachedBaseCharacter->GetCharacterInventoryComponent();
+	ReloadedAmmo = IsValid(InventoryComponent) ? InventoryComponent->ConsumeAmmo(CurrentEquippedWeapon->GetAmmoType(), ReloadedAmmo) : 0;
 	CurrentEquippedWeapon->SetAmmo(ReloadedAmmo + CurrentAmmo);
 	if (bCheckIsFull) {
-		AvailableAmunition = AmunitionArray[(uint32)CurrentEquippedWeapon->GetAmmoType()];
+		AvailableAmunition = GetAvailableAmunitionForCurrentWeapon();
 		bool bIsFullyReloaded = CurrentEquippedWeapon->GetCurrentAmmo() == CurrentEquippedWeapon->GetMaxAmmo();
 		if (AvailableAmunition == 0 || bIsFullyReloaded) {
 			CurrentEquippedWeapon->EndReload(true);
@@ -236,11 +175,11 @@ ARangeWeaponItem* UCharacterEquipmentComponent::GetCurrentRangeWeaponItem() cons
 	return CurrentEquippedWeapon;
 }
 
-void UCharacterEquipmentComponent::ReloadCurrentWeapon() 
+void UCharacterEquipmentComponent::ReloadCurrentWeapon()
 {
 	check(IsValid(CurrentEquippedWeapon));
 	int32 AvailableAmunition = GetAvailableAmunitionForCurrentWeapon();
-	if (AvailableAmunition <=0) {
+	if (AvailableAmunition <= 0) {
 		return;
 	}
 	CurrentEquippedWeapon->StartReload();
@@ -300,8 +239,8 @@ void UCharacterEquipmentComponent::StartLaunching(UAnimMontage* EquipMontage)
 
 void UCharacterEquipmentComponent::AttachCurrentItemToEquippedSocket()
 {
-	if(IsValid(CurrentEquippedItem))
-	CurrentEquippedItem->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, CurrentEquippedItem->GetEquppedSocketName());
+	if (IsValid(CurrentEquippedItem))
+		CurrentEquippedItem->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, CurrentEquippedItem->GetEquppedSocketName());
 }
 
 AMeleeWeaponItem* UCharacterEquipmentComponent::GetCurrentMeleeWeapon() const
@@ -332,24 +271,24 @@ void UCharacterEquipmentComponent::EquipNextItem()
 {
 	uint32 CurrentSlotIndex = (uint32)CurrentEquippedSlot;
 	uint32 NextSlotIndex = NextItemsArraySlotIndex(CurrentSlotIndex);
-	while (CurrentSlotIndex != NextSlotIndex 
+	while (CurrentSlotIndex != NextSlotIndex
 		&& (IgnoreSlotsWhileSwitching.Contains((EEquipmentSlots)NextSlotIndex)
-		|| !IsValid(ItemsArray[NextSlotIndex]))) {
+			|| !IsValid(ItemsArray[NextSlotIndex]))) {
 		NextSlotIndex = NextItemsArraySlotIndex(NextSlotIndex);
 	}
-	if (CurrentSlotIndex!=NextSlotIndex) {
+	if (CurrentSlotIndex != NextSlotIndex) {
 		EquipItemInSlot((EEquipmentSlots)NextSlotIndex);
 	}
-	
+
 }
 
 void UCharacterEquipmentComponent::EquipPreviousItem()
 {
 	uint32 CurrentSlotIndex = (uint32)CurrentEquippedSlot;
 	uint32  PreviousSlotIndex = PreviousItemsArraySlotIndex(CurrentSlotIndex);
-	while (CurrentSlotIndex != PreviousSlotIndex 
+	while (CurrentSlotIndex != PreviousSlotIndex
 		&& (IgnoreSlotsWhileSwitching.Contains((EEquipmentSlots)PreviousSlotIndex)
-		|| !IsValid(ItemsArray[PreviousSlotIndex]))) {
+			|| !IsValid(ItemsArray[PreviousSlotIndex]))) {
 		PreviousSlotIndex = PreviousItemsArraySlotIndex(PreviousSlotIndex);
 	}
 	if (CurrentSlotIndex != PreviousSlotIndex) {
@@ -367,15 +306,15 @@ void UCharacterEquipmentComponent::LaunchCurrentThrowableItem()
 	if (IsValid(CurrentThowableItem)) {
 		if (CurrentThowableItem->GetMaxAmmo() == 0)
 			CurrentThowableItem->SetAmmo(0);
-		else 
+		else
 			CurrentThowableItem->SetMaxAmmo(CurrentThowableItem->GetMaxAmmo() - 1);
 
-			CurrentThowableItem->Throw();
-			bIsEquipping = false;
-		    OnCurrentItemChanged(CurrentThowableItem->GetCurrentAmmo());
-			//if (PreviosEquippedSlot == EEquipmentSlots::PrivaryItemSlot)
-			//	PreviosEquippedSlot = EEquipmentSlots::None;
-			//EquipItemInSlot(PreviosEquippedSlot);
+		CurrentThowableItem->Throw();
+		bIsEquipping = false;
+		OnCurrentItemChanged(CurrentThowableItem->GetCurrentAmmo());
+		//if (PreviosEquippedSlot == EEquipmentSlots::PrivaryItemSlot)
+		//	PreviosEquippedSlot = EEquipmentSlots::None;
+		//EquipItemInSlot(PreviosEquippedSlot);
 	}
 }
 

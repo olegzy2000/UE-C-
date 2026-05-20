@@ -7,7 +7,7 @@
 #include "UInventoryAmmoItem.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class MYPROJECT_API UInventoryAmmoItem : public UInventoryItem
@@ -16,11 +16,11 @@ class MYPROJECT_API UInventoryAmmoItem : public UInventoryItem
 public:
 	void SetAmmoType(EAmunitionType AmunitionType);
 	void SetAmount(int32 Amount);
-	EAmunitionType GetAmmoType();
-	int32 GetAmount();
+	EAmunitionType GetAmmoType() const;
+	int32 GetAmount() const;
 protected:
 	UPROPERTY(EditAnywhere)
 	EAmunitionType AmunitionType;
-private :
-	int32 Amount=0;
+private:
+	int32 Amount = 0;
 };

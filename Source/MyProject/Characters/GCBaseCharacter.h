@@ -30,27 +30,27 @@ struct FMantlingSettings
 {
 	GENERATED_BODY()
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		class UAnimMontage* MantlingMontage;
+	class UAnimMontage* MantlingMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		class UCurveVector* MantlingCurve;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,meta=(ClampMin=0.0f,UMin=0.0f))
-		float MaxHeight=200.0f;
+	class UCurveVector* MantlingCurve;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0f, UMin = 0.0f))
-		float MinHeight = 100.0f;
+	float MaxHeight = 200.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0f, UMin = 0.0f))
-		float MaxHeightStartTime = 0.0f;
+	float MinHeight = 100.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0f, UMin = 0.0f))
-		float MinHeightStartTime = 0.5f;
+	float MaxHeightStartTime = 0.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0f, UMin = 0.0f))
-		float AnimationCorrectionXY = 65.0f;
+	float MinHeightStartTime = 0.5f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0f, UMin = 0.0f))
-		float AnimationCorrectionZ = 200.0f;
+	float AnimationCorrectionXY = 65.0f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0f, UMin = 0.0f))
+	float AnimationCorrectionZ = 200.0f;
 };
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnAminStateChanged,bool)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnAminStateChanged, bool)
 
-UCLASS(Abstract,NotBlueprintable)
-class MYPROJECT_API AGCBaseCharacter : public ACharacter,public IGenericTeamAgentInterface , public ISaveSubsystemInterface
+UCLASS(Abstract, NotBlueprintable)
+class MYPROJECT_API AGCBaseCharacter : public ACharacter, public IGenericTeamAgentInterface, public ISaveSubsystemInterface
 {
 	GENERATED_BODY()
 
@@ -58,7 +58,7 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 	void PreviousItem();
 	void NextItem();
-	void Reload() ;
+	void Reload();
 
 	//@ ISaveSubsystemInterface
 	virtual void OnLevelDeserialized_Implementation() override;
@@ -100,8 +100,7 @@ public:
 	virtual void SwimForward(float Value) {};
 	virtual void SwimUp(float Value) {};
 	bool PickupItem(TWeakObjectPtr <UInventoryItem> ItemToPickup);
-	void UseInventory(APlayerController* PlayerController);
-	void ChangeCapsuleParamOnProneStateFromCrouch(float Radius,float Height);
+	void ChangeCapsuleParamOnProneStateFromCrouch(float Radius, float Height);
 	void ChangeCapsuleParamFromProneStateToCrouch(float Radius, float Height);
 	UFUNCTION()
 	void AddHealth(float Health);
@@ -135,11 +134,11 @@ public:
 	UGCBaseCharacterMovementComponent* GetBaseCharacterMovementComponent() const;
 	AGCBaseCharacter(const FObjectInitializer& ObjectInitializer);
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FORCEINLINE float GetIKRightFootOffset() const {
+	FORCEINLINE float GetIKRightFootOffset() const {
 		return IKRightFootOffset;
 	}
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FORCEINLINE float GetIKLeftFootOffset() const {
+	FORCEINLINE float GetIKLeftFootOffset() const {
 		return IKLeftFootOffset;
 	}
 	void RegisterInteractiveActor(AInteractiveActor* InteractiveActor);
@@ -151,9 +150,9 @@ public:
 	AZipline* GetAvailableZipline();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Character")
-		void OnStartAiming();
-	UFUNCTION(BlueprintNativeEvent,BlueprintCallable, Category = "Character")
-		void OnStopAiming();
+	void OnStartAiming();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Character")
+	void OnStopAiming();
 	FOnAminStateChanged OnAmingStateChanged;
 	virtual FGenericTeamId GetGenericTeamId() const override;
 	void Interact();
@@ -166,16 +165,16 @@ public:
 	FOnInteractableObjectFound OnInteractableObjectFound;
 
 	void AddEquipmentItem(const TSubclassOf<AEquipableItem>EquipableItemClass);
-	
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Controls")
-		float BaseTurnRate = 45.0f;
+	float BaseTurnRate = 45.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Controls")
-		float BaseLookUpRate = 45.0f;
+	float BaseLookUpRate = 45.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Controls")
-		float SprintSpeed = 800.0f;
+	float SprintSpeed = 800.0f;
 	virtual bool CanSprint();
-	UFUNCTION(BlueprintImplementableEvent,Category="Character | Movement")
+	UFUNCTION(BlueprintImplementableEvent, Category = "Character | Movement")
 	void OnSprintStart();
 	virtual void OnSprintStart_Implementation();
 	UFUNCTION(BlueprintImplementableEvent, Category = "Character | Movement")
@@ -187,7 +186,7 @@ protected:
 	UGCBaseCharacterMovementComponent* GCBaseCharacterMovementComponent;
 	bool bCanStartSrpint = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float TimeToSwitchPositionCameraInSprint = 0.5f;
+	float TimeToSwitchPositionCameraInSprint = 0.5f;
 	UPROPERTY(EditAnywhere, Category = "Character | Curve for camera timeline")
 	UCurveFloat* TimelineCurveForCamera;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Camera")
@@ -204,7 +203,7 @@ protected:
 	FTimeline TimelineForIkFoot;
 	UPROPERTY(EditAnywhere, Category = "Character | IK setting")
 	UCurveFloat* TimelineCurveForIKFoot;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | IK settings",meta =(BlueprintProtected=true))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | IK settings", meta = (BlueprintProtected = true))
 	FName RightFootBoneName;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | IK settings", meta = (BlueprintProtected = true))
 	FName LeftFootBoneName;
@@ -223,7 +222,7 @@ protected:
 	const float DefaultCapsuleHeight = 88.0f;
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	const float CrouchCapsuleHeight = 50.0f;
-	void ChangeCapsuleParamOnProneState(float CapsuleRadius,float ProneCapsuleHalfHeight);
+	void ChangeCapsuleParamOnProneState(float CapsuleRadius, float ProneCapsuleHalfHeight);
 	void ChangeCapsuleParamOutProneState(float CapsuleRadius, float ProneCapsuleHalfHeight);
 	bool CanStartFire();
 	void ChangeMaxSpeedOfPlayer(float speed);
@@ -236,29 +235,29 @@ protected:
 	FMantlingSettings SwimmingMantleSettings;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement | Mantling")
 	FMantlingSettings LowMantleSettings;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement | Mantling" ,meta=(ClampMin=0.0f,UIMin=0.0f))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement | Mantling", meta = (ClampMin = 0.0f, UIMin = 0.0f))
 	float LowMantleMaxHeight = 125.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Components")
 	UCharacterAttributeComponent* CharacterAttributesComponent;
 	virtual void OnDeath();
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character | Animations")
-		class UAnimMontage* OnDeathAnimMontage;
+	class UAnimMontage* OnDeathAnimMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character | Attributes")
-		class UCurveFloat* FallDamageCurve;
+	class UCurveFloat* FallDamageCurve;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
-		UCharacterInventoryComponent* CharacterInventoryComponent;
+	UCharacterInventoryComponent* CharacterInventoryComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
-		UCharacterEquipmentComponent* CharacterEquipmentComponent;
+	UCharacterEquipmentComponent* CharacterEquipmentComponent;
 	virtual void OnStartAimingInternal();
 	virtual void OnStopAimingInternal();
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Team")
-		ETeams Team=ETeams::Enemy;
+	ETeams Team = ETeams::Enemy;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character | Interactive")
-		float LineSightDistance = 500.0f;
+	float LineSightDistance = 500.0f;
 	void TraceOfSight();
 	UPROPERTY()
-		TScriptInterface<IInteractable> LineOfSightObject;
-	
+	TScriptInterface<IInteractable> LineOfSightObject;
+
 private:
 	float CurrentAimingMovementSpeed;
 	void ShowLoseText();
@@ -277,8 +276,8 @@ private:
 	float IKLeftFootOffset = 0.0f;
 	bool bCanCrouch = true;
 	bool bIsTrytoChangeCrouchPosition = false;
-	bool bChangeRightEffector=false;
-	bool bChangeLeftEffector=false;
+	bool bChangeRightEffector = false;
+	bool bChangeLeftEffector = false;
 	bool bIsDebugLkCalculationEnable = false;
 	bool bIsAiming = false;
 	FVector FinalEffectorPosition;

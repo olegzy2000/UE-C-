@@ -50,10 +50,10 @@ void AGCBaseCharacter::EndPlay(const EEndPlayReason::Type Reason)
 }
 void AGCBaseCharacter::ChangeCrouchState()
 {
-		if (CanCrouch()) {
-			GetBaseCharacterMovementComponent()->ChangeCrouchState();
-			OnChangeCrouchState();
-		}
+	if (CanCrouch()) {
+		GetBaseCharacterMovementComponent()->ChangeCrouchState();
+		OnChangeCrouchState();
+	}
 }
 
 void AGCBaseCharacter::OnChangeCrouchState()
@@ -132,7 +132,7 @@ void AGCBaseCharacter::StartFire()
 		CharacterEquipmentComponent->StartLaunching(CurrentThrowableItem->GetCharacterThrowAnimMontage());
 		return;
 	}
-	
+
 }
 
 bool AGCBaseCharacter::CanStartFire() {
@@ -252,28 +252,10 @@ bool AGCBaseCharacter::PickupItem(TWeakObjectPtr<UInventoryItem> ItemToPickup)
 {
 	bool Result = false;
 	if (CharacterInventoryComponent->HasFreeSlot()) {
-		Result=CharacterInventoryComponent->AddItem(ItemToPickup, 1);
+		Result = CharacterInventoryComponent->AddItem(ItemToPickup, 1);
 	}
 	return Result;
 
-}
-void AGCBaseCharacter::UseInventory(APlayerController* PlayerController)
-{
-	if (!IsValid(PlayerController)) {
-		return;
-	}
-	if (!CharacterInventoryComponent->IsViewVisible()) {
-		CharacterInventoryComponent->OpenViewInventory(PlayerController);
-		CharacterEquipmentComponent->OpenViewEquipment(PlayerController);
-		PlayerController->SetInputMode(FInputModeGameAndUI{});
-		PlayerController->bShowMouseCursor=true;
-	}
-	else {
-		CharacterInventoryComponent->CloseViewInventory();
-		CharacterEquipmentComponent->CloseViewEquipment();
-		PlayerController->SetInputMode(FInputModeGameOnly{});
-		PlayerController->bShowMouseCursor = false;
-	}
 }
 void AGCBaseCharacter::ChangeCapsuleParamOnProneStateFromCrouch(float Radius, float ProneCapsuleHalfHeight)
 {
@@ -298,7 +280,7 @@ void AGCBaseCharacter::AddHealth(float Health)
 {
 	//CharacterAttributesComponent->AddHealth(Health);
 	if (CharacterAttributesComponent->OnHealthChangedEvent.IsBound()) {
-		CharacterAttributesComponent->OnHealthChangedEvent.Broadcast(Health/CharacterAttributesComponent->GetMaxHealth());
+		CharacterAttributesComponent->OnHealthChangedEvent.Broadcast(Health / CharacterAttributesComponent->GetMaxHealth());
 	}
 }
 
@@ -347,13 +329,13 @@ void AGCBaseCharacter::Mantle(bool bForce)
 		return;
 	}
 	FLedgeDescription LedgeDescription;
-	if (LegDetectorComponent->DetectLedge(LedgeDescription) && !GetBaseCharacterMovementComponent()->IsMantling()){
+	if (LegDetectorComponent->DetectLedge(LedgeDescription) && !GetBaseCharacterMovementComponent()->IsMantling()) {
 		FMantlingMovementParameters MantlingParameters;
 		if (LedgeDescription.HitObject != NULL && LedgeDescription.HitObject) {
 			MantlingParameters.HitObject = LedgeDescription.HitObject;
-		//	AttachToComponent(LedgeDescription.HitObject->GetPlatformMesh(),FAttachmentTransformRules::KeepWorldTransform);
+			//	AttachToComponent(LedgeDescription.HitObject->GetPlatformMesh(),FAttachmentTransformRules::KeepWorldTransform);
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("Some debug message!"));
-			
+
 		}
 		else
 		{
@@ -361,12 +343,12 @@ void AGCBaseCharacter::Mantle(bool bForce)
 		}
 		//MantlingParameters.InitialLocation = LedgeDescription.HitObject->GetActorTransform().TransformPosition(GetActorLocation());
 		//else
-			MantlingParameters.InitialLocation = GetActorLocation();
+		MantlingParameters.InitialLocation = GetActorLocation();
 		MantlingParameters.InitialRotation = GetActorRotation();
 		//if (LedgeDescription.HitObject != NULL)
 		//MantlingParameters.TargetLocation = LedgeDescription.HitObject->GetActorTransform().TransformPosition(LedgeDescription.Location);
 		//else
-			MantlingParameters.TargetLocation = LedgeDescription.Location;
+		MantlingParameters.TargetLocation = LedgeDescription.Location;
 		MantlingParameters.TargetRotation = LedgeDescription.Rotation;
 		float MantlingHeight = (MantlingParameters.TargetLocation - MantlingParameters.InitialLocation).Z;
 		const FMantlingSettings& MantlingSettings = GetMantlingSettings(MantlingHeight);
@@ -375,18 +357,18 @@ void AGCBaseCharacter::Mantle(bool bForce)
 		MantlingSettings.MantlingCurve->GetTimeRange(MinRange, MaxRange);
 		MantlingParameters.Duration = MaxRange - MinRange;
 
-	
-	//	float StartTime = HightMantleSettings.MaxHeightStartTime + (MantlingHeight = HightMantleSettings.MinHeight) / (HightMantleSettings.MaxHeight - HightMantleSettings.MinHeight) * (HightMantleSettings.MaxHeightStartTime - HightMantleSettings.MinHeightStartTime);
+
+		//	float StartTime = HightMantleSettings.MaxHeightStartTime + (MantlingHeight = HightMantleSettings.MinHeight) / (HightMantleSettings.MaxHeight - HightMantleSettings.MinHeight) * (HightMantleSettings.MaxHeightStartTime - HightMantleSettings.MinHeightStartTime);
 		MantlingParameters.MantlingCurve = MantlingSettings.MantlingCurve;
 		FVector2D SourceRange(MantlingSettings.MinHeight, MantlingSettings.MaxHeight);
 		FVector2D TargetRange(MantlingSettings.MinHeightStartTime, MantlingSettings.MaxHeightStartTime);
 		MantlingParameters.StartTime = FMath::GetMappedRangeValueClamped(SourceRange, TargetRange, MantlingHeight);
 		MantlingParameters.Duration -= MantlingParameters.StartTime;
-		MantlingParameters.InitialAnimationLocation = MantlingParameters.TargetLocation - MantlingSettings.AnimationCorrectionZ * FVector::UpVector+ MantlingSettings.AnimationCorrectionXY*LedgeDescription.LedgeNormal;
+		MantlingParameters.InitialAnimationLocation = MantlingParameters.TargetLocation - MantlingSettings.AnimationCorrectionZ * FVector::UpVector + MantlingSettings.AnimationCorrectionXY * LedgeDescription.LedgeNormal;
 		GetBaseCharacterMovementComponent()->StartMantle(MantlingParameters);
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		AnimInstance->Montage_Play(MantlingSettings.MantlingMontage, 1.0f,EMontagePlayReturnType::Duration,MantlingParameters.StartTime);
-    }
+		AnimInstance->Montage_Play(MantlingSettings.MantlingMontage, 1.0f, EMontagePlayReturnType::Duration, MantlingParameters.StartTime);
+	}
 }
 void AGCBaseCharacter::TryToRunWall()
 {
@@ -397,81 +379,81 @@ void AGCBaseCharacter::CalculateIkFootPosition()
 	UGCBaseCharacterAnimInstance* GCBaseCharacterAnimInstance = Cast<UGCBaseCharacterAnimInstance>(GetMesh()->GetAnimInstance());
 	if (!GCBaseCharacterAnimInstance)
 		return;
-		if (GetVelocity().Size() == 0 && !GetBaseCharacterMovementComponent()->IsMantling()) {
-			TArray<AActor*>ActorsToIgnore;
-			FHitResult LeftTraceHit;
-			const FVector LeftFootLocation = GetTransform().TransformPosition(LeftFootBoneRelativeLocation);
-			EDrawDebugTrace::Type DebugTrace;
-			if (bIsDebugLkCalculationEnable)
-				DebugTrace =EDrawDebugTrace::ForOneFrame;
-			else
-				DebugTrace = EDrawDebugTrace::None;
-			bool bLeftFootTraceHit = UKismetSystemLibrary::SphereTraceSingle(this, LeftFootLocation + FVector(0.f, 0.0f, 50.f),
-				LeftFootLocation + FVector(0.f, 0.f, -100.f), 10, ETraceTypeQuery::TraceTypeQuery1, false, ActorsToIgnore, DebugTrace, LeftTraceHit, true);
+	if (GetVelocity().Size() == 0 && !GetBaseCharacterMovementComponent()->IsMantling()) {
+		TArray<AActor*>ActorsToIgnore;
+		FHitResult LeftTraceHit;
+		const FVector LeftFootLocation = GetTransform().TransformPosition(LeftFootBoneRelativeLocation);
+		EDrawDebugTrace::Type DebugTrace;
+		if (bIsDebugLkCalculationEnable)
+			DebugTrace = EDrawDebugTrace::ForOneFrame;
+		else
+			DebugTrace = EDrawDebugTrace::None;
+		bool bLeftFootTraceHit = UKismetSystemLibrary::SphereTraceSingle(this, LeftFootLocation + FVector(0.f, 0.0f, 50.f),
+			LeftFootLocation + FVector(0.f, 0.f, -100.f), 10, ETraceTypeQuery::TraceTypeQuery1, false, ActorsToIgnore, DebugTrace, LeftTraceHit, true);
 
-			FHitResult RightTraceHit;
-			const FVector RightFootLocation = GetTransform().TransformPosition(RightFootBoneRelativeLocation);
-			bool bRightFootTraceHit = UKismetSystemLibrary::SphereTraceSingle(this, RightFootLocation + FVector(0.f, 0.0f, 50.f),
-				RightFootLocation + FVector(0.f, 0.f, -100.f), 10, ETraceTypeQuery::TraceTypeQuery1, false, ActorsToIgnore, DebugTrace, RightTraceHit, true);
+		FHitResult RightTraceHit;
+		const FVector RightFootLocation = GetTransform().TransformPosition(RightFootBoneRelativeLocation);
+		bool bRightFootTraceHit = UKismetSystemLibrary::SphereTraceSingle(this, RightFootLocation + FVector(0.f, 0.0f, 50.f),
+			RightFootLocation + FVector(0.f, 0.f, -100.f), 10, ETraceTypeQuery::TraceTypeQuery1, false, ActorsToIgnore, DebugTrace, RightTraceHit, true);
 
-			float ZOffset = 0;
-			if (RightTraceHit.ImpactPoint.Z>0 && LeftTraceHit.ImpactPoint.Z >0 && fabs(RightTraceHit.ImpactPoint.Z - LeftTraceHit.ImpactPoint.Z) < 50.0f) {
-				if (LeftTraceHit.ImpactPoint.Z < RightTraceHit.ImpactPoint.Z) {
-					ZOffset = LeftFootLocation.Z - LeftTraceHit.ImpactPoint.Z;
-					StartEffectorPosition = RightFootBoneRelativeLocation;
-					FinalEffectorPosition = RightTraceHit.ImpactPoint + FVector(0.f, 0.f, 14.f);
-					bChangeRightEffector = true;
-					bChangeLeftEffector = false;
-					//GCBaseCharacterAnimInstance->setRightEffectorLocation(RightTraceHit.ImpactPoint + FVector(0.f, 0.f, 14.f));
-					GCBaseCharacterAnimInstance->SetLeftFootAlpha(0.f);
-					GCBaseCharacterAnimInstance->SetRightFootAlpha(1.f);
+		float ZOffset = 0;
+		if (RightTraceHit.ImpactPoint.Z > 0 && LeftTraceHit.ImpactPoint.Z > 0 && fabs(RightTraceHit.ImpactPoint.Z - LeftTraceHit.ImpactPoint.Z) < 50.0f) {
+			if (LeftTraceHit.ImpactPoint.Z < RightTraceHit.ImpactPoint.Z) {
+				ZOffset = LeftFootLocation.Z - LeftTraceHit.ImpactPoint.Z;
+				StartEffectorPosition = RightFootBoneRelativeLocation;
+				FinalEffectorPosition = RightTraceHit.ImpactPoint + FVector(0.f, 0.f, 14.f);
+				bChangeRightEffector = true;
+				bChangeLeftEffector = false;
+				//GCBaseCharacterAnimInstance->setRightEffectorLocation(RightTraceHit.ImpactPoint + FVector(0.f, 0.f, 14.f));
+				GCBaseCharacterAnimInstance->SetLeftFootAlpha(0.f);
+				GCBaseCharacterAnimInstance->SetRightFootAlpha(1.f);
 
-					TimelineForIkFoot.Play();
-				}
-				else {
-					ZOffset = RightFootLocation.Z - RightTraceHit.ImpactPoint.Z;
-					//GCBaseCharacterAnimInstance->setLeftEffectorLocation(LeftTraceHit.ImpactPoint + FVector(0.f, 0.f, 14.f));
-					bChangeRightEffector = false;
-					bChangeLeftEffector = true;
-					StartEffectorPosition = LeftFootBoneRelativeLocation;
-					FinalEffectorPosition = LeftTraceHit.ImpactPoint + FVector(0.f, 0.f, 14.f);
-					GCBaseCharacterAnimInstance->SetRightFootAlpha(0.f);
-					GCBaseCharacterAnimInstance->SetLeftFootAlpha(1.f);
-					if (RightTraceHit.ImpactPoint.Z == LeftTraceHit.ImpactPoint.Z)
-						GCBaseCharacterAnimInstance->setLeftEffectorLocation(FinalEffectorPosition);
-					else
-						TimelineForIkFoot.Play();
-				}
-				StartSkeletonPosition = GetMesh()->GetRelativeLocation();
-				if (GetBaseCharacterMovementComponent()->IsCrouched()) {
-					ZOffset = -18.0f;
-				}
-				EndSkeletonPosition = InitialMeshRalativeLocation + FVector(0.f, 0.f, -ZOffset + 14.0f);
-				if (GetBaseCharacterMovementComponent()->IsCrouched()) {
-					ChangeSkeletalMeshPosition(InitialMeshRalativeLocation + FVector(0.f, 0.f, -ZOffset + 14.0f));
-				}
-				else if (fabs(LeftTraceHit.ImpactPoint.Z-RightTraceHit.ImpactPoint.Z)>1.0f && GetBaseCharacterMovementComponent()->IsProning()) {
-					ChangeSkeletalMeshPosition(InitialMeshRalativeLocation + FVector(0.f, 0.f, -ZOffset + 60.0f));
-				}
+				TimelineForIkFoot.Play();
+			}
+			else {
+				ZOffset = RightFootLocation.Z - RightTraceHit.ImpactPoint.Z;
+				//GCBaseCharacterAnimInstance->setLeftEffectorLocation(LeftTraceHit.ImpactPoint + FVector(0.f, 0.f, 14.f));
+				bChangeRightEffector = false;
+				bChangeLeftEffector = true;
+				StartEffectorPosition = LeftFootBoneRelativeLocation;
+				FinalEffectorPosition = LeftTraceHit.ImpactPoint + FVector(0.f, 0.f, 14.f);
+				GCBaseCharacterAnimInstance->SetRightFootAlpha(0.f);
+				GCBaseCharacterAnimInstance->SetLeftFootAlpha(1.f);
+				if (RightTraceHit.ImpactPoint.Z == LeftTraceHit.ImpactPoint.Z)
+					GCBaseCharacterAnimInstance->setLeftEffectorLocation(FinalEffectorPosition);
 				else
-					TimelineForSkeletonPosition.PlayFromStart();
+					TimelineForIkFoot.Play();
 			}
-		}
-		else if(!GetBaseCharacterMovementComponent()->IsProning() && !GetBaseCharacterMovementComponent()->IsCrouched()) {
 			StartSkeletonPosition = GetMesh()->GetRelativeLocation();
-			EndSkeletonPosition = InitialMeshRalativeLocation;
-			if (GetBaseCharacterMovementComponent()->IsProning()) {
-				EndSkeletonPosition += FVector(0.f, 0.f,1000.0f);
+			if (GetBaseCharacterMovementComponent()->IsCrouched()) {
+				ZOffset = -18.0f;
 			}
-			if (TimelineForSkeletonPosition.IsPlaying())
-				TimelineForSkeletonPosition.Stop();
-			if (TimelineForIkFoot.IsPlaying())
-				TimelineForIkFoot.Stop();
-			TimelineForSkeletonPosition.Stop();
-			Cast<UGCBaseCharacterAnimInstance>(GetMesh()->GetAnimInstance())->SetLeftFootAlpha(0.f);
-			Cast<UGCBaseCharacterAnimInstance>(GetMesh()->GetAnimInstance())->SetRightFootAlpha(0.f);
-			ChangeSkeletalMeshPosition(InitialMeshRalativeLocation);
+			EndSkeletonPosition = InitialMeshRalativeLocation + FVector(0.f, 0.f, -ZOffset + 14.0f);
+			if (GetBaseCharacterMovementComponent()->IsCrouched()) {
+				ChangeSkeletalMeshPosition(InitialMeshRalativeLocation + FVector(0.f, 0.f, -ZOffset + 14.0f));
+			}
+			else if (fabs(LeftTraceHit.ImpactPoint.Z - RightTraceHit.ImpactPoint.Z) > 1.0f && GetBaseCharacterMovementComponent()->IsProning()) {
+				ChangeSkeletalMeshPosition(InitialMeshRalativeLocation + FVector(0.f, 0.f, -ZOffset + 60.0f));
+			}
+			else
+				TimelineForSkeletonPosition.PlayFromStart();
 		}
+	}
+	else if (!GetBaseCharacterMovementComponent()->IsProning() && !GetBaseCharacterMovementComponent()->IsCrouched()) {
+		StartSkeletonPosition = GetMesh()->GetRelativeLocation();
+		EndSkeletonPosition = InitialMeshRalativeLocation;
+		if (GetBaseCharacterMovementComponent()->IsProning()) {
+			EndSkeletonPosition += FVector(0.f, 0.f, 1000.0f);
+		}
+		if (TimelineForSkeletonPosition.IsPlaying())
+			TimelineForSkeletonPosition.Stop();
+		if (TimelineForIkFoot.IsPlaying())
+			TimelineForIkFoot.Stop();
+		TimelineForSkeletonPosition.Stop();
+		Cast<UGCBaseCharacterAnimInstance>(GetMesh()->GetAnimInstance())->SetLeftFootAlpha(0.f);
+		Cast<UGCBaseCharacterAnimInstance>(GetMesh()->GetAnimInstance())->SetRightFootAlpha(0.f);
+		ChangeSkeletalMeshPosition(InitialMeshRalativeLocation);
+	}
 }
 
 void AGCBaseCharacter::OnDeath()
@@ -479,7 +461,7 @@ void AGCBaseCharacter::OnDeath()
 	GetBaseCharacterMovementComponent()->DisableMovement();
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	//GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	float Duration=PlayAnimMontage(OnDeathAnimMontage);
+	float Duration = PlayAnimMontage(OnDeathAnimMontage);
 	if (Duration == 0.0f) {
 		EnableRagdoll();
 	}
@@ -499,13 +481,13 @@ void AGCBaseCharacter::OnDeath()
 void AGCBaseCharacter::ShowLoseText()
 {
 	if (GEngine) {
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("You lose((("), true,FVector2D(10,10));
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("You lose((("), true, FVector2D(10, 10));
 	}
 }
 void AGCBaseCharacter::restartCurrentLevel()
 {
 	float realtimeSeconds = GetWorld()->GetTimeSeconds();
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Time in game %f seconds"),realtimeSeconds));
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Time in game %f seconds"), realtimeSeconds));
 	UGameplayStatics::OpenLevel(this, FName("LocamotionLevel"), true);
 }
 void AGCBaseCharacter::EnableRagdoll()
@@ -519,18 +501,18 @@ void AGCBaseCharacter::ChangeCapsuleParamFromIdleWalkStateToCrouch()
 	GetCapsuleComponent()->SetCapsuleSize(GetDefaultCapsuleRadius(), GetCrouchCapsuleHeight());
 	GetCapsuleComponent()->MoveComponent(FVector(0.f, 0.f, -(GetDefaultCapsuleHeight() - GetCrouchCapsuleHeight()) / 2), GetCapsuleComponent()->GetComponentQuat()
 		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
-	ChangeSkeletalMeshPosition(InitialMeshRalativeLocation  + FVector(0.f, 0.f, (GetCrouchCapsuleHeight() / 2)+7));
-	SpringArmComponent->MoveComponent(FVector(0.f, 0.f,((GetDefaultCapsuleHeight() - GetCrouchCapsuleHeight()) / 2)+19), GetCapsuleComponent()->GetComponentQuat()
+	ChangeSkeletalMeshPosition(InitialMeshRalativeLocation + FVector(0.f, 0.f, (GetCrouchCapsuleHeight() / 2) + 7));
+	SpringArmComponent->MoveComponent(FVector(0.f, 0.f, ((GetDefaultCapsuleHeight() - GetCrouchCapsuleHeight()) / 2) + 19), GetCapsuleComponent()->GetComponentQuat()
 		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
 }
 
 void AGCBaseCharacter::ChangeCapsuleParamFromCrouchedToIdleWalk()
 {
 	GetCapsuleComponent()->SetCapsuleSize(GetDefaultCapsuleRadius(), GetDefaultCapsuleHeight());
-	GetCapsuleComponent()->MoveComponent(FVector(0.f, 0.f, (GetDefaultCapsuleHeight())/2), GetCapsuleComponent()->GetComponentQuat()
+	GetCapsuleComponent()->MoveComponent(FVector(0.f, 0.f, (GetDefaultCapsuleHeight()) / 2), GetCapsuleComponent()->GetComponentQuat()
 		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
 	ChangeSkeletalMeshPosition(InitialMeshRalativeLocation);
-	SpringArmComponent->MoveComponent(FVector(0.f, 0.f, (-((GetDefaultCapsuleHeight() - GetCrouchCapsuleHeight())/2)-19)), GetCapsuleComponent()->GetComponentQuat()
+	SpringArmComponent->MoveComponent(FVector(0.f, 0.f, (-((GetDefaultCapsuleHeight() - GetCrouchCapsuleHeight()) / 2) - 19)), GetCapsuleComponent()->GetComponentQuat()
 		, false, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
 }
 
@@ -538,7 +520,7 @@ void AGCBaseCharacter::InitTimelineToIKFoot()
 {
 	FOnTimelineFloatStatic IKFootTimeLineUpdate;
 	IKFootTimeLineUpdate.BindUObject(this, &AGCBaseCharacter::IKFootPositionUpdate);
-	TimelineForIkFoot.AddInterpFloat(TimelineCurveForIKFoot ,IKFootTimeLineUpdate);
+	TimelineForIkFoot.AddInterpFloat(TimelineCurveForIKFoot, IKFootTimeLineUpdate);
 	TimelineForIkFoot.SetTimelineLength(0.05f);
 	TimelineForIkFoot.SetLooping(false);
 
@@ -593,7 +575,7 @@ void AGCBaseCharacter::NotifyJumpApex()
 void AGCBaseCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
-	float FallHeight = (CurrentFallApex-GetActorLocation()).Z/100;
+	float FallHeight = (CurrentFallApex - GetActorLocation()).Z / 100;
 	if (IsValid(FallDamageCurve)) {
 		float DamageAmount = FallDamageCurve->GetFloatValue(FallHeight);
 		TakeDamage(DamageAmount, FDamageEvent(), GetController(), Hit.GetActor());
@@ -602,7 +584,7 @@ void AGCBaseCharacter::Landed(const FHitResult& Hit)
 
 UGCBaseCharacterMovementComponent* AGCBaseCharacter::GetBaseCharacterMovementComponent() const
 {
-		return GCBaseCharacterMovementComponent;
+	return GCBaseCharacterMovementComponent;
 }
 
 
@@ -619,8 +601,8 @@ void AGCBaseCharacter::UnRegisterInteractiveActor(AInteractiveActor* Interactive
 void AGCBaseCharacter::ClimbLadderUp(float Value)
 {
 	if (GetBaseCharacterMovementComponent()->IsOnLadder() && !FMath::IsNearlyZero(Value)) {
-		FVector LadderUpVector=GetBaseCharacterMovementComponent()->GetCurrentLadder()->GetActorUpVector();
-		AddMovementInput(LadderUpVector,Value);
+		FVector LadderUpVector = GetBaseCharacterMovementComponent()->GetCurrentLadder()->GetActorUpVector();
+		AddMovementInput(LadderUpVector, Value);
 	}
 }
 
@@ -665,7 +647,7 @@ const ALadder* AGCBaseCharacter::GetAvailableLadder()
 }
 AZipline* AGCBaseCharacter::GetAvailableZipline()
 {
-	 AZipline* Result = nullptr;
+	AZipline* Result = nullptr;
 	for (AInteractiveActor* InteractiveActor : AvailableInteractiveActors) {
 		if (InteractiveActor->IsA<AZipline>()) {
 			Result = StaticCast< AZipline*>(InteractiveActor);
@@ -739,21 +721,21 @@ void AGCBaseCharacter::TraceOfSight()
 	FCollisionQueryParams ParamsCollision;
 	//GCTraceUtils::LineTraceSingleByChannel(GetWorld(), HitResult, ViewLocation, TraceEnd, ECollisionChannel::ECC_Visibility, ParamsCollision, true, 1, FColor::Green);
 	if (HitResult.GetActor() != nullptr) {
-			LineOfSightObject = HitResult.GetActor();
-			FName ActionName;
-			if (LineOfSightObject.GetInterface()) {
-				ActionName = LineOfSightObject->GetActionEventName();
-			}
-			else {
-				ActionName = NAME_None;
-			}
-			OnInteractableObjectFound.ExecuteIfBound(ActionName);
+		LineOfSightObject = HitResult.GetActor();
+		FName ActionName;
+		if (LineOfSightObject.GetInterface()) {
+			ActionName = LineOfSightObject->GetActionEventName();
+		}
+		else {
+			ActionName = NAME_None;
+		}
+		OnInteractableObjectFound.ExecuteIfBound(ActionName);
 	}
 	else {
 		LineOfSightObject = nullptr;
 		OnInteractableObjectFound.ExecuteIfBound(NAME_None);
 	}
-	
+
 }
 bool AGCBaseCharacter::CanSprint()
 {
@@ -807,7 +789,7 @@ void AGCBaseCharacter::OnSprintEnd_Implementation()
 
 bool AGCBaseCharacter::CanMantle() const
 {
-	return !GetBaseCharacterMovementComponent()->IsOnLadder() && !GetBaseCharacterMovementComponent()->IsOnZipline()  && !GetBaseCharacterMovementComponent()->IsSlide();
+	return !GetBaseCharacterMovementComponent()->IsOnLadder() && !GetBaseCharacterMovementComponent()->IsOnZipline() && !GetBaseCharacterMovementComponent()->IsSlide();
 }
 
 void AGCBaseCharacter::TryChangeSprintState()

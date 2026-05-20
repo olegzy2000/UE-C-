@@ -16,6 +16,9 @@
 /**
  *
  */
+class UInventoryViewWidget;
+class UEquipmentViewWidget;
+
 UCLASS()
 class MYPROJECT_API AGCPlayerController : public APlayerController
 {
@@ -25,8 +28,21 @@ protected:
 	virtual void SetupInputComponent() override;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "User interface | setting")
 	TSubclassOf<class UUserWidget> UserInterface;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "User interface | Inventory")
+	TSubclassOf<UInventoryViewWidget> InventoryViewWidgetClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "User interface | Inventory")
+	TSubclassOf<UEquipmentViewWidget> EquipmentViewWidgetClass;
+
 	UPROPERTY()
 	UPlayerHUD* PlayerHUD;
+
+	UPROPERTY()
+	UInventoryViewWidget* InventoryViewWidget;
+
+	UPROPERTY()
+	UEquipmentViewWidget* EquipmentViewWidget;
 
 
 
@@ -67,6 +83,11 @@ private:
 	void SecondaryMeleeAttack();
 	void Interact();
 	void OnInteractableObjectFound(FName ActionName);
+	void ToggleInventoryUI();
+	void OpenInventoryUI();
+	void CloseInventoryUI();
+	bool IsInventoryUIOpen() const;
+	void CreateInventoryUIIfNeeded();
 	void UseInventory();
 	void QuickSaveGame();
 	void QuickLoadGame();

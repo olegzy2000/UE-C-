@@ -9,17 +9,15 @@
 #include <Actors/Equipment/Throwable/ThrowableItem.h>
 #include "Actors/Equipment/Weapons/RangeWeaponItem.h"
 #include "Actors/Equipment/Weapons/MeleeWeaponItem.h"
-#include <Widget/Equipment/EquipmentViewWidget.h>
 #include "Characters/GCBaseCharacter.h"
 #include "CharacterEquipmentComponent.generated.h"
 typedef TArray<AEquipableItem*, TInlineAllocator<(uint32)EEquipmentSlots::MAX>> TItemsArray;
-typedef TArray<int32, TInlineAllocator<(uint32)EAmunitionType::MAX>> TAmunitionArray;
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnCurrentWeaponAmmoChanged, int32, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquippedItemChanged, const AEquipableItem*);
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class MYPROJECT_API UCharacterEquipmentComponent : public UActorComponent , public ISaveSubsystemInterface
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
+class MYPROJECT_API UCharacterEquipmentComponent : public UActorComponent, public ISaveSubsystemInterface
 {
 	GENERATED_BODY()
 public:
@@ -27,7 +25,7 @@ public:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction);
 	EEquipableItemType GetCurrentEquippedWeaponType() const;
 	ARangeWeaponItem* GetCurrentRangeWeaponItem() const;
-	void ReloadCurrentWeapon() ;
+	void ReloadCurrentWeapon();
 	void EquipItemInSlot(EEquipmentSlots Slot);
 	void StartLaunching(UAnimMontage* EquipMontage);
 	void AttachCurrentItemToEquippedSocket();
@@ -38,34 +36,27 @@ public:
 	void EquipPreviousItem();
 	bool IsEquipping() const;
 	void LaunchCurrentThrowableItem();
-	void ReloadAmmoInCurrentWeapon(int32 NumberOfAmmo=0, bool bCheckIsFull=false);
+	void ReloadAmmoInCurrentWeapon(int32 NumberOfAmmo = 0, bool bCheckIsFull = false);
 	FOnCurrentWeaponAmmoChanged OnCurrentWeaponAmmoChanged;
 	FOnEquippedItemChanged OnEquippedItemChanged;
 	bool AddEquipmentItemToSlot(const TSubclassOf<AEquipableItem>EquipableItemClass, int32 SlotIndex, int32 StartedAmmo);
 	void RemoveItemFromSlot(int32 SlotIndex);
-	void OpenViewEquipment(APlayerController* PlayerController);
-	void CloseViewEquipment();
-	bool IsViewVisible() const;
 	const TArray<AEquipableItem*> GetItems() const;
-	void AddAmunition(EAmunitionType AmunitionType, int32 Amount);
 
 	virtual void OnLevelDeserialized_Implementation() override;
 protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Loadout")
-		TMap<EAmunitionType, int32>MaxAmunitionAmount;
+	TMap<EAmunitionType, int32>MaxAmunitionAmount;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Loadout")
-		TMap<EEquipmentSlots, TSubclassOf<AEquipableItem>>ItemsLodout;
+	TMap<EEquipmentSlots, TSubclassOf<AEquipableItem>>ItemsLodout;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Loadout")
-		TSet<EEquipmentSlots>IgnoreSlotsWhileSwitching;
+	TSet<EEquipmentSlots>IgnoreSlotsWhileSwitching;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Loadout")
-		EEquipmentSlots AutoEquipItemInSlot=EEquipmentSlots::None;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "View")
-		TSubclassOf<UEquipmentViewWidget> ViewWidgetClass ;
-	void CreateViewWidget(APlayerController* PlayerController);
+	EEquipmentSlots AutoEquipItemInSlot = EEquipmentSlots::None;
 private:
 	void AutoEquip();
-	bool bIsEquipping=false;
+	bool bIsEquipping = false;
 	uint32 NextItemsArraySlotIndex(uint32 CurrentSlotIndex);
 	uint32 PreviousItemsArraySlotIndex(uint32 CurrentSlotIndex);
 	UPROPERTY(SaveGame)
@@ -74,10 +65,6 @@ private:
 	EEquipmentSlots CurrentEquippedSlot;
 	EEquipmentSlots PreviosEquippedSlot;
 	int32 GetAvailableAmunitionForCurrentWeapon();
-	//UPROPERTY(SaveGame)
-	//TAmunitionArray AmunitionArray;
-	UPROPERTY(SaveGame)
-	TArray<int32> AmunitionArray;
 	UPROPERTY(SaveGame)
 	TArray<AEquipableItem*> ItemsArray;
 	void CreateLoadout();
@@ -91,10 +78,9 @@ private:
 	void OnCurrentWeaponChanged(int32 Ammo);
 	void OnCurrentItemChanged(int32 Ammo);
 	UFUNCTION()
-		void OnWeaponReloadComplete();
+	void OnWeaponReloadComplete();
 	FDelegateHandle OnCurrentWeaponAmmoChangeHandle;
 	FDelegateHandle OnCurrentWeaponAReloadedHandle;
 	void EquipAnimationFinished();
-	UEquipmentViewWidget* ViewWidget;
 
 };

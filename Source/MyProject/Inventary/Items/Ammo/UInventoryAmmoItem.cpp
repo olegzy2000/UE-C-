@@ -12,12 +12,12 @@ void UInventoryAmmoItem::SetAmount(int32 NewAmount)
     this->Amount = NewAmount;
 }
 
-EAmunitionType UInventoryAmmoItem::GetAmmoType()
+EAmunitionType UInventoryAmmoItem::GetAmmoType() const
 {
     return AmunitionType;
 }
 
-int32 UInventoryAmmoItem::GetAmount()
+int32 UInventoryAmmoItem::GetAmount() const
 {
     return Amount;
 }
