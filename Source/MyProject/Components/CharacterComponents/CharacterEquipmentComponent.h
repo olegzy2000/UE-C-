@@ -11,10 +11,27 @@
 #include "Actors/Equipment/Weapons/MeleeWeaponItem.h"
 #include "Characters/GCBaseCharacter.h"
 #include "CharacterEquipmentComponent.generated.h"
-typedef TArray<AEquipableItem*, TInlineAllocator<(uint32)EEquipmentSlots::MAX>> TItemsArray;
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnCurrentWeaponAmmoChanged, int32, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquippedItemChanged, const AEquipableItem*);
+
+USTRUCT()
+struct FEquipmentSlotSaveData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(SaveGame)
+	EEquipmentSlots Slot = EEquipmentSlots::None;
+
+	UPROPERTY(SaveGame)
+	FName ItemId = NAME_None;
+
+	UPROPERTY(SaveGame)
+	TSubclassOf<AEquipableItem> ItemClass;
+
+	UPROPERTY(SaveGame)
+	int32 AmmoInMagazine = 0;
+};
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class MYPROJECT_API UCharacterEquipmentComponent : public UActorComponent, public ISaveSubsystemInterface
@@ -23,6 +40,7 @@ class MYPROJECT_API UCharacterEquipmentComponent : public UActorComponent, publi
 public:
 	UCharacterEquipmentComponent();
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction);
+	virtual void Serialize(FArchive& Archive) override;
 	EEquipableItemType GetCurrentEquippedWeaponType() const;
 	ARangeWeaponItem* GetCurrentRangeWeaponItem() const;
 	void ReloadCurrentWeapon();
@@ -57,21 +75,30 @@ protected:
 private:
 	void AutoEquip();
 	bool bIsEquipping = false;
+	void CaptureEquipmentSaveData();
+	void RestoreEquipmentSaveData();
+	void RebuildRuntimeEquipmentFromSaveData();
+	TSubclassOf<AEquipableItem> ResolveSavedEquipmentClass(const FEquipmentSlotSaveData& SlotSaveData) const;
+	void ClearRuntimeEquipment();
 	uint32 NextItemsArraySlotIndex(uint32 CurrentSlotIndex);
 	uint32 PreviousItemsArraySlotIndex(uint32 CurrentSlotIndex);
-	UPROPERTY(SaveGame)
-	AEquipableItem* CurrentEquippedItem;
-	UPROPERTY(SaveGame)
-	EEquipmentSlots CurrentEquippedSlot;
+	UPROPERTY(Transient)
+	AEquipableItem* CurrentEquippedItem = nullptr;
+	UPROPERTY(Transient)
+	EEquipmentSlots CurrentEquippedSlot = EEquipmentSlots::None;
 	EEquipmentSlots PreviosEquippedSlot;
 	int32 GetAvailableAmunitionForCurrentWeapon();
-	UPROPERTY(SaveGame)
+	UPROPERTY(Transient)
 	TArray<AEquipableItem*> ItemsArray;
-	void CreateLoadout();
 	UPROPERTY(SaveGame)
-	ARangeWeaponItem* CurrentEquippedWeapon;
-	AThrowableItem* CurrentThowableItem;
-	AMeleeWeaponItem* CurrentMeleeeWeaponItem;
+	TArray<FEquipmentSlotSaveData> EquipmentSaveData;
+	UPROPERTY(SaveGame)
+	EEquipmentSlots SavedCurrentEquippedSlot = EEquipmentSlots::None;
+	void CreateLoadout();
+	UPROPERTY(Transient)
+	ARangeWeaponItem* CurrentEquippedWeapon = nullptr;
+	AThrowableItem* CurrentThowableItem = nullptr;
+	AMeleeWeaponItem* CurrentMeleeeWeaponItem = nullptr;
 	TWeakObjectPtr<AGCBaseCharacter> CachedBaseCharacter;
 	FTimerHandle EquipTimer;
 	UFUNCTION()

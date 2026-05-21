@@ -4,10 +4,42 @@
 #include "GameCodeTypes.h"
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "../../Subsystems/SaveSubsystem/SaveSubsystemInterface.h"
 #include "CharacterInventoryComponent.generated.h"
 
 class UInventoryItem;
 class AGCBaseCharacter;
+
+UENUM()
+enum class EInventorySlotSaveType : uint8
+{
+	None,
+	GenericItem,
+	WeaponItem,
+	AmmoItem
+};
+
+USTRUCT()
+struct FInventorySlotSaveData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(SaveGame)
+	FName ItemId = NAME_None;
+
+	UPROPERTY(SaveGame)
+	int32 Count = 0;
+
+	UPROPERTY(SaveGame)
+	EInventorySlotSaveType ItemType = EInventorySlotSaveType::None;
+
+	UPROPERTY(SaveGame)
+	EAmunitionType AmmoType = EAmunitionType::None;
+
+	UPROPERTY(SaveGame)
+	int32 AmmoAmount = 0;
+};
+
 USTRUCT(BlueprintType)
 struct FInventorySlot
 {
@@ -28,7 +60,7 @@ private:
 };
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class MYPROJECT_API UCharacterInventoryComponent : public UActorComponent
+class MYPROJECT_API UCharacterInventoryComponent : public UActorComponent, public ISaveSubsystemInterface
 {
 	GENERATED_BODY()
 
@@ -47,10 +79,12 @@ public:
 	bool UpdateAmountAmmoInSlot(EAmunitionType AmunitionType, int32 Amount);
 	bool UpdateInventoryAmmoSlotByWeaponAmmo(TWeakObjectPtr<UInventoryItem> ItemToAdd);
 	bool RemoveItem(FName ItemID);
+	virtual void OnLevelDeserialized_Implementation() override;
 protected:
 	// Called when the game starts
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void BeginPlay() override;
+	virtual void Serialize(FArchive& Archive) override;
 
 	void UpdateInventoryAmmoComponentAmount();
 
@@ -61,6 +95,11 @@ protected:
 	FInventorySlot* FindItemSlot(FName ItemID);
 	FInventorySlot* FindFreeSlot();
 	FInventorySlot* FindSlotWithCustomAmmoItem(EAmunitionType AmmoType);
+	void CaptureInventorySaveData();
+	void RestoreInventorySaveData();
+
+	UPROPERTY(SaveGame)
+	TArray<FInventorySlotSaveData> InventorySaveData;
 private:
 	AGCBaseCharacter* BaseCharacterOwner;
 	int32 ItemsInInventory;

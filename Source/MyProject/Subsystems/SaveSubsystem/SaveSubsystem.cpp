@@ -6,6 +6,7 @@
 #include "SaveSubsystemInterface.h"
 #include "SaveSubsystemUtils.h"
 #include "GameFramework/Character.h"
+#include "Actors/Equipment/EquipableItem.h"
 #include <Runtime/Core/Public/Serialization/ArchiveSaveCompressedProxy.h>
 #include <Runtime/Core/Public/Serialization/ArchiveLoadCompressedProxy.h>
 
@@ -45,6 +46,7 @@ void USaveSubsystem::LoadGame(int32 SaveId)
 		return;
 	}
 
+	bHasPendingLoad = true;
 	UGameplayStatics::OpenLevel(this, GameSaveData.LevelName);
 }
 
@@ -85,6 +87,13 @@ void USaveSubsystem::SerializeLevel(const ULevel* Level, const ULevelStreaming* 
 	ActorsSaveData.Empty();
 	for (AActor* Actor : Level->Actors) {
 		if (!IsValid(Actor) || !Actor->Implements<USaveSubsystemInterface>()) {
+			continue;
+		}
+
+		// Equipped weapon actors are runtime children of the character. Their state is
+		// saved by UCharacterEquipmentComponent, so they must not be saved as separate
+		// level actors with unstable generated names.
+		if (Actor->IsA<AEquipableItem>() && IsValid(Actor->GetOwner())) {
 			continue;
 		}
 		FActorSaveData& ActorSaveData = ActorsSaveData[ActorsSaveData.AddUnique(FActorSaveData(Actor))];
@@ -176,6 +185,14 @@ void USaveSubsystem::DeserializeLevel(ULevel* Level, const ULevelStreaming* Stre
 			continue;
 		}
 
+		// Backward compatibility for saves that already contain equipped weapon actors
+		// as standalone level actors. EquipmentComponent will recreate them from its
+		// own slot save data after actor reconciliation is complete.
+		if (ActorSaveData->Class->IsChildOf(AEquipableItem::StaticClass())) {
+			UE_LOG(LogSaveSubsystem, Verbose, TEXT("USaveSubsystem::DeserializeLevel(): Skipped standalone equipable actor from save: %s"), *ActorSaveData->Name.ToString());
+			continue;
+		}
+
 		UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeLevel(): %s , Spawn new actor with name: %s"), *GetNameSafe(this), *ActorSaveData->Name.ToString());
 		ActorSpawnParameters.Name = ActorSaveData->Name;
 
@@ -215,7 +232,8 @@ void USaveSubsystem::NotifyActorsAndComponents(AActor* Actor)
 void USaveSubsystem::DeserializeGame()
 {
 	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::DeserializeGame(): %s  "), *GetNameSafe(this));
-	if (GameSaveData.bIsSerialized) {
+	if (!bHasPendingLoad) {
+		UE_LOG(LogSaveSubsystem, Verbose, TEXT("USaveSubsystem::DeserializeGame(): Skipped. No pending loaded save data."));
 		return;
 	}
 
@@ -238,6 +256,7 @@ void USaveSubsystem::DeserializeGame()
 	}
 
 	DeserializeLevel(World->PersistentLevel);
+	bHasPendingLoad = false;
 }
 void USaveSubsystem::SerializeGame() {
 	UE_LOG(LogSaveSubsystem, Display, TEXT("USaveSubsystem::SerializeGame(): %s"), *GetNameSafe(this));

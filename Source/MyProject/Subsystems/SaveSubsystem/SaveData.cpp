@@ -34,7 +34,7 @@ bool FObjectSaveData::Serialize(FArchive& Archive)
 
 FActorSaveData::FActorSaveData(const AActor* Actor)
 	:Super(Actor)
-	,Transform(FTransform::Identity)
+	, Transform(FTransform::Identity)
 {
 
 }
@@ -73,13 +73,11 @@ bool FGameSaveData::Serialize(FArchive& Archive)
 	Archive << Level;
 	Archive << GameInstance;
 	Archive << StartTransform;
-	bIsSerialized = true;
 	return true;
 }
 FGameSaveData::FGameSaveData()
 	: Level(FName(TEXT("Persistent")))
 	, StartTransform(FTransform::Identity)
-	, bIsSerialized(false)
 {
 
 }

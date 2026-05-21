@@ -11,20 +11,112 @@
 #include <Widget/Equipment/EquipmentSlotWidget.h>
 #include "../../Inventary/Items/Equipables/WeaponInventoryItem.h"
 // Sets default values for this component's properties
-UCharacterInventoryComponent::UCharacterInventoryComponent() {
+UCharacterInventoryComponent::UCharacterInventoryComponent()
+	: ItemsInInventory(0)
+{
 	PrimaryComponentTick.bCanEverTick = true;
 }
 void UCharacterInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
+
+void UCharacterInventoryComponent::Serialize(FArchive& Archive)
+{
+	if (Archive.IsSaveGame() && Archive.IsSaving()) {
+		CaptureInventorySaveData();
+	}
+
+	Super::Serialize(Archive);
+
+	if (Archive.IsSaveGame() && Archive.IsLoading()) {
+		RestoreInventorySaveData();
+	}
+}
+
+void UCharacterInventoryComponent::CaptureInventorySaveData()
+{
+	InventorySaveData.Empty();
+
+	for (const FInventorySlot& Slot : InventorySlots) {
+		if (!Slot.Item.IsValid()) {
+			continue;
+		}
+
+		FInventorySlotSaveData SlotSaveData;
+		SlotSaveData.ItemId = Slot.Item->GetDataTableID();
+		SlotSaveData.Count = Slot.Count;
+
+		if (const UInventoryAmmoItem* AmmoItem = Cast<UInventoryAmmoItem>(Slot.Item.Get())) {
+			SlotSaveData.ItemType = EInventorySlotSaveType::AmmoItem;
+			SlotSaveData.AmmoType = AmmoItem->GetAmmoType();
+			SlotSaveData.AmmoAmount = AmmoItem->GetAmount();
+		}
+		else if (Slot.Item->IsA<UWeaponInventoryItem>()) {
+			SlotSaveData.ItemType = EInventorySlotSaveType::WeaponItem;
+		}
+		else {
+			SlotSaveData.ItemType = EInventorySlotSaveType::GenericItem;
+		}
+
+		InventorySaveData.Add(SlotSaveData);
+	}
+}
+
+void UCharacterInventoryComponent::RestoreInventorySaveData()
+{
+	if (!IsValid(BaseCharacterOwner)) {
+		BaseCharacterOwner = Cast<AGCBaseCharacter>(GetOwner());
+	}
+
+	InventorySlots.Empty();
+	InventorySlots.AddDefaulted(Capacity);
+	ItemsInInventory = 0;
+
+	if (!IsValid(BaseCharacterOwner)) {
+		return;
+	}
+
+	for (const FInventorySlotSaveData& SlotSaveData : InventorySaveData) {
+		if (SlotSaveData.ItemId.IsNone() || SlotSaveData.ItemType == EInventorySlotSaveType::None) {
+			continue;
+		}
+
+		TWeakObjectPtr<UInventoryItem> RestoredItem = nullptr;
+		int32 RestoredCount = SlotSaveData.Count;
+
+		if (SlotSaveData.ItemType == EInventorySlotSaveType::AmmoItem) {
+			RestoredItem = GCSpawner::SpawnInventoryAmmoItem(BaseCharacterOwner, SlotSaveData.ItemId, SlotSaveData.AmmoAmount);
+			RestoredCount = FMath::Max(RestoredCount, 1);
+		}
+		else if (SlotSaveData.ItemType == EInventorySlotSaveType::WeaponItem) {
+			RestoredItem = GCSpawner::SpawnInventoryWeaponItem(BaseCharacterOwner, SlotSaveData.ItemId);
+		}
+		else {
+			RestoredItem = GCSpawner::SpawnInventoryItem(BaseCharacterOwner, SlotSaveData.ItemId);
+		}
+
+		if (RestoredItem.IsValid()) {
+			CreateNewInventorySlot(RestoredItem, RestoredCount);
+		}
+	}
+}
+
+
+void UCharacterInventoryComponent::OnLevelDeserialized_Implementation()
+{
+	// Inventory state is restored during Serialize() from InventorySaveData.
+}
+
 // Called when the game starts
 void UCharacterInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	BaseCharacterOwner = Cast<AGCBaseCharacter>(GetOwner());
 	//BaseCharacterOwner->GetCharacterEquipmentComponent_Mutable()->OnCurrentWeaponAmmoChanged.AddUFunction(this, FName("UpdateInventoryAmmoComponentAmount"));
-	InventorySlots.AddDefaulted(Capacity);
+	if (InventorySlots.Num() == 0) {
+		InventorySlots.AddDefaulted(Capacity);
+	}
 }
 void UCharacterInventoryComponent::UpdateInventoryAmmoComponentAmount() {
 	EAmunitionType AmmoType = BaseCharacterOwner->GetCharacterEquipmentComponent()->GetCurrentRangeWeaponItem()->GetAmmoType();

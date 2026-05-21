@@ -7,9 +7,10 @@
 #include "../../Inventary/InventoryItem.h"
 #include <Characters/PlayerCharacter.h>
 #include <Utils/GCSpawner.h>
+#include <Utils/GCDataTableUtils.h>
 bool UCharacterEquipmentComponent::AddEquipmentItemToSlot(const TSubclassOf<AEquipableItem> EquipableItemClass, int32 SlotIndex, int32 StartedAmmo)
 {
-	if (!IsValid(EquipableItemClass)) {
+	if (!ItemsArray.IsValidIndex(SlotIndex) || !IsValid(EquipableItemClass)) {
 		return false;
 	}
 	AEquipableItem* EquipableItem = EquipableItemClass->GetDefaultObject<AEquipableItem>();
@@ -21,6 +22,9 @@ bool UCharacterEquipmentComponent::AddEquipmentItemToSlot(const TSubclassOf<AEqu
 	}
 	if (!IsValid(ItemsArray[SlotIndex])) {
 		AEquipableItem* Item = GetWorld()->SpawnActor<AEquipableItem>(EquipableItemClass);
+		if (!IsValid(Item) || !CachedBaseCharacter.IsValid() || !IsValid(CachedBaseCharacter->GetMesh())) {
+			return false;
+		}
 		Item->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, Item->GetUnEquppedSocketName());
 		Item->SetOwner(CachedBaseCharacter.Get());
 		Item->SetAmmo(StartedAmmo);
@@ -105,6 +109,16 @@ void UCharacterEquipmentComponent::CreateLoadout()
 }
 void UCharacterEquipmentComponent::OnLevelDeserialized_Implementation()
 {
+	// Runtime equipment actors must be spawned only after SaveSubsystem has finished
+	// reconciling level actors. If we spawn them inside Serialize() while the level
+	// actor loop is still running, SaveSubsystem can treat them as unknown actors
+	// and destroy them immediately.
+	RebuildRuntimeEquipmentFromSaveData();
+
+	if (CurrentEquippedSlot == EEquipmentSlots::None || !ItemsArray.IsValidIndex((int32)CurrentEquippedSlot)) {
+		return;
+	}
+
 	EquipItemInSlot(CurrentEquippedSlot);
 }
 void UCharacterEquipmentComponent::OnCurrentWeaponChanged(int32 Ammo)
@@ -150,6 +164,128 @@ void UCharacterEquipmentComponent::EquipAnimationFinished()
 {
 	bIsEquipping = false;
 	AttachCurrentItemToEquippedSocket();
+}
+
+
+void UCharacterEquipmentComponent::Serialize(FArchive& Archive)
+{
+	if (Archive.IsSaveGame() && Archive.IsSaving()) {
+		CaptureEquipmentSaveData();
+	}
+
+	Super::Serialize(Archive);
+
+	if (Archive.IsSaveGame() && Archive.IsLoading()) {
+		RestoreEquipmentSaveData();
+	}
+}
+
+void UCharacterEquipmentComponent::CaptureEquipmentSaveData()
+{
+	EquipmentSaveData.Empty();
+	SavedCurrentEquippedSlot = CurrentEquippedSlot;
+
+	for (int32 SlotIndex = 0; SlotIndex < ItemsArray.Num(); ++SlotIndex) {
+		AEquipableItem* Item = ItemsArray[SlotIndex];
+		if (!IsValid(Item)) {
+			continue;
+		}
+
+		FEquipmentSlotSaveData SlotSaveData;
+		SlotSaveData.Slot = (EEquipmentSlots)SlotIndex;
+		SlotSaveData.ItemId = Item->GetDataTableID();
+		SlotSaveData.ItemClass = Item->GetClass();
+		SlotSaveData.AmmoInMagazine = Item->GetCurrentAmmo();
+		EquipmentSaveData.Add(SlotSaveData);
+	}
+}
+
+void UCharacterEquipmentComponent::ClearRuntimeEquipment()
+{
+	UnEquipCurrentItem();
+
+	for (AEquipableItem* Item : ItemsArray) {
+		if (IsValid(Item)) {
+			Item->Destroy();
+		}
+	}
+
+	ItemsArray.Empty();
+	ItemsArray.AddZeroed((uint32)EEquipmentSlots::MAX);
+	CurrentEquippedItem = nullptr;
+	CurrentEquippedWeapon = nullptr;
+	CurrentThowableItem = nullptr;
+	CurrentMeleeeWeaponItem = nullptr;
+	CurrentEquippedSlot = EEquipmentSlots::None;
+}
+
+TSubclassOf<AEquipableItem> UCharacterEquipmentComponent::ResolveSavedEquipmentClass(const FEquipmentSlotSaveData& SlotSaveData) const
+{
+	if (IsValid(SlotSaveData.ItemClass)) {
+		return SlotSaveData.ItemClass;
+	}
+
+	if (SlotSaveData.ItemId.IsNone()) {
+		return nullptr;
+	}
+
+	const FWeaponTableRow* WeaponData = GCDataTableUtils::FindWeaponData(SlotSaveData.ItemId);
+	return WeaponData != nullptr ? WeaponData->EquipableActor : nullptr;
+}
+
+void UCharacterEquipmentComponent::RestoreEquipmentSaveData()
+{
+	if (!CachedBaseCharacter.IsValid()) {
+		CachedBaseCharacter = Cast<AGCBaseCharacter>(GetOwner());
+	}
+
+	if (!CachedBaseCharacter.IsValid() || !IsValid(GetWorld())) {
+		return;
+	}
+
+	// Do not spawn equipment actors here. This function is called from Serialize()
+	// while SaveSubsystem::DeserializeLevel may still be iterating Level->Actors.
+	// Actors spawned at this point can be destroyed as "not found in save data".
+	ClearRuntimeEquipment();
+	CurrentEquippedSlot = SavedCurrentEquippedSlot;
+}
+
+void UCharacterEquipmentComponent::RebuildRuntimeEquipmentFromSaveData()
+{
+	if (!CachedBaseCharacter.IsValid()) {
+		CachedBaseCharacter = Cast<AGCBaseCharacter>(GetOwner());
+	}
+
+	if (!CachedBaseCharacter.IsValid() || !IsValid(GetWorld())) {
+		return;
+	}
+
+	if (ItemsArray.Num() != (int32)EEquipmentSlots::MAX) {
+		ItemsArray.Empty();
+		ItemsArray.AddZeroed((uint32)EEquipmentSlots::MAX);
+	}
+
+	for (const FEquipmentSlotSaveData& SlotSaveData : EquipmentSaveData) {
+		const int32 SlotIndex = (int32)SlotSaveData.Slot;
+		if (!ItemsArray.IsValidIndex(SlotIndex)) {
+			UE_LOG(LogTemp, Warning, TEXT("UCharacterEquipmentComponent::RebuildRuntimeEquipmentFromSaveData skipped invalid slot %d"), SlotIndex);
+			continue;
+		}
+
+		if (IsValid(ItemsArray[SlotIndex])) {
+			continue;
+		}
+
+		const TSubclassOf<AEquipableItem> ResolvedItemClass = ResolveSavedEquipmentClass(SlotSaveData);
+		if (!IsValid(ResolvedItemClass)) {
+			UE_LOG(LogTemp, Warning, TEXT("UCharacterEquipmentComponent::RebuildRuntimeEquipmentFromSaveData failed to resolve item class for ItemId %s"), *SlotSaveData.ItemId.ToString());
+			continue;
+		}
+
+		AddEquipmentItemToSlot(ResolvedItemClass, SlotIndex, SlotSaveData.AmmoInMagazine);
+	}
+
+	CurrentEquippedSlot = SavedCurrentEquippedSlot;
 }
 
 UCharacterEquipmentComponent::UCharacterEquipmentComponent()

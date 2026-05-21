@@ -28,6 +28,7 @@ private:
 	FDelegateHandle OnActorSpawnedDelegateHandle;
 	bool bUseCompressedSaves = false;
 	bool bIgnoreOnActorSpawnedCallback = false;
+	bool bHasPendingLoad = false;
 public:
 	const FGameSaveData& GetGameSaveData() const;
 	UFUNCTION(BlueprintCallable, Category = "Save Subsystem")

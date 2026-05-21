@@ -6,20 +6,20 @@
 #include "UObject/StrongObjectPtr.h"
 #include "SaveData.generated.h"
 /**
- * 
+ *
  */
 
 USTRUCT()
-struct FBaseSaveData 
+struct FBaseSaveData
 {
 
 	GENERATED_BODY()
 
 public:
 	FBaseSaveData();
-	virtual ~FBaseSaveData(){}
+	virtual ~FBaseSaveData() {}
 	virtual bool Serialize(FArchive& Archive);
-	friend FArchive& operator << (FArchive& Archive, FBaseSaveData& SaveData) 
+	friend FArchive& operator << (FArchive& Archive, FBaseSaveData& SaveData)
 	{
 		SaveData.Serialize(Archive);
 		return Archive;
@@ -83,5 +83,4 @@ public:
 	FLevelSaveData Level;
 	FObjectSaveData GameInstance;
 	FTransform StartTransform;
-	bool bIsSerialized;
 };
