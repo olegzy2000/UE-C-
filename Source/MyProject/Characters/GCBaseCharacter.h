@@ -1,29 +1,28 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-#include "../Actors/Interactive/InteractiveActor.h"
-#include "../Actors/Interactive/Environment/Ladder.h"
-#include "../Actors/Interactive/Environment/Zipline.h"
 #include "../Subsystems/SaveSubsystem/SaveSubsystemInterface.h"
 #include "../Components/MovementComponents/GCBaseCharacterMovementComponent.h"
 #include "../Components/MovementComponents/LedgeDetectorComponent.h"
 #include "../Components/CharacterComponents/CharacterAttributeComponent.h"
+#include "../Components/CharacterComponents/CharacterInteractionComponent.h"
 #include "Animations/GCBaseCharacterAnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Character.h"
-#include <Actors/Interactive/Interactive.h>
 #include <Runtime/AIModule/Classes/GenericTeamAgentInterface.h>
 #include "CoreMinimal.h"
 #include "GCBaseCharacter.generated.h"
 
-DECLARE_DELEGATE_OneParam(FOnInteractableObjectFound, FName)
 class UCharacterEquipmentComponent;
 class UWidgetComponent;
 class AEquipableItem;
 class UInventoryItem;
 class UCharacterInventoryComponent;
+class AInteractiveActor;
+class ALadder;
+class AZipline;
 
 USTRUCT(BlueprintType)
 struct FMantlingSettings
@@ -107,6 +106,7 @@ public:
 	const UCharacterEquipmentComponent* GetCharacterEquipmentComponent() const;
 	UCharacterEquipmentComponent* GetCharacterEquipmentComponent_Mutable() const;
 	UCharacterInventoryComponent* GetCharacterInventoryComponent();
+	UCharacterInteractionComponent* GetCharacterInteractionComponent() const;
 	float GetProneCapsuleHeight() {
 		return ProneCapsuleHeight;
 	}
@@ -248,16 +248,12 @@ protected:
 	UCharacterInventoryComponent* CharacterInventoryComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
 	UCharacterEquipmentComponent* CharacterEquipmentComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
+	UCharacterInteractionComponent* CharacterInteractionComponent;
 	virtual void OnStartAimingInternal();
 	virtual void OnStopAimingInternal();
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Team")
 	ETeams Team = ETeams::Enemy;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character | Interactive")
-	float LineSightDistance = 500.0f;
-	void TraceOfSight();
-	UPROPERTY()
-	TScriptInterface<IInteractable> LineOfSightObject;
-
 private:
 	float CurrentAimingMovementSpeed;
 	void ShowLoseText();
@@ -284,7 +280,6 @@ private:
 	FVector StartEffectorPosition;
 	FVector StartSkeletonPosition;
 	FVector EndSkeletonPosition;
-	TArray<AInteractiveActor*>AvailableInteractiveActors;
 	FVector CurrentFallApex;
 	void restartCurrentLevel();
 };

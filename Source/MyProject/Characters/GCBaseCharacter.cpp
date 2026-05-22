@@ -6,6 +6,7 @@
 #include "Components/CharacterComponents/CharacterEquipmentComponent.h"
 #include "Components/CharacterComponents/CharacterAttributeComponent.h"
 #include "Components/CharacterComponents/CharacterInventoryComponent.h"
+#include "Components/CharacterComponents/CharacterInteractionComponent.h"
 #include "DrawDebugHelpers.h"
 #include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
 #include "AIController.h"
@@ -22,6 +23,7 @@ AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
 	CharacterAttributesComponent = CreateDefaultSubobject<UCharacterAttributeComponent>(TEXT("CharacterAttributes"));
 	CharacterInventoryComponent = CreateDefaultSubobject<UCharacterInventoryComponent>(TEXT("CharacterInventory"));
 	CharacterEquipmentComponent = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("CharacterEquipment"));
+	CharacterInteractionComponent = CreateDefaultSubobject<UCharacterInteractionComponent>(TEXT("CharacterInteraction"));
 }
 void AGCBaseCharacter::BeginPlay()
 {
@@ -40,6 +42,11 @@ void AGCBaseCharacter::BeginPlay()
 	InitTimelineToIKFoot();
 	InitializeHealthProgress();
 	CharacterAttributesComponent->OnDeathEvent.AddUObject(this, &AGCBaseCharacter::OnDeath);
+	if (IsValid(CharacterInteractionComponent)) {
+		CharacterInteractionComponent->OnInteractableObjectFound.BindLambda([this](FName ActionName) {
+			OnInteractableObjectFound.ExecuteIfBound(ActionName);
+			});
+	}
 }
 void AGCBaseCharacter::EndPlay(const EEndPlayReason::Type Reason)
 {
@@ -298,6 +305,11 @@ UCharacterInventoryComponent* AGCBaseCharacter::GetCharacterInventoryComponent()
 	return CharacterInventoryComponent;
 }
 
+UCharacterInteractionComponent* AGCBaseCharacter::GetCharacterInteractionComponent() const
+{
+	return CharacterInteractionComponent;
+}
+
 
 bool AGCBaseCharacter::IsAming()
 {
@@ -316,7 +328,6 @@ void AGCBaseCharacter::Tick(float DeltaTime)
 #else
 	bool bIsDebugEnable = false;
 #endif
-	TraceOfSight();
 }
 
 void AGCBaseCharacter::InitIkDebugDraw() {
@@ -590,71 +601,47 @@ UGCBaseCharacterMovementComponent* AGCBaseCharacter::GetBaseCharacterMovementCom
 
 void AGCBaseCharacter::RegisterInteractiveActor(AInteractiveActor* InteractiveActor)
 {
-	AvailableInteractiveActors.AddUnique(InteractiveActor);
+	if (IsValid(CharacterInteractionComponent)) {
+		CharacterInteractionComponent->RegisterInteractiveActor(InteractiveActor);
+	}
 }
 
 void AGCBaseCharacter::UnRegisterInteractiveActor(AInteractiveActor* InteractiveActor)
 {
-	AvailableInteractiveActors.RemoveSingleSwap(InteractiveActor);
+	if (IsValid(CharacterInteractionComponent)) {
+		CharacterInteractionComponent->UnRegisterInteractiveActor(InteractiveActor);
+	}
 }
 
 void AGCBaseCharacter::ClimbLadderUp(float Value)
 {
-	if (GetBaseCharacterMovementComponent()->IsOnLadder() && !FMath::IsNearlyZero(Value)) {
-		FVector LadderUpVector = GetBaseCharacterMovementComponent()->GetCurrentLadder()->GetActorUpVector();
-		AddMovementInput(LadderUpVector, Value);
+	if (IsValid(CharacterInteractionComponent)) {
+		CharacterInteractionComponent->ClimbLadderUp(Value);
 	}
 }
 
 void AGCBaseCharacter::InteractionWithLadder()
 {
-	if (GetBaseCharacterMovementComponent()->IsOnLadder()) {
-		GetBaseCharacterMovementComponent()->DetachFromLadder(EDetachFromLadderMethod::JumpOff);
-	}
-	else {
-		const ALadder* AvailableLadder = GetAvailableLadder();
-		if (IsValid(AvailableLadder)) {
-			if (AvailableLadder->GetIsOnTop()) {
-				PlayAnimMontage(AvailableLadder->GetAttachFromTopAnimMontage());
-			}
-			GetBaseCharacterMovementComponent()->AttachToLadder(AvailableLadder);
-		}
+	if (IsValid(CharacterInteractionComponent)) {
+		CharacterInteractionComponent->InteractionWithLadder();
 	}
 }
+
 void AGCBaseCharacter::InteractionWithZipline()
 {
-	if (GetBaseCharacterMovementComponent()->IsOnZipline()) {
-		GetBaseCharacterMovementComponent()->DetachFromZipline(EDetachFromLadderMethod::JumpOff);
-	}
-	else {
-		AZipline* AvailableZipline = GetAvailableZipline();
-		if (IsValid(AvailableZipline)) {
-			GetBaseCharacterMovementComponent()->AttachToZipline(AvailableZipline);
-		}
+	if (IsValid(CharacterInteractionComponent)) {
+		CharacterInteractionComponent->InteractionWithZipline();
 	}
 }
 
 const ALadder* AGCBaseCharacter::GetAvailableLadder()
 {
-	const ALadder* Result = nullptr;
-	for (const AInteractiveActor* InteractiveActor : AvailableInteractiveActors) {
-		if (InteractiveActor->IsA<ALadder>()) {
-			Result = StaticCast<const ALadder*>(InteractiveActor);
-			break;
-		}
-	}
-	return Result;
+	return IsValid(CharacterInteractionComponent) ? CharacterInteractionComponent->GetAvailableLadder() : nullptr;
 }
+
 AZipline* AGCBaseCharacter::GetAvailableZipline()
 {
-	AZipline* Result = nullptr;
-	for (AInteractiveActor* InteractiveActor : AvailableInteractiveActors) {
-		if (InteractiveActor->IsA<AZipline>()) {
-			Result = StaticCast< AZipline*>(InteractiveActor);
-			break;
-		}
-	}
-	return Result;
+	return IsValid(CharacterInteractionComponent) ? CharacterInteractionComponent->GetAvailableZipline() : nullptr;
 }
 FGenericTeamId AGCBaseCharacter::GetGenericTeamId() const
 {
@@ -662,8 +649,8 @@ FGenericTeamId AGCBaseCharacter::GetGenericTeamId() const
 }
 void AGCBaseCharacter::Interact()
 {
-	if (LineOfSightObject.GetInterface()) {
-		LineOfSightObject->Interact(this);
+	if (IsValid(CharacterInteractionComponent)) {
+		CharacterInteractionComponent->Interact();
 	}
 }
 void AGCBaseCharacter::InitializeHealthProgress()
@@ -703,39 +690,6 @@ void AGCBaseCharacter::OnStopAimingInternal()
 	if (OnAmingStateChanged.IsBound()) {
 		OnAmingStateChanged.Broadcast(false);
 	}
-}
-void AGCBaseCharacter::TraceOfSight()
-{
-	if (!IsPlayerControlled()) {
-		return;
-	}
-	FVector ViewLocation;
-	FRotator ViewRotation;
-	TArray<AActor*>ActorsToIgnore;
-	APlayerController* PlayerController = GetController<APlayerController>();
-	PlayerController->GetPlayerViewPoint(ViewLocation, ViewRotation);
-	FVector ViewDirection = ViewRotation.Vector();
-	FVector TraceEnd = ViewLocation + ViewDirection * LineSightDistance;
-	FHitResult HitResult;
-	GetWorld()->LineTraceSingleByChannel(HitResult, ViewLocation, TraceEnd, ECC_Visibility);
-	FCollisionQueryParams ParamsCollision;
-	//GCTraceUtils::LineTraceSingleByChannel(GetWorld(), HitResult, ViewLocation, TraceEnd, ECollisionChannel::ECC_Visibility, ParamsCollision, true, 1, FColor::Green);
-	if (HitResult.GetActor() != nullptr) {
-		LineOfSightObject = HitResult.GetActor();
-		FName ActionName;
-		if (LineOfSightObject.GetInterface()) {
-			ActionName = LineOfSightObject->GetActionEventName();
-		}
-		else {
-			ActionName = NAME_None;
-		}
-		OnInteractableObjectFound.ExecuteIfBound(ActionName);
-	}
-	else {
-		LineOfSightObject = nullptr;
-		OnInteractableObjectFound.ExecuteIfBound(NAME_None);
-	}
-
 }
 bool AGCBaseCharacter::CanSprint()
 {
