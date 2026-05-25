@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Inventary/InventoryItem.h"
+#include "Inventory/InventoryItem.h"
 #include "UInventoryAmmoItem.generated.h"
 
 /**

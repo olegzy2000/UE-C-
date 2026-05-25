@@ -6,7 +6,7 @@
 #include<Perception/AIPerceptionComponent.h>
 #include<Perception/AISense_Damage.h>
 #include<Perception/AISenseEvent_Damage.h>
-#include "../Turrent/Turret.h"
+#include "../Turret/Turret.h"
 #include <Characters/GCBaseCharacter.h>
 void AAITurretController::SetPawn(APawn* InPawn)
 {

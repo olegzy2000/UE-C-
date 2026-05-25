@@ -10,8 +10,8 @@ ARangeWeaponItem::ARangeWeaponItem() {
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	WeaponMesh->SetupAttachment(RootComponent);
 
-	WeaponBarell = CreateDefaultSubobject<UWeaponBarellComponent>(TEXT("WeaponBarell"));
-	WeaponBarell->SetupAttachment(WeaponMesh, SocketWeaponMuzzleSocket);
+	WeaponBarrel = CreateDefaultSubobject<UWeaponBarrelComponent>(TEXT("WeaponBarrel"));
+	WeaponBarrel->SetupAttachment(WeaponMesh, SocketWeaponMuzzleSocket);
 	ReticleType = EReticleType::Default;
 	EquppedSocketName = SocketCharacterWeapon;
 
@@ -47,13 +47,13 @@ void ARangeWeaponItem::MakeShot()
 		bIsAming=CurrentCharacterOwner->IsAming();
 	}
 	else {
-		ShotLocation = WeaponBarell->GetComponentLocation();
+		ShotLocation = WeaponBarrel->GetComponentLocation();
 		ShotRotation = CurrentCharacterOwner->GetBaseAimRotation();
 	}
 	
 	FVector ShotDirection= ShotRotation.RotateVector(FVector::ForwardVector);
 	
-	WeaponBarell->Shot(ShotLocation, ShotDirection, GetCurrentBulletSpreadAngle(), bIsAming);
+	WeaponBarrel->Shot(ShotLocation, ShotDirection, GetCurrentBulletSpreadAngle(), bIsAming);
 	SetAmmo(GetCurrentAmmo() - 1);
 	GetWorld()->GetTimerManager().SetTimer(ShotTimer, this, &ARangeWeaponItem::OnShotTimerElapsed, RateFire, false);
 }
@@ -205,9 +205,9 @@ EReticleType ARangeWeaponItem::GetReticleType() const
 
 void ARangeWeaponItem::ChangeFireMode()
 {
-	if (!WeaponBarell->CanUseRifleGrenate())
+	if (!WeaponBarrel->CanUseRifleGrenate())
 		return;
-	if (WeaponBarell->UseRifleGrenate()) {
+	if (WeaponBarrel->UseRifleGrenate()) {
 		FireMode = DefaultFireMode;
 		AmmoType = DefaultAmmoType;
 		CurrentAlternativeAmmo = GetCurrentAmmo();
@@ -224,8 +224,8 @@ void ARangeWeaponItem::ChangeFireMode()
 		MaxAmmo = MaxAmmoToAlternativeShoting;
 		SetAmmo(CurrentAlternativeAmmo);
 	}
-	WeaponBarell->ChangeUseRifleGrenate();
-	WeaponBarell->ChangeCurrentProjectileClass();
+	WeaponBarrel->ChangeUseRifleGrenate();
+	WeaponBarrel->ChangeCurrentProjectileClass();
 }
 
 void ARangeWeaponItem::OnLevelDeserialized_Implementation()

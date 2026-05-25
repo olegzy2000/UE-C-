@@ -2,7 +2,7 @@
 
 
 #include "Turret.h"
-#include "../../Components/Weapon/WeaponBarellComponent.h"
+#include "../../Components/Weapon/WeaponBarrelComponent.h"
 #include "AIController.h"
 #include "Particles/ParticleSystem.h"
 #include <Characters/GCBaseCharacter.h>
@@ -16,11 +16,11 @@ ATurret::ATurret()
 	TurretBaseComponent = CreateDefaultSubobject<USceneComponent>(TEXT("TurretBase"));
 	TurretBaseComponent->SetupAttachment(TurretRoot);
 	AlAttributeComponent = CreateDefaultSubobject<UAlAttributeComponent>(TEXT("TurretAttribute"));
-	TurretBarellComponent= CreateDefaultSubobject<USceneComponent>(TEXT("TurretBarell"));
-	TurretBarellComponent->SetupAttachment(TurretBaseComponent);
+	TurretBarrelComponent= CreateDefaultSubobject<USceneComponent>(TEXT("TurretBarrel"));
+	TurretBarrelComponent->SetupAttachment(TurretBaseComponent);
 	
-	WeaponBarell = CreateDefaultSubobject<UWeaponBarellComponent>(TEXT("WeaponBarell"));
-	WeaponBarell->SetupAttachment(TurretBarellComponent);
+	WeaponBarrel = CreateDefaultSubobject<UWeaponBarrelComponent>(TEXT("WeaponBarrel"));
+	WeaponBarrel->SetupAttachment(TurretBarrelComponent);
 }
 void ATurret::BeginPlay() {
 	Super::BeginPlay();
@@ -57,20 +57,20 @@ AActor* ATurret::GetCurrentTarget()
 
 FVector ATurret::GetPawnViewLocation() const
 {
-	return WeaponBarell->GetComponentLocation();
+	return WeaponBarrel->GetComponentLocation();
 }
 
 FRotator ATurret::GetViewRotation() const
 {
-	return WeaponBarell->GetComponentRotation();
+	return WeaponBarrel->GetComponentRotation();
 }
 
 void ATurret::MakeShot()
 {
-	FVector ShotLocation = WeaponBarell->GetComponentLocation();
-	FVector ShotDirection = WeaponBarell->GetComponentRotation().RotateVector(FVector::ForwardVector);
+	FVector ShotLocation = WeaponBarrel->GetComponentLocation();
+	FVector ShotDirection = WeaponBarrel->GetComponentRotation().RotateVector(FVector::ForwardVector);
 	float SpreadAngle = FMath::DegreesToRadians(BulletSpreadAngle);
-	WeaponBarell->Shot(ShotLocation, ShotDirection, SpreadAngle,false);
+	WeaponBarrel->Shot(ShotLocation, ShotDirection, SpreadAngle,false);
 	if (CurrentTarget!=nullptr && CurrentTarget->IsA<AGCBaseCharacter>()) {
 		AGCBaseCharacter* CurrentTargetCharacter = Cast<AGCBaseCharacter>(CurrentTarget);
 		if (CurrentTargetCharacter->GetCharacterAttributesComponent()->GetHealth() <= 0) {
@@ -104,9 +104,9 @@ void ATurret::SearchingMovement(float DeltaTime)
 	FRotator TurretBaseRotation = TurretBaseComponent->GetRelativeRotation();
 	TurretBaseRotation.Yaw += DeltaTime * BaseSearchingRotationRate;
 	TurretBaseComponent->SetRelativeRotation(TurretBaseRotation);
-	FRotator TurretBarellRotation = TurretBarellComponent->GetRelativeRotation();
-	TurretBarellRotation.Pitch = FMath::FInterpTo(TurretBarellRotation.Pitch,0.0f,DeltaTime,BarellPitchRotationRate);
-	TurretBarellComponent->SetRelativeRotation(TurretBarellRotation);
+	FRotator TurretBarrelRotation = TurretBarrelComponent->GetRelativeRotation();
+	TurretBarrelRotation.Pitch = FMath::FInterpTo(TurretBarrelRotation.Pitch,0.0f,DeltaTime,BarrelPitchRotationRate);
+	TurretBarrelComponent->SetRelativeRotation(TurretBarrelRotation);
 }
 
 void ATurret::SetCurrentTurretState(ETurretState NewState)
@@ -136,11 +136,11 @@ void ATurret::FiringMovement(float DeltaTime)
 	FQuat TargetQuat = FMath::QInterpTo(TurretBaseComponent->GetComponentQuat(), LookAtQuat,DeltaTime,BaseFiringInterpSpeed);
 	TurretBaseComponent->SetWorldRotation(TargetQuat);
 
-	FVector BarellLookAtDirection = (CurrentTarget->GetActorLocation() - TurretBarellComponent->GetComponentLocation()).GetSafeNormal();
-	float LookAtPitchAngle = BarellLookAtDirection.ToOrientationRotator().Pitch;
-	FRotator BarellLocalRotation = TurretBarellComponent->GetRelativeRotation();
-	BarellLocalRotation.Pitch = FMath::FInterpTo(BarellLocalRotation.Pitch,LookAtPitchAngle,DeltaTime,BarellPitchRotationRate);
-	TurretBarellComponent->SetRelativeRotation(BarellLocalRotation);
+	FVector BarrelLookAtDirection = (CurrentTarget->GetActorLocation() - TurretBarrelComponent->GetComponentLocation()).GetSafeNormal();
+	float LookAtPitchAngle = BarrelLookAtDirection.ToOrientationRotator().Pitch;
+	FRotator BarrelLocalRotation = TurretBarrelComponent->GetRelativeRotation();
+	BarrelLocalRotation.Pitch = FMath::FInterpTo(BarrelLocalRotation.Pitch,LookAtPitchAngle,DeltaTime,BarrelPitchRotationRate);
+	TurretBarrelComponent->SetRelativeRotation(BarrelLocalRotation);
 }
 
 float ATurret::GetFireInterval() const {

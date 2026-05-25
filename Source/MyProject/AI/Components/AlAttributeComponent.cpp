@@ -6,7 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "../../Subsystems/DebugSubsystem.h"
 #include <Runtime/Engine/Public/DrawDebugHelpers.h>
-#include "AI/Turrent/Turret.h"
+#include "AI/Turret/Turret.h"
 UAlAttributeComponent::UAlAttributeComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;

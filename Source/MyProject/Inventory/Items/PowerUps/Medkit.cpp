@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Inventary/Items/PowerUps/Medkit.h"
+#include "Inventory/Items/PowerUps/Medkit.h"
 #include "../../../Characters/GCBaseCharacter.h"
 #include "../../../Components/CharacterComponents/CharacterAttributeComponent.h"
 bool UMedkit::Consume(AGCBaseCharacter* ConsumeTarget) {

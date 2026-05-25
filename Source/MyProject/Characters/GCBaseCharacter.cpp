@@ -9,9 +9,9 @@
 #include "Components/CharacterComponents/CharacterCombatComponent.h"
 #include "Components/CharacterComponents/CharacterTraversalComponent.h"
 #include "Components/CharacterComponents/CharacterFootIKComponent.h"
+#include "../Inventory/InventoryItem.h"
 #include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
 #include "AIController.h"
-#include <Inventary/InventoryItem.h>
 
 
 AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)

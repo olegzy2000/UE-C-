@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Components/Weapon/WeaponBarellComponent.h"
+#include "Components/Weapon/WeaponBarrelComponent.h"
 #include "GameCodeTypes.h"
 #include "Subsystems/DebugSubsystem.h"
 #include "../../Actors/Projectile/GCProjectile.h"
@@ -15,7 +15,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 
-void UWeaponBarellComponent::Shot(FVector ShotStart, FVector ShotDirection, float SpreadAngle,bool IsAming)
+void UWeaponBarrelComponent::Shot(FVector ShotStart, FVector ShotDirection, float SpreadAngle,bool IsAming)
 {
 	FVector MuzzleLocation = GetComponentLocation();
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleFlashFX, MuzzleLocation, GetComponentRotation());
@@ -62,22 +62,22 @@ void UWeaponBarellComponent::Shot(FVector ShotStart, FVector ShotDirection, floa
 		}
 	}
 }
-void UWeaponBarellComponent::ChangeCurrentProjectileClass()
+void UWeaponBarrelComponent::ChangeCurrentProjectileClass()
 {
 	if (bUseRifleGrenete)
 		CurrentProjectileClass = RifleGreneteClass;
 	else
 		CurrentProjectileClass = ProjectileClass;
 }
-bool UWeaponBarellComponent::CanUseRifleGrenate()
+bool UWeaponBarrelComponent::CanUseRifleGrenate()
 {
 	return bCanUseRifleGrenate;
 }
-bool UWeaponBarellComponent::UseRifleGrenate()
+bool UWeaponBarrelComponent::UseRifleGrenate()
 {
 	return bUseRifleGrenete;
 }
-void UWeaponBarellComponent::ChangeUseRifleGrenate() {
+void UWeaponBarrelComponent::ChangeUseRifleGrenate() {
 	bUseRifleGrenete = !bUseRifleGrenete;
 	if (bUseRifleGrenete) {
 		OldHitRegistration = HitRegistration;
@@ -88,19 +88,19 @@ void UWeaponBarellComponent::ChangeUseRifleGrenate() {
 	}
 
 }
-TSubclassOf<AGCProjectile> UWeaponBarellComponent::GetCurrentProjectileClass() const
+TSubclassOf<AGCProjectile> UWeaponBarrelComponent::GetCurrentProjectileClass() const
 {
 	return CurrentProjectileClass;
 }
-TSubclassOf<AGCProjectile> UWeaponBarellComponent::GetRifleGreneteClass() const
+TSubclassOf<AGCProjectile> UWeaponBarrelComponent::GetRifleGreneteClass() const
 {
 	return RifleGreneteClass;
 }
-TSubclassOf<AGCProjectile> UWeaponBarellComponent::GetProjectileClass() const
+TSubclassOf<AGCProjectile> UWeaponBarrelComponent::GetProjectileClass() const
 {
 	return ProjectileClass;
 }
-bool UWeaponBarellComponent::HitScan(FVector ShotStart, OUT FVector& ShotEnd, FVector ShotDirection) {
+bool UWeaponBarrelComponent::HitScan(FVector ShotStart, OUT FVector& ShotEnd, FVector ShotDirection) {
 	FHitResult ShotResult;
 	bool bHasHit = GetWorld()->LineTraceSingleByChannel(ShotResult, ShotStart, ShotEnd, ECC_Bullet);
 	if (bHasHit) {
@@ -108,19 +108,21 @@ bool UWeaponBarellComponent::HitScan(FVector ShotStart, OUT FVector& ShotEnd, FV
 		ProcessHit(ShotResult,ShotDirection);
 	}
 	UNiagaraComponent* TraceFxComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TraceFX, GetComponentLocation(), GetComponentRotation());
-	TraceFxComponent->SetVectorParameter(FXParamTraceEnd, ShotEnd);
+	if (IsValid(TraceFxComponent)) {
+		TraceFxComponent->SetVectorParameter(FXParamTraceEnd, ShotEnd);
+	}
 	return bHasHit;
 }
-void UWeaponBarellComponent::LaunchProjectile(const FVector& LaunchStart, FVector LaunchDirection)
+void UWeaponBarrelComponent::LaunchProjectile(const FVector& LaunchStart, FVector LaunchDirection)
 {
 	AGCProjectile* Projectile = GetWorld()->SpawnActor<AGCProjectile>(CurrentProjectileClass, LaunchStart, LaunchDirection.ToOrientationRotator());
 	if (IsValid(Projectile)) {
 		Projectile->SetOwner(GetOwningPawn());
-		Projectile->OnProjectileHit.AddDynamic(this, &UWeaponBarellComponent::ProcessHit);
+		Projectile->OnProjectileHit.AddDynamic(this, &UWeaponBarrelComponent::ProcessHit);
 		Projectile->LaunchProjectile(LaunchDirection.GetSafeNormal());
 	}
 }
-void UWeaponBarellComponent::ProcessHit(const FHitResult& HitResult, const FVector& Direction) {
+void UWeaponBarrelComponent::ProcessHit(const FHitResult& HitResult, const FVector& Direction) {
 	if (bUseRifleGrenete) {
 		HitByRifleGrenete();
 	}
@@ -128,10 +130,10 @@ void UWeaponBarellComponent::ProcessHit(const FHitResult& HitResult, const FVect
 		HitByDefaultBullet(HitResult, Direction);
 	}
 }
-void UWeaponBarellComponent::HitByRifleGrenete() {
+void UWeaponBarrelComponent::HitByRifleGrenete() {
 	
 }
-void UWeaponBarellComponent::HitByDefaultBullet(const FHitResult& HitResult, const FVector& Direction) {
+void UWeaponBarrelComponent::HitByDefaultBullet(const FHitResult& HitResult, const FVector& Direction) {
 	AActor* HitActor = HitResult.GetActor();
 	if (IsValid(HitActor) && FalloffDiagram!=nullptr && IsValid(FalloffDiagram)) {
 		float DamageCoef = FalloffDiagram->GetFloatValue(HitResult.Distance);//Distance
@@ -149,18 +151,18 @@ void UWeaponBarellComponent::HitByDefaultBullet(const FHitResult& HitResult, con
 		}
 	}
 	else {
-		UE_LOG(LogTemp, Log, TEXT("UWeaponBarellComponent::Shot Decal material not found"));
+		UE_LOG(LogTemp, Log, TEXT("UWeaponBarrelComponent::Shot Decal material not found"));
 	}
 }
 
-void UWeaponBarellComponent::InitFalloffDiagram()
+void UWeaponBarrelComponent::InitFalloffDiagram()
 {
 	FalloffDiagram = NewObject<UCurveFloat>();
 	FKeyHandle KeyHandleForProgressBar = FalloffDiagram->FloatCurve.AddKey(FiringRange, 0.f);
 	FalloffDiagram->FloatCurve.AddKey(0.f, 1.0f);
 	FalloffDiagram->FloatCurve.SetKeyInterpMode(KeyHandleForProgressBar, ERichCurveInterpMode::RCIM_Linear, true);
 }
-void UWeaponBarellComponent::BeginPlay()
+void UWeaponBarrelComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	InitFalloffDiagram();
@@ -168,7 +170,7 @@ void UWeaponBarellComponent::BeginPlay()
 	if(GetOwner()->IsA<ARangeWeaponItem>())
 	CachedRangeWeaponItem = Cast<ARangeWeaponItem>(GetOwner());
 }
-FVector UWeaponBarellComponent::GetBulletSpreadOffset(float Angle, FRotator ShotRotation) const
+FVector UWeaponBarrelComponent::GetBulletSpreadOffset(float Angle, FRotator ShotRotation) const
 {
 	float SpreadSize = FMath::Tan(Angle);
 	float RotationAngle = FMath::RandRange(0.0f, 2 * PI);
@@ -178,7 +180,7 @@ FVector UWeaponBarellComponent::GetBulletSpreadOffset(float Angle, FRotator Shot
 	return Result;
 }
 
-APawn* UWeaponBarellComponent::GetOwningPawn() const
+APawn* UWeaponBarrelComponent::GetOwningPawn() const
 {
 	AActor* OwnerActor = GetOwner();
 	if (!IsValid(OwnerActor))
@@ -195,12 +197,12 @@ APawn* UWeaponBarellComponent::GetOwningPawn() const
 	return Cast<APawn>(OwnerActor->GetOwner());
 }
 
-AController* UWeaponBarellComponent::GetController() const
+AController* UWeaponBarrelComponent::GetController() const
 {
 	APawn* PawnOwner = GetOwningPawn();
 	return IsValid(PawnOwner) ? PawnOwner->GetController() : nullptr;
 }
 
-EHitRegistrationType UWeaponBarellComponent::GetHitRegistration() {
+EHitRegistrationType UWeaponBarrelComponent::GetHitRegistration() {
 	return HitRegistration;
 }

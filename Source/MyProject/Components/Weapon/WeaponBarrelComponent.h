@@ -3,7 +3,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
-#include "WeaponBarellComponent.generated.h"
+#include "WeaponBarrelComponent.generated.h"
 
 UENUM(BlueprintType)
 enum class EHitRegistrationType :uint8
@@ -29,7 +29,7 @@ class AGCProjectile;
 class ARangeWeaponItem;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class MYPROJECT_API UWeaponBarellComponent : public USceneComponent
+class MYPROJECT_API UWeaponBarrelComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
@@ -45,27 +45,27 @@ public:
 	TSubclassOf<class AGCProjectile> GetCurrentProjectileClass() const;
 	EHitRegistrationType GetHitRegistration();
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes",meta = (ClampMin=1,UIMin=1))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barrel attributes",meta = (ClampMin=1,UIMin=1))
 		int32 BulletsPerShot = 1.0f;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barrel attributes")
 		float FiringRange = 5000.0f;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barrel attributes")
 		TSubclassOf<class UDamageType> DamageTypeClass ;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | Hit registration")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barrel attributes | Hit registration")
 		EHitRegistrationType HitRegistration = EHitRegistrationType::HitScan;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | Hit registration" , meta=(EditCondition="HitRegistration==EHitRegistrationType::Projectile"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barrel attributes | Hit registration" , meta=(EditCondition="HitRegistration==EHitRegistrationType::Projectile"))
 		TSubclassOf<class AGCProjectile> ProjectileClass;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | Alternative shoting")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barrel attributes | Alternative shoting")
 		bool bCanUseRifleGrenate = false;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | Alternative shoting", meta = (EditCondition = "bCanUseRifleGrenate"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barrel attributes | Alternative shoting", meta = (EditCondition = "bCanUseRifleGrenate"))
 		TSubclassOf<class AGCProjectile> RifleGreneteClass;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | Damage")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barrel attributes | Damage")
 		float DamageAmount = 20.0f;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | VFX")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barrel attributes | VFX")
 		class UNiagaraSystem* MuzzleFlashFX;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | VFX")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barrel attributes | VFX")
 		class UNiagaraSystem* TraceFX;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barell attributes | Decals")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barrel attributes | Decals")
 		FDecalInfo DefaultDecalInfo;
 	UPROPERTY()
 	UCurveFloat* FalloffDiagram;

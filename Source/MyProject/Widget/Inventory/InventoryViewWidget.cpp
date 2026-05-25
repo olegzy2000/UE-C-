@@ -2,7 +2,7 @@
 
 
 #include "InventoryViewWidget.h"
-#include "../../Inventary/InventoryItem.h"
+#include "../../Inventory/InventoryItem.h"
 #include "InventorySlotWidget.h"
 #include "Components/GridPanel.h"
 #include <Components/CharacterComponents/CharacterInventoryComponent.h>

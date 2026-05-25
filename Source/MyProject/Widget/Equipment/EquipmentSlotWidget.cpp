@@ -2,8 +2,8 @@
 
 
 #include "EquipmentSlotWidget.h"
-#include "../../Inventary/InventoryItem.h"
-#include "../../Inventary/Items/Equipables/WeaponInventoryItem.h"
+#include "../../Inventory/InventoryItem.h"
+#include "../../Inventory/Items/Equipables/WeaponInventoryItem.h"
 #include "../../Actors/Equipment/EquipableItem.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"

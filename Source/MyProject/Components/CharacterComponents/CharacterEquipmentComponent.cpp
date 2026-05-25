@@ -3,8 +3,8 @@
 
 #include "Components/CharacterComponents/CharacterEquipmentComponent.h"
 #include "CharacterInventoryComponent.h"
-#include "../../Inventary/Items/Ammo/UInventoryAmmoItem.h"
-#include "../../Inventary/InventoryItem.h"
+#include "../../Inventory/Items/Ammo/UInventoryAmmoItem.h"
+#include "../../Inventory/InventoryItem.h"
 #include <Characters/PlayerCharacter.h>
 #include <Utils/GCSpawner.h>
 #include <Utils/GCDataTableUtils.h>

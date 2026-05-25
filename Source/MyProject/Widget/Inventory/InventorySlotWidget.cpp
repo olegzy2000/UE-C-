@@ -2,12 +2,12 @@
 
 
 #include "InventorySlotWidget.h"
-#include "../../Inventary/InventoryItem.h"
+#include "../../Inventory/InventoryItem.h"
 #include "Framework/Application/SlateApplication.h"
 #include <Components/CharacterComponents/CharacterInventoryComponent.h>
 #include <Runtime/UMG/Public/Components/Image.h>
 #include <Runtime/UMG/Public/Blueprint/WidgetBlueprintLibrary.h>
-#include <Inventary/Items/Ammo/UInventoryAmmoItem.h>
+#include <Inventory/Items/Ammo/UInventoryAmmoItem.h>
 #include <Characters/GCBaseCharacter.h>
 #include <Utils/GCDataTableUtils.h>
 
@@ -79,8 +79,8 @@ void UInventorySlotWidget::UpdateView()
 	}
 }
 
-void UInventorySlotWidget::InitializeItemSlot(FInventorySlot& InventarySlot) {
-	LinkedSlot = &InventarySlot;
+void UInventorySlotWidget::InitializeItemSlot(FInventorySlot& InventorySlot) {
+	LinkedSlot = &InventorySlot;
 	FInventorySlot::FInventorySlotUpdate OnInventorySlotUpdate;
 	OnInventorySlotUpdate.BindUObject(this, &UInventorySlotWidget::UpdateView);
 	LinkedSlot->BindOnInventorySlotUpdate(OnInventorySlotUpdate);

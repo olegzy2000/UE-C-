@@ -17,7 +17,7 @@ class MYPROJECT_API UInventorySlotWidget : public UUserWidget
 	GENERATED_BODY()
 public:
 	void UpdateView();
-	void InitializeItemSlot(FInventorySlot& InventarySlot);
+	void InitializeItemSlot(FInventorySlot& InventorySlot);
 	void SetItemIcon(UTexture2D* Icon);
 	void SetAmount(int32 Amount);
 protected:

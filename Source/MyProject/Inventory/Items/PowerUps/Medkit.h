@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Inventary/InventoryItem.h"
+#include "Inventory/InventoryItem.h"
 #include "Medkit.generated.h"
 class AGCBaseCharacter;
 /**

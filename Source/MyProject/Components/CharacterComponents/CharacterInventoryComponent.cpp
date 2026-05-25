@@ -2,14 +2,14 @@
 
 
 #include "CharacterInventoryComponent.h"
-#include "../../Inventary/InventoryItem.h"
+#include "../../Inventory/InventoryItem.h"
 #include "CharacterEquipmentComponent.h"
 #include "../../Actors/Equipment/Weapons/RangeWeaponItem.h"
 #include "../../Utils/GCSpawner.h"
 #include <Characters/PlayerCharacter.h>
-#include <Inventary/Items/Ammo/UInventoryAmmoItem.h>
+#include <Inventory/Items/Ammo/UInventoryAmmoItem.h>
 #include <Widget/Equipment/EquipmentSlotWidget.h>
-#include "../../Inventary/Items/Equipables/WeaponInventoryItem.h"
+#include "../../Inventory/Items/Equipables/WeaponInventoryItem.h"
 #include <Utils/GCDataTableUtils.h>
 
 namespace

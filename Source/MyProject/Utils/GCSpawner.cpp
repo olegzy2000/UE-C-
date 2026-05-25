@@ -1,9 +1,9 @@
 #include "GCSpawner.h"
 #include <Runtime/Core/Public/UObject/WeakObjectPtrTemplates.h>
 #include "../Characters/GCBaseCharacter.h"
-#include "../Inventary/InventoryItem.h"
-#include "../Inventary/Items/Ammo/UInventoryAmmoItem.h"
-#include "../Inventary/Items/Equipables/WeaponInventoryItem.h"
+#include "../Inventory/InventoryItem.h"
+#include "../Inventory/Items/Ammo/UInventoryAmmoItem.h"
+#include "../Inventory/Items/Equipables/WeaponInventoryItem.h"
 #include <Utils/GCDataTableUtils.h>
 
 TWeakObjectPtr<UInventoryAmmoItem> GCSpawner::SpawnInventoryAmmoItem(AGCBaseCharacter* Character, FName DataTableID, int32 AmountAmmo)

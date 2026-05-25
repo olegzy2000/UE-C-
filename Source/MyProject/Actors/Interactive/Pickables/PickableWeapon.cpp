@@ -4,7 +4,7 @@
 #include "PickableWeapon.h"
 #include <GameCodeTypes.h>
 #include <Utils/GCDataTableUtils.h>
-#include <Inventary/Items/Equipables/WeaponInventoryItem.h>
+#include <Inventory/Items/Equipables/WeaponInventoryItem.h>
 #include <Utils/GCSpawner.h>
 
 APickableWeapon::APickableWeapon() {

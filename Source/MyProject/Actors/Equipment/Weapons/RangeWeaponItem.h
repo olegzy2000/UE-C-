@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Runtime/Engine/Public/TimerManager.h"
-#include "Components/Weapon/WeaponBarellComponent.h"
+#include "Components/Weapon/WeaponBarrelComponent.h"
 #include "Subsystems/SaveSubsystem/SaveSubsystemInterface.h"
 #include "Actors/Equipment/EquipableItem.h"
 #include "RangeWeaponItem.generated.h"
@@ -60,7 +60,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		USkeletalMeshComponent* WeaponMesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-		UWeaponBarellComponent* WeaponBarell;
+		UWeaponBarrelComponent* WeaponBarrel;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animations | Weapon")
 		UAnimMontage* WeaponFireMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animations | Weapon")

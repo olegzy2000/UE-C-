@@ -3,7 +3,7 @@
 
 #include "Actors/Interactive/Pickables/PickableAmmo.h"
 #include <Utils/GCDataTableUtils.h>
-#include <Inventary/Items/Ammo/UInventoryAmmoItem.h>
+#include <Inventory/Items/Ammo/UInventoryAmmoItem.h>
 #include <Utils/GCSpawner.h>
 APickableAmmo::APickableAmmo() {
 	AmmoMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));

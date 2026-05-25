@@ -6,7 +6,6 @@
 #include <Actors/Equipment/EquipableItem.h>
 #include <Actors/Interactive/Pickables/PickableItem.h>
 #include "Engine/DataTable.h"
-#include "UObject/NoExportTypes.h"
 #include "InventoryItem.generated.h"
 
 /**
