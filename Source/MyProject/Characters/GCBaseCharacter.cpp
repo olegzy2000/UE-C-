@@ -7,6 +7,7 @@
 #include "Components/CharacterComponents/CharacterAttributeComponent.h"
 #include "Components/CharacterComponents/CharacterInventoryComponent.h"
 #include "Components/CharacterComponents/CharacterInteractionComponent.h"
+#include "Components/CharacterComponents/CharacterCombatComponent.h"
 #include "DrawDebugHelpers.h"
 #include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
 #include "AIController.h"
@@ -24,6 +25,7 @@ AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
 	CharacterInventoryComponent = CreateDefaultSubobject<UCharacterInventoryComponent>(TEXT("CharacterInventory"));
 	CharacterEquipmentComponent = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("CharacterEquipment"));
 	CharacterInteractionComponent = CreateDefaultSubobject<UCharacterInteractionComponent>(TEXT("CharacterInteraction"));
+	CharacterCombatComponent = CreateDefaultSubobject<UCharacterCombatComponent>(TEXT("CharacterCombat"));
 }
 void AGCBaseCharacter::BeginPlay()
 {
@@ -126,27 +128,13 @@ void AGCBaseCharacter::Slide()
 
 void AGCBaseCharacter::StartFire()
 {
-	if (!CanStartFire()) {
-		return;
+	if (IsValid(CharacterCombatComponent)) {
+		CharacterCombatComponent->StartFire();
 	}
-	ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
-	if (IsValid(CurrentRangeWeapon)) {
-		CurrentRangeWeapon->StartFire();
-		return;
-	}
-	AThrowableItem* CurrentThrowableItem = CharacterEquipmentComponent->GetCurrentThowableItem();
-	if (IsValid(CurrentThrowableItem)) {
-		CharacterEquipmentComponent->StartLaunching(CurrentThrowableItem->GetCharacterThrowAnimMontage());
-		return;
-	}
-
 }
 
 bool AGCBaseCharacter::CanStartFire() {
-	if (CharacterEquipmentComponent->IsEquipping()) {
-		return false;
-	}
-	return true;
+	return IsValid(CharacterCombatComponent) && CharacterCombatComponent->CanStartFire();
 }
 void AGCBaseCharacter::ChangeMaxSpeedOfPlayer(float speed)
 {
@@ -154,58 +142,43 @@ void AGCBaseCharacter::ChangeMaxSpeedOfPlayer(float speed)
 }
 void AGCBaseCharacter::StopFire()
 {
-	ARangeWeaponItem* CurrentRangeWeapon = CharacterEquipmentComponent->GetCurrentRangeWeaponItem();
-	if (IsValid(CurrentRangeWeapon)) {
-		CurrentRangeWeapon->StopFire();
+	if (IsValid(CharacterCombatComponent)) {
+		CharacterCombatComponent->StopFire();
 	}
 }
 void AGCBaseCharacter::StartAiming()
 {
-	ARangeWeaponItem* CurrentRangeWeapon = GetCharacterEquipmentComponent()->GetCurrentRangeWeaponItem();
-	if (!IsValid(CurrentRangeWeapon)) {
-		return;
+	if (IsValid(CharacterCombatComponent)) {
+		CharacterCombatComponent->StartAiming();
 	}
-	bIsAiming = true;
-	CurrentAimingMovementSpeed = CurrentRangeWeapon->GetAimMovementMaxSpeed();
-	CurrentRangeWeapon->StartAim();
-	OnStartAiming();
 }
 void AGCBaseCharacter::StopAiming()
 {
-	if (!bIsAiming) {
-		return;
+	if (IsValid(CharacterCombatComponent)) {
+		CharacterCombatComponent->StopAiming();
 	}
-
-	ARangeWeaponItem* CurrentRangeWeapon = GetCharacterEquipmentComponent()->GetCurrentRangeWeaponItem();
-	if (IsValid(CurrentRangeWeapon)) {
-		CurrentRangeWeapon->StopAim();
-	}
-
-	bIsAiming = false;
-	CurrentAimingMovementSpeed = 0.0f;
-	OnStopAiming();
 }
 void AGCBaseCharacter::PrimaryMeleeAttack()
 {
-	AMeleeWeaponItem* CurrentMeleeWeapon = CharacterEquipmentComponent->GetCurrentMeleeWeapon();
-	if (IsValid(CurrentMeleeWeapon)) {
-		CurrentMeleeWeapon->StartAttack(EMeleeAttackTypes::PrimaryAttack);
+	if (IsValid(CharacterCombatComponent)) {
+		CharacterCombatComponent->PrimaryMeleeAttack();
 	}
 }
 void AGCBaseCharacter::SecondaryMeleeAttack()
 {
-	AMeleeWeaponItem* CurrentMeleeWeapon = CharacterEquipmentComponent->GetCurrentMeleeWeapon();
-	if (IsValid(CurrentMeleeWeapon)) {
-		CurrentMeleeWeapon->StartAttack(EMeleeAttackTypes::SecondaryAttack);
+	if (IsValid(CharacterCombatComponent)) {
+		CharacterCombatComponent->SecondaryMeleeAttack();
 	}
 }
 void AGCBaseCharacter::EquipPrimaryItem()
 {
-	CharacterEquipmentComponent->EquipItemInSlot(EEquipmentSlots::PrivaryItemSlot);
+	if (IsValid(CharacterCombatComponent)) {
+		CharacterCombatComponent->EquipPrimaryItem();
+	}
 }
 float AGCBaseCharacter::GetAimingMovementSpeed() const
 {
-	return CurrentAimingMovementSpeed;
+	return IsValid(CharacterCombatComponent) ? CharacterCombatComponent->GetAimingMovementSpeed() : 0.0f;
 }
 void AGCBaseCharacter::ChangeProneState()
 {
@@ -310,10 +283,15 @@ UCharacterInteractionComponent* AGCBaseCharacter::GetCharacterInteractionCompone
 	return CharacterInteractionComponent;
 }
 
+UCharacterCombatComponent* AGCBaseCharacter::GetCharacterCombatComponent() const
+{
+	return CharacterCombatComponent;
+}
+
 
 bool AGCBaseCharacter::IsAming()
 {
-	return bIsAiming;
+	return IsValid(CharacterCombatComponent) && CharacterCombatComponent->IsAiming();
 }
 
 void AGCBaseCharacter::Tick(float DeltaTime)
@@ -701,17 +679,21 @@ bool AGCBaseCharacter::CanSprint()
 
 void AGCBaseCharacter::PreviousItem()
 {
-	CharacterEquipmentComponent->EquipPreviousItem();
+	if (IsValid(CharacterCombatComponent)) {
+		CharacterCombatComponent->PreviousItem();
+	}
 }
 void AGCBaseCharacter::NextItem()
 {
-	CharacterEquipmentComponent->EquipNextItem();
+	if (IsValid(CharacterCombatComponent)) {
+		CharacterCombatComponent->NextItem();
+	}
 }
 
 void AGCBaseCharacter::Reload()
 {
-	if (IsValid(CharacterEquipmentComponent->GetCurrentRangeWeaponItem())) {
-		CharacterEquipmentComponent->ReloadCurrentWeapon();
+	if (IsValid(CharacterCombatComponent)) {
+		CharacterCombatComponent->Reload();
 	}
 }
 
@@ -726,8 +708,8 @@ UCharacterAttributeComponent* AGCBaseCharacter::GetCharacterAttributesComponent(
 
 void AGCBaseCharacter::ChangeFireMode()
 {
-	if (IsValid(CharacterEquipmentComponent) && IsValid(CharacterEquipmentComponent->GetCurrentRangeWeaponItem())) {
-		CharacterEquipmentComponent->GetCurrentRangeWeaponItem()->ChangeFireMode();
+	if (IsValid(CharacterCombatComponent)) {
+		CharacterCombatComponent->ChangeFireMode();
 	}
 }
 

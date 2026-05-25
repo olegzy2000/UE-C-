@@ -6,6 +6,7 @@
 #include "../Components/MovementComponents/LedgeDetectorComponent.h"
 #include "../Components/CharacterComponents/CharacterAttributeComponent.h"
 #include "../Components/CharacterComponents/CharacterInteractionComponent.h"
+#include "../Components/CharacterComponents/CharacterCombatComponent.h"
 #include "Animations/GCBaseCharacterAnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/TimelineComponent.h"
@@ -16,6 +17,7 @@
 #include "GCBaseCharacter.generated.h"
 
 class UCharacterEquipmentComponent;
+class UCharacterCombatComponent;
 class UWidgetComponent;
 class AEquipableItem;
 class UInventoryItem;
@@ -107,6 +109,7 @@ public:
 	UCharacterEquipmentComponent* GetCharacterEquipmentComponent_Mutable() const;
 	UCharacterInventoryComponent* GetCharacterInventoryComponent();
 	UCharacterInteractionComponent* GetCharacterInteractionComponent() const;
+	UCharacterCombatComponent* GetCharacterCombatComponent() const;
 	float GetProneCapsuleHeight() {
 		return ProneCapsuleHeight;
 	}
@@ -250,12 +253,13 @@ protected:
 	UCharacterEquipmentComponent* CharacterEquipmentComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
 	UCharacterInteractionComponent* CharacterInteractionComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
+	UCharacterCombatComponent* CharacterCombatComponent;
 	virtual void OnStartAimingInternal();
 	virtual void OnStopAimingInternal();
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Team")
 	ETeams Team = ETeams::Enemy;
 private:
-	float CurrentAimingMovementSpeed;
 	void ShowLoseText();
 	FTimerHandle MyTimerHandle;
 	void CalculateIkFootPosition();
@@ -275,7 +279,6 @@ private:
 	bool bChangeRightEffector = false;
 	bool bChangeLeftEffector = false;
 	bool bIsDebugLkCalculationEnable = false;
-	bool bIsAiming = false;
 	FVector FinalEffectorPosition;
 	FVector StartEffectorPosition;
 	FVector StartSkeletonPosition;
