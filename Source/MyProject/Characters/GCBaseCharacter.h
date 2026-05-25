@@ -6,8 +6,7 @@
 #include "../Components/MovementComponents/LedgeDetectorComponent.h"
 #include "../Components/CharacterComponents/CharacterAttributeComponent.h"
 #include "../Components/CharacterComponents/CharacterInteractionComponent.h"
-#include "../Components/CharacterComponents/CharacterCombatComponent.h"
-#include "Animations/GCBaseCharacterAnimInstance.h"
+#include "GameCodeTypes.h"
 #include "Camera/CameraComponent.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -18,6 +17,8 @@
 
 class UCharacterEquipmentComponent;
 class UCharacterCombatComponent;
+class UCharacterTraversalComponent;
+class UCharacterFootIKComponent;
 class UWidgetComponent;
 class AEquipableItem;
 class UInventoryItem;
@@ -110,6 +111,8 @@ public:
 	UCharacterInventoryComponent* GetCharacterInventoryComponent();
 	UCharacterInteractionComponent* GetCharacterInteractionComponent() const;
 	UCharacterCombatComponent* GetCharacterCombatComponent() const;
+	UCharacterTraversalComponent* GetCharacterTraversalComponent() const;
+	UCharacterFootIKComponent* GetCharacterFootIKComponent() const;
 	float GetProneCapsuleHeight() {
 		return ProneCapsuleHeight;
 	}
@@ -135,15 +138,13 @@ public:
 	virtual void Mantle(bool bForce);
 	void TryToRunWall();
 	UGCBaseCharacterMovementComponent* GetBaseCharacterMovementComponent() const;
+	ULedgeDetectorComponent* GetLedgeDetectorComponent() const;
+	const FMantlingSettings& GetMantlingSettings(float LedgeHeight) const;
 	AGCBaseCharacter(const FObjectInitializer& ObjectInitializer);
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	FORCEINLINE float GetIKRightFootOffset() const {
-		return IKRightFootOffset;
-	}
+	float GetIKRightFootOffset() const;
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	FORCEINLINE float GetIKLeftFootOffset() const {
-		return IKLeftFootOffset;
-	}
+	float GetIKLeftFootOffset() const;
 	void RegisterInteractiveActor(AInteractiveActor* InteractiveActor);
 	void UnRegisterInteractiveActor(AInteractiveActor* InteractiveActor);
 	void ClimbLadderUp(float Value);
@@ -200,19 +201,7 @@ protected:
 	FTimerHandle FuzeTimerHandle;
 	UPROPERTY()
 	FTimeline TimelineForCamera;
-	UPROPERTY()
-	FTimeline TimelineForSkeletonPosition;
-	UPROPERTY()
-	FTimeline TimelineForIkFoot;
-	UPROPERTY(EditAnywhere, Category = "Character | IK setting")
-	UCurveFloat* TimelineCurveForIKFoot;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | IK settings", meta = (BlueprintProtected = true))
-	FName RightFootBoneName;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | IK settings", meta = (BlueprintProtected = true))
-	FName LeftFootBoneName;
-	FVector LeftFootBoneRelativeLocation;
-	FVector RightFootBoneRelativeLocation;
-	FVector InitialMeshRalativeLocation;
+	FVector InitialMeshRalativeLocation = FVector::ZeroVector;
 	bool bIsSprintRequested = false;
 	bool bCanProne = false;
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -255,6 +244,11 @@ protected:
 	UCharacterInteractionComponent* CharacterInteractionComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
 	UCharacterCombatComponent* CharacterCombatComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
+	UCharacterTraversalComponent* CharacterTraversalComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
+	UCharacterFootIKComponent* CharacterFootIKComponent;
+
 	virtual void OnStartAimingInternal();
 	virtual void OnStopAimingInternal();
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Team")
@@ -262,27 +256,13 @@ protected:
 private:
 	void ShowLoseText();
 	FTimerHandle MyTimerHandle;
-	void CalculateIkFootPosition();
 	void ChangeCapsuleParamFromIdleWalkStateToCrouch();
-	void InitTimelineToIKFoot();
-	void IKFootPositionUpdate(float Alpha);
-	void IKSkeletonPositionUpdate(float Alpha);
 	void ChangeSkeletalMeshPosition(FVector Position);
 	void EnableRagdoll();
 	void TryChangeSprintState();
-	const FMantlingSettings& GetMantlingSettings(float LedgeHeight) const;
 	void ChangeCapsuleParamFromProneToCrouched();
-	float IKRightFootOffset = 0.0f;
-	float IKLeftFootOffset = 0.0f;
 	bool bCanCrouch = true;
 	bool bIsTrytoChangeCrouchPosition = false;
-	bool bChangeRightEffector = false;
-	bool bChangeLeftEffector = false;
-	bool bIsDebugLkCalculationEnable = false;
-	FVector FinalEffectorPosition;
-	FVector StartEffectorPosition;
-	FVector StartSkeletonPosition;
-	FVector EndSkeletonPosition;
 	FVector CurrentFallApex;
 	void restartCurrentLevel();
 };

@@ -17,7 +17,28 @@ UCharacterInteractionComponent::UCharacterInteractionComponent()
 void UCharacterInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
 	CachedBaseCharacter = Cast<AGCBaseCharacter>(GetOwner());
+	if (!CachedBaseCharacter.IsValid()) {
+		UE_LOG(LogTemp, Warning, TEXT("UCharacterInteractionComponent::BeginPlay failed: owner is not AGCBaseCharacter"));
+		return;
+	}
+
+	CachedBaseCharacterMovementComponent = CachedBaseCharacter->GetBaseCharacterMovementComponent();
+	if (!CachedBaseCharacterMovementComponent.IsValid()) {
+		UE_LOG(LogTemp, Warning, TEXT("UCharacterInteractionComponent::BeginPlay failed: movement component is not valid"));
+	}
+
+	CachedPlayerController = CachedBaseCharacter->GetController<APlayerController>();
+}
+
+APlayerController* UCharacterInteractionComponent::GetCachedPlayerController()
+{
+	if (!CachedPlayerController.IsValid() && CachedBaseCharacter.IsValid()) {
+		CachedPlayerController = CachedBaseCharacter->GetController<APlayerController>();
+	}
+
+	return CachedPlayerController.Get();
 }
 
 void UCharacterInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -41,17 +62,17 @@ void UCharacterInteractionComponent::UnRegisterInteractiveActor(AInteractiveActo
 void UCharacterInteractionComponent::Interact()
 {
 	if (LineOfSightObject.GetInterface()) {
-		LineOfSightObject->Interact(CachedBaseCharacter);
+		LineOfSightObject->Interact(CachedBaseCharacter.Get());
 	}
 }
 
 void UCharacterInteractionComponent::ClimbLadderUp(float Value)
 {
-	if (!IsValid(CachedBaseCharacter)) {
+	if (!CachedBaseCharacter.IsValid()) {
 		return;
 	}
 
-	UGCBaseCharacterMovementComponent* MovementComponent = CachedBaseCharacter->GetBaseCharacterMovementComponent();
+	UGCBaseCharacterMovementComponent* MovementComponent = CachedBaseCharacterMovementComponent.Get();
 	if (IsValid(MovementComponent) && MovementComponent->IsOnLadder() && !FMath::IsNearlyZero(Value)) {
 		FVector LadderUpVector = MovementComponent->GetCurrentLadder()->GetActorUpVector();
 		CachedBaseCharacter->AddMovementInput(LadderUpVector, Value);
@@ -60,11 +81,11 @@ void UCharacterInteractionComponent::ClimbLadderUp(float Value)
 
 void UCharacterInteractionComponent::InteractionWithLadder()
 {
-	if (!IsValid(CachedBaseCharacter)) {
+	if (!CachedBaseCharacter.IsValid()) {
 		return;
 	}
 
-	UGCBaseCharacterMovementComponent* MovementComponent = CachedBaseCharacter->GetBaseCharacterMovementComponent();
+	UGCBaseCharacterMovementComponent* MovementComponent = CachedBaseCharacterMovementComponent.Get();
 	if (!IsValid(MovementComponent)) {
 		return;
 	}
@@ -85,11 +106,11 @@ void UCharacterInteractionComponent::InteractionWithLadder()
 
 void UCharacterInteractionComponent::InteractionWithZipline()
 {
-	if (!IsValid(CachedBaseCharacter)) {
+	if (!CachedBaseCharacter.IsValid()) {
 		return;
 	}
 
-	UGCBaseCharacterMovementComponent* MovementComponent = CachedBaseCharacter->GetBaseCharacterMovementComponent();
+	UGCBaseCharacterMovementComponent* MovementComponent = CachedBaseCharacterMovementComponent.Get();
 	if (!IsValid(MovementComponent)) {
 		return;
 	}
@@ -131,11 +152,11 @@ AZipline* UCharacterInteractionComponent::GetAvailableZipline() const
 
 void UCharacterInteractionComponent::TraceOfSight()
 {
-	if (!IsValid(CachedBaseCharacter) || !CachedBaseCharacter->IsPlayerControlled()) {
+	if (!CachedBaseCharacter.IsValid() || !CachedBaseCharacter->IsPlayerControlled()) {
 		return;
 	}
 
-	APlayerController* PlayerController = CachedBaseCharacter->GetController<APlayerController>();
+	APlayerController* PlayerController = GetCachedPlayerController();
 	if (!IsValid(PlayerController) || !IsValid(GetWorld())) {
 		return;
 	}

@@ -15,17 +15,27 @@ UCharacterCombatComponent::UCharacterCombatComponent()
 void UCharacterCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	CachedBaseCharacter = Cast<AGCBaseCharacter>(GetOwner());
+	if (!CachedBaseCharacter.IsValid()) {
+		UE_LOG(LogTemp, Warning, TEXT("UCharacterCombatComponent::BeginPlay failed: owner is not AGCBaseCharacter"));
+		return;
+	}
+
+	CachedEquipmentComponent = CachedBaseCharacter->GetCharacterEquipmentComponent_Mutable();
+	if (!CachedEquipmentComponent.IsValid()) {
+		UE_LOG(LogTemp, Warning, TEXT("UCharacterCombatComponent::BeginPlay failed: equipment component is not valid"));
+	}
 }
 
 AGCBaseCharacter* UCharacterCombatComponent::GetBaseCharacterOwner() const
 {
-	return Cast<AGCBaseCharacter>(GetOwner());
+	return CachedBaseCharacter.Get();
 }
 
 UCharacterEquipmentComponent* UCharacterCombatComponent::GetEquipmentComponent() const
 {
-	const AGCBaseCharacter* BaseCharacter = GetBaseCharacterOwner();
-	return IsValid(BaseCharacter) ? BaseCharacter->GetCharacterEquipmentComponent_Mutable() : nullptr;
+	return CachedEquipmentComponent.Get();
 }
 
 void UCharacterCombatComponent::PreviousItem()

@@ -13,6 +13,8 @@ class AGCBaseCharacter;
 class AInteractiveActor;
 class ALadder;
 class AZipline;
+class UGCBaseCharacterMovementComponent;
+class APlayerController;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class MYPROJECT_API UCharacterInteractionComponent : public UActorComponent
@@ -44,9 +46,16 @@ protected:
 
 private:
 	void TraceOfSight();
+	APlayerController* GetCachedPlayerController();
 
 	UPROPERTY()
-	AGCBaseCharacter* CachedBaseCharacter = nullptr;
+	TWeakObjectPtr<AGCBaseCharacter> CachedBaseCharacter;
+
+	UPROPERTY()
+	TWeakObjectPtr<UGCBaseCharacterMovementComponent> CachedBaseCharacterMovementComponent;
+
+	UPROPERTY()
+	TWeakObjectPtr<APlayerController> CachedPlayerController;
 
 	UPROPERTY()
 	TScriptInterface<IInteractable> LineOfSightObject;

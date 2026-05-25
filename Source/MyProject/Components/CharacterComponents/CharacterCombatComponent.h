@@ -10,6 +10,7 @@
 class AGCBaseCharacter;
 class UCharacterEquipmentComponent;
 
+
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class MYPROJECT_API UCharacterCombatComponent : public UActorComponent
 {
@@ -40,6 +41,12 @@ public:
 private:
 	AGCBaseCharacter* GetBaseCharacterOwner() const;
 	UCharacterEquipmentComponent* GetEquipmentComponent() const;
+
+	UPROPERTY()
+	TWeakObjectPtr<AGCBaseCharacter> CachedBaseCharacter;
+
+	UPROPERTY()
+	TWeakObjectPtr<UCharacterEquipmentComponent> CachedEquipmentComponent;
 
 	bool bIsAiming = false;
 	float CurrentAimingMovementSpeed = 0.0f;
