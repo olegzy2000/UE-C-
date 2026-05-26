@@ -83,12 +83,10 @@ namespace
 		return false;
 	}
 }
-
-// Sets default values for this component's properties
 UCharacterInventoryComponent::UCharacterInventoryComponent()
 	: ItemsInInventory(0)
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCharacterInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

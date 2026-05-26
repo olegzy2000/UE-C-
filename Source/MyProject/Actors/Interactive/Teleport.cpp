@@ -4,11 +4,9 @@
 #include "Teleport.h"
 #include "Components/BoxComponent.h"
 #include <Runtime/Engine/Classes/Kismet/KismetMathLibrary.h>
-// Sets default values
 ATeleport::ATeleport()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("TeleportRoot"));
 	InteractionVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionVolume"));
 	InteractionVolume->SetupAttachment(RootComponent);
@@ -16,7 +14,6 @@ ATeleport::ATeleport()
 
 }
 
-// Called when the game starts or when spawned
 void ATeleport::BeginPlay()
 {
 	Super::BeginPlay();

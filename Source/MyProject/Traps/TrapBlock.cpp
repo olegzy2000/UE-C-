@@ -6,7 +6,7 @@
 #include <MyProject/GameCodeTypes.h>
 ATrapBlock::ATrapBlock()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Block root"));
 	BlockMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Platform"));
 	BlockMesh->SetupAttachment(RootComponent);

@@ -12,7 +12,10 @@
 #include "../../Platforms/BasePlatform.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GCBaseCharacterMovementComponent.generated.h"
+USTRUCT()
 struct FMantlingMovementParameters {
+	GENERATED_BODY()
+
 	FVector InitialLocation = FVector::ZeroVector;
 	FRotator InitialRotation = FRotator::ZeroRotator;
 	FVector TargetLocation = FVector::ZeroVector;
@@ -153,7 +156,7 @@ private:
 	uint8 bSavedIsSprinting : 1;
 public:
 	virtual void Clear() override;
-	virtual uint8 GetCompressedFalgs() const;
+	virtual uint8 GetCompressedFlags() const override;
 	virtual bool CanCombineWith(const FSavedMovePtr& NewMovePtr, ACharacter* InCharacter, float MaxDelta) const override;
 	virtual void SetMoveFor(ACharacter * Character,float InDeltaTimeFVector,FVector const& NewAccel,class FNetworkPredictionData_Client_Character & ClientDataCharacter) override;
 	virtual void PrepMoveFor(ACharacter* Character);

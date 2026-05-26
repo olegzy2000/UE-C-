@@ -109,10 +109,7 @@ void UCharacterEquipmentComponent::CreateLoadout()
 }
 void UCharacterEquipmentComponent::OnLevelDeserialized_Implementation()
 {
-	// Runtime equipment actors must be spawned only after SaveSubsystem has finished
-	// reconciling level actors. If we spawn them inside Serialize() while the level
-	// actor loop is still running, SaveSubsystem can treat them as unknown actors
-	// and destroy them immediately.
+	
 	RebuildRuntimeEquipmentFromSaveData();
 
 	if (CurrentEquippedSlot == EEquipmentSlots::None || !ItemsArray.IsValidIndex((int32)CurrentEquippedSlot)) {
@@ -290,7 +287,7 @@ void UCharacterEquipmentComponent::RebuildRuntimeEquipmentFromSaveData()
 
 UCharacterEquipmentComponent::UCharacterEquipmentComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCharacterEquipmentComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

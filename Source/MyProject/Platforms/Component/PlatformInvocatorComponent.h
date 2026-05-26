@@ -12,11 +12,9 @@ class MYPROJECT_API UPlatformInvocatorComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
 	UPlatformInvocatorComponent();
 
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
 	UPROPERTY(EditInstanceOnly)
 	APlatformInvocator* PlatformInvocator;

@@ -13,9 +13,8 @@ class MYPROJECT_API ASwimmingPool : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	ASwimmingPool();
 	UPROPERTY(EditAnywhere)
-		APhysicsVolume* physicsVolumel;
+	APhysicsVolume* physicsVolumel;
 
 };

@@ -546,7 +546,7 @@ void FSavedMove_GC::Clear()
 	bSavedIsSprinting = 0;
 }
 
-uint8 FSavedMove_GC::GetCompressedFalgs() const
+uint8 FSavedMove_GC::GetCompressedFlags() const
 {
 	uint8 Result = Super::GetCompressedFlags();
 	/*FLAG_JumpPressed = 0x01,	// Jump pressed
@@ -577,12 +577,14 @@ bool FSavedMove_GC::CanCombineWith(const FSavedMovePtr& NewMovePtr, ACharacter* 
 void FSavedMove_GC::SetMoveFor(ACharacter* Character, float InDeltaTime, FVector const& NewAccel, FNetworkPredictionData_Client_Character& ClientDataCharacter)
 {
 	Super::SetMoveFor(Character, InDeltaTime, NewAccel, ClientDataCharacter);
+	checkf(Character->GetCharacterMovement()->IsA<UGCBaseCharacterMovementComponent>(), TEXT("FSavedMove_GC::SetMoveFor CharacterMovement is not UGCBaseCharacterMovementComponent"));
 	UGCBaseCharacterMovementComponent* MovementComponent = StaticCast<UGCBaseCharacterMovementComponent*>(Character->GetCharacterMovement());
 	bSavedIsSprinting = MovementComponent->IsSprinting();
 
 }
 void FSavedMove_GC::PrepMoveFor(ACharacter* Character) {
 	Super::PrepMoveFor(Character);
+	checkf(Character->GetCharacterMovement()->IsA<UGCBaseCharacterMovementComponent>(), TEXT("FSavedMove_GC::PrepMoveFor CharacterMovement is not UGCBaseCharacterMovementComponent"));
 	UGCBaseCharacterMovementComponent* MovementComponent = StaticCast<UGCBaseCharacterMovementComponent*>(Character->GetMovementComponent());
 	MovementComponent->SetIsSprinting(bSavedIsSprinting);
 
