@@ -128,7 +128,7 @@ public:
 	float GetDefaultCapsuleHeight() const {
 		return DefaultCapsuleHeight;
 	}
-	bool IsAming();
+	bool IsAiming();
 	FTimerHandle getTimeHandler() {
 		return FuzeTimerHandle;
 	}
@@ -157,7 +157,7 @@ public:
 	void OnStartAiming();
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Character")
 	void OnStopAiming();
-	FOnAminStateChanged OnAmingStateChanged;
+	FOnAminStateChanged OnAimingStateChanged;
 	virtual FGenericTeamId GetGenericTeamId() const override;
 	void Interact();
 

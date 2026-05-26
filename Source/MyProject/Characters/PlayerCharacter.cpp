@@ -220,7 +220,7 @@ void APlayerCharacter::StopAiming()
 
 void APlayerCharacter::StartFire()
 {
-	if (!IsAming())
+	if (!IsAiming())
 	{
 		StartAiming();
 		bIsCallingAimingByFire = true;
@@ -230,7 +230,7 @@ void APlayerCharacter::StartFire()
 
 void APlayerCharacter::StopFire()
 {
-	if (bIsCallingAimingByFire && IsAming())
+	if (bIsCallingAimingByFire && IsAiming())
 	{
 		GetWorld()->GetTimerManager().SetTimer(StopAimTimerHandle, this, &APlayerCharacter::StopAiming, 2.0f, false);
 	}
@@ -300,7 +300,7 @@ void APlayerCharacter::StopSprint()
 }
 void APlayerCharacter::OnSprintStart_Implementation()
 {
-	if (IsAming())
+	if (IsAiming())
 	{
 		StopAiming();
 	}

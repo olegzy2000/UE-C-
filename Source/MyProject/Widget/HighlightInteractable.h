@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
-#include "HighglightInteractable.generated.h"
+#include "HighlightInteractable.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MYPROJECT_API UHighglightInteractable : public UUserWidget
+class MYPROJECT_API UHighlightInteractable : public UUserWidget
 {
 	GENERATED_BODY()
 public:

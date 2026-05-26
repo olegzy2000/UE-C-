@@ -9,7 +9,7 @@
 #include "RunWallDetectorComponent.h"
 #include "Curves/CurveVector.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "../../Platformes/BasePlatform.h"
+#include "../../Platforms/BasePlatform.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GCBaseCharacterMovementComponent.generated.h"
 struct FMantlingMovementParameters {

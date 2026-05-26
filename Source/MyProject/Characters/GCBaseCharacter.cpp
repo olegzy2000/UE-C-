@@ -304,7 +304,7 @@ float AGCBaseCharacter::GetIKLeftFootOffset() const
 	return IsValid(CharacterFootIKComponent) ? CharacterFootIKComponent->GetIKLeftFootOffset() : 0.0f;
 }
 
-bool AGCBaseCharacter::IsAming()
+bool AGCBaseCharacter::IsAiming()
 {
 	return IsValid(CharacterCombatComponent) && CharacterCombatComponent->IsAiming();
 }
@@ -512,14 +512,14 @@ void AGCBaseCharacter::OnStopAiming_Implementation()
 
 void AGCBaseCharacter::OnStartAimingInternal()
 {
-	if (OnAmingStateChanged.IsBound()) {
-		OnAmingStateChanged.Broadcast(true);
+	if (OnAimingStateChanged.IsBound()) {
+		OnAimingStateChanged.Broadcast(true);
 	}
 }
 void AGCBaseCharacter::OnStopAimingInternal()
 {
-	if (OnAmingStateChanged.IsBound()) {
-		OnAmingStateChanged.Broadcast(false);
+	if (OnAimingStateChanged.IsBound()) {
+		OnAimingStateChanged.Broadcast(false);
 	}
 }
 bool AGCBaseCharacter::CanSprint()

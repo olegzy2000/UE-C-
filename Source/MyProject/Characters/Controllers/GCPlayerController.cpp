@@ -138,11 +138,11 @@ void AGCPlayerController::BindHUDToEquipment()
 	UReticleWidget* ReticleWidget = PlayerHUD->GetReticleWidget();
 	if (IsValid(ReticleWidget))
 	{
-		CachedBaseCharacter->OnAmingStateChanged.RemoveAll(ReticleWidget);
+		CachedBaseCharacter->OnAimingStateChanged.RemoveAll(ReticleWidget);
 		CharacterEquipment->OnEquippedItemChanged.RemoveAll(ReticleWidget);
 
 		ReticleWidget->SetupCurrentReticle();
-		CachedBaseCharacter->OnAmingStateChanged.AddUFunction(ReticleWidget, FName("OnAimingStateChange"));
+		CachedBaseCharacter->OnAimingStateChanged.AddUFunction(ReticleWidget, FName("OnAimingStateChange"));
 		CharacterEquipment->OnEquippedItemChanged.AddUFunction(ReticleWidget, FName("OnEquippedItemChanged"));
 	}
 
@@ -165,7 +165,7 @@ void AGCPlayerController::UnbindHUDFromEquipment()
 
 	if (UReticleWidget* ReticleWidget = PlayerHUD->GetReticleWidget(); IsValid(ReticleWidget))
 	{
-		CachedBaseCharacter->OnAmingStateChanged.RemoveAll(ReticleWidget);
+		CachedBaseCharacter->OnAimingStateChanged.RemoveAll(ReticleWidget);
 
 		if (IsValid(CharacterEquipment))
 		{

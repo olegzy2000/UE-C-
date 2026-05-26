@@ -3,7 +3,7 @@
 #pragma once
 #include "PlatformInvocator.h"
 #include "Components/TimelineComponent.h"
-#include <MyProject/Platformes/Component/PlatformInvocatorComponent.h>
+#include <MyProject/Platforms/Component/PlatformInvocatorComponent.h>
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BasePlatform.generated.h"

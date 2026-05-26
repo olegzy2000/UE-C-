@@ -3,7 +3,7 @@
 #include "Widget/PlayerHUD.h"
 
 #include "Components/ProgressBar.h"
-#include "HighglightInteractable.h"
+#include "HighlightInteractable.h"
 
 void UPlayerHUD::SetHealthPercent(float Percent)
 {

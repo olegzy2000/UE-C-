@@ -25,7 +25,7 @@ bool UCharacterEquipmentComponent::AddEquipmentItemToSlot(const TSubclassOf<AEqu
 		if (!IsValid(Item) || !CachedBaseCharacter.IsValid() || !IsValid(CachedBaseCharacter->GetMesh())) {
 			return false;
 		}
-		Item->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, Item->GetUnEquppedSocketName());
+		Item->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, Item->GetUnEquippedSocketName());
 		Item->SetOwner(CachedBaseCharacter.Get());
 		Item->SetAmmo(StartedAmmo);
 		Item->UnEquip();
@@ -376,7 +376,7 @@ void UCharacterEquipmentComponent::StartLaunching(UAnimMontage* EquipMontage)
 void UCharacterEquipmentComponent::AttachCurrentItemToEquippedSocket()
 {
 	if (IsValid(CurrentEquippedItem))
-		CurrentEquippedItem->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, CurrentEquippedItem->GetEquppedSocketName());
+		CurrentEquippedItem->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, CurrentEquippedItem->GetEquippedSocketName());
 }
 
 AMeleeWeaponItem* UCharacterEquipmentComponent::GetCurrentMeleeWeapon() const
@@ -390,7 +390,7 @@ AThrowableItem* UCharacterEquipmentComponent::GetCurrentThowableItem() const
 void UCharacterEquipmentComponent::UnEquipCurrentItem()
 {
 	if (IsValid(CurrentEquippedItem)) {
-		CurrentEquippedItem->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, CurrentEquippedItem->GetUnEquppedSocketName());
+		CurrentEquippedItem->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, CurrentEquippedItem->GetUnEquippedSocketName());
 		CurrentEquippedItem->UnEquip();
 	}
 	if (IsValid(CurrentEquippedWeapon)) {

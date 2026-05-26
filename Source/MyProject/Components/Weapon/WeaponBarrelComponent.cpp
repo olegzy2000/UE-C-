@@ -15,7 +15,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 
-void UWeaponBarrelComponent::Shot(FVector ShotStart, FVector ShotDirection, float SpreadAngle,bool IsAming)
+void UWeaponBarrelComponent::Shot(FVector ShotStart, FVector ShotDirection, float SpreadAngle,bool IsAiming)
 {
 	FVector MuzzleLocation = GetComponentLocation();
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleFlashFX, MuzzleLocation, GetComponentRotation());
@@ -46,7 +46,7 @@ void UWeaponBarrelComponent::Shot(FVector ShotStart, FVector ShotDirection, floa
 				ShotEnd = ShotResult.ImpactPoint;
 			}
 			FVector CurrentStartLocation = MuzzleLocation;
-			if (CachedRangeWeaponItem->GetReticleType() == EReticleType::SniperRifle && IsAming)
+			if (CachedRangeWeaponItem->GetReticleType() == EReticleType::SniperRifle && IsAiming)
 				CurrentStartLocation = ShotStart;
 			FVector ShotDirectionProjectile = ShotEnd - CurrentStartLocation;
 

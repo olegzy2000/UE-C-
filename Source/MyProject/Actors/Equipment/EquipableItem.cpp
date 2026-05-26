@@ -9,14 +9,14 @@ EEquipableItemType AEquipableItem::GetItemType()
 	return EquipableItemType;
 }
 
-FName AEquipableItem::GetUnEquppedSocketName() const
+FName AEquipableItem::GetUnEquippedSocketName() const
 {
-	return UnEquppedSocketName;
+	return UnEquippedSocketName;
 }
 
-FName AEquipableItem::GetEquppedSocketName() const
+FName AEquipableItem::GetEquippedSocketName() const
 {
-	return EquppedSocketName;
+	return EquippedSocketName;
 }
 UAnimMontage* AEquipableItem::GetCharacterEquipAnimMontage() const
 {

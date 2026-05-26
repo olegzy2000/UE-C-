@@ -11,7 +11,7 @@
 /**
  *
  */
-class UHighglightInteractable;
+class UHighlightInteractable;
 UCLASS()
 class MYPROJECT_API UPlayerHUD : public UUserWidget
 {
@@ -29,7 +29,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UAmmoWidget* AmmoWidget;
 	UPROPERTY(meta = (BindWidget))
-	UHighglightInteractable* InteractableKey;
+	UHighlightInteractable* InteractableKey;
 
 public:
 	UFUNCTION()

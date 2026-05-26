@@ -17,7 +17,7 @@ class MYPROJECT_API UReticleWidget : public UUserWidget
 	GENERATED_BODY()
 protected:
 	UFUNCTION(BlueprintNativeEvent)
-		void OnAimingStateChange(bool bIsAming);
+		void OnAimingStateChange(bool bIsAiming);
 	UFUNCTION(BlueprintNativeEvent)
 		void OnEquippedItemChanged(const AEquipableItem* EquippedItem);
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Reticle")

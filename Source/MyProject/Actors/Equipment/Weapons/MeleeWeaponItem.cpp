@@ -4,7 +4,7 @@
 #include "Actors/Equipment/Weapons/MeleeWeaponItem.h"
 #include "Components/Weapon/MeleeHitRegistrator.h"
 AMeleeWeaponItem::AMeleeWeaponItem() {
-	EquppedSocketName = SocketCharacterWeapon;
+	EquippedSocketName = SocketCharacterWeapon;
 }
 void AMeleeWeaponItem::StartAttack(EMeleeAttackTypes AttackType)
 {

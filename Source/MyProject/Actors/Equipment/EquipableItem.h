@@ -21,9 +21,9 @@ class MYPROJECT_API AEquipableItem : public AActor
 	  UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Equipable item")
 	  EEquipableItemType EquipableItemType=EEquipableItemType::None;
 	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipable item")
-		  FName UnEquppedSocketName = NAME_None;
+		  FName UnEquippedSocketName = NAME_None;
 	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipable item")
-		  FName EquppedSocketName = NAME_None;
+		  FName EquippedSocketName = NAME_None;
 	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters | Ammo")
 		  int32 MaxAmmo = 30;
 	  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon | Parameters | Ammo")
@@ -44,8 +44,8 @@ class MYPROJECT_API AEquipableItem : public AActor
 		  FName DataTableID = NAME_None;
   public:
 	  EEquipableItemType GetItemType();
-	  FName GetUnEquppedSocketName() const;
-	  FName GetEquppedSocketName() const;
+	  FName GetUnEquippedSocketName() const;
+	  FName GetEquippedSocketName() const;
 	  UAnimMontage* GetCharacterEquipAnimMontage() const;
 	  virtual void Equip();
 	  virtual void UnEquip();

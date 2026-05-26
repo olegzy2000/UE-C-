@@ -41,7 +41,7 @@ void UGCBaseCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (IsValid(CurrentRangeWeaponItem)) {
 		ForGribSocketTransform = CurrentRangeWeaponItem->GetForGribTransform();
 	}
-	bIsAming = CachedBaseCharacter->IsAming();
+	bIsAiming = CachedBaseCharacter->IsAiming();
 }
 void UGCBaseCharacterAnimInstance::setLeftEffectorLocation(FVector NewEffectorLocation)
 {

@@ -74,7 +74,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character animation | weapon")
 		FTransform ForGribSocketTransform;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character animation | weapon")
-		bool bIsAming;
+		bool bIsAiming;
 
 private:
 	UPROPERTY()

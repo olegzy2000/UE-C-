@@ -5,13 +5,13 @@
 #include "TimerManager.h"
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotify.h"
-#include "AnimNotify_EnableRogdoll.generated.h"
+#include "AnimNotify_EnableRagdoll.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MYPROJECT_API UAnimNotify_EnableRogdoll : public UAnimNotify
+class MYPROJECT_API UAnimNotify_EnableRagdoll : public UAnimNotify
 {
 	GENERATED_BODY()
 public:

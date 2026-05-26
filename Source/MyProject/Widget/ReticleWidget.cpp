@@ -8,7 +8,7 @@ void UReticleWidget::OnEquippedItemChanged_Implementation(const AEquipableItem* 
 	CurrentEquippedItem = EquippedItem;
 	SetupCurrentReticle();
 }
-void UReticleWidget::OnAimingStateChange_Implementation(bool bIsAming) {
+void UReticleWidget::OnAimingStateChange_Implementation(bool bIsAiming) {
 	SetupCurrentReticle();
 }
 void UReticleWidget::SetupCurrentReticle() {

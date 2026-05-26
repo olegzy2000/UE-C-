@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "../../Platformes/BasePlatform.h"
+#include "../../Platforms/BasePlatform.h"
 #include "Math/Rotator.h"
 #include "LedgeDetectorComponent.generated.h"
 

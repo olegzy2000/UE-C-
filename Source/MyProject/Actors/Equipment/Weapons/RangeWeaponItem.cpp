@@ -13,7 +13,7 @@ ARangeWeaponItem::ARangeWeaponItem() {
 	WeaponBarrel = CreateDefaultSubobject<UWeaponBarrelComponent>(TEXT("WeaponBarrel"));
 	WeaponBarrel->SetupAttachment(WeaponMesh, SocketWeaponMuzzleSocket);
 	ReticleType = EReticleType::Default;
-	EquppedSocketName = SocketCharacterWeapon;
+	EquippedSocketName = SocketCharacterWeapon;
 
 }
 
@@ -40,11 +40,12 @@ void ARangeWeaponItem::MakeShot()
 	PlayAnimMontage(WeaponFireMontage);
 	FVector ShotLocation;
 	FRotator ShotRotation;
-	bool bIsAming = false;
+	//bool bIsAiming = false;
+	bIsAiming = false;
 	if (CurrentCharacterOwner->IsPlayerControlled()) {
 		APlayerController* Controller = CurrentCharacterOwner->GetController<APlayerController>();
 		Controller->GetPlayerViewPoint(ShotLocation, ShotRotation);
-		bIsAming=CurrentCharacterOwner->IsAming();
+		bIsAiming = CurrentCharacterOwner->IsAiming();
 	}
 	else {
 		ShotLocation = WeaponBarrel->GetComponentLocation();
@@ -53,7 +54,7 @@ void ARangeWeaponItem::MakeShot()
 	
 	FVector ShotDirection= ShotRotation.RotateVector(FVector::ForwardVector);
 	
-	WeaponBarrel->Shot(ShotLocation, ShotDirection, GetCurrentBulletSpreadAngle(), bIsAming);
+	WeaponBarrel->Shot(ShotLocation, ShotDirection, GetCurrentBulletSpreadAngle(), bIsAiming);
 	SetAmmo(GetCurrentAmmo() - 1);
 	GetWorld()->GetTimerManager().SetTimer(ShotTimer, this, &ARangeWeaponItem::OnShotTimerElapsed, RateFire, false);
 }
@@ -178,7 +179,7 @@ void ARangeWeaponItem::EndReload(bool bIsSuccess)
 		CurrentCharacterOwner->StopAnimMontage(CharacterReloadMontage);
 		StopAnimMontage(WeaponReloadMontage);
 	}
-	if (ReloadType==EReloadType::ByBullet) {
+	if (ReloadType == EReloadType::ByBullet) {
 		AGCBaseCharacter* CurrentCharacterOwner = GetCharacterOwner();
 		if (!IsValid(CurrentCharacterOwner))
 			return;
@@ -200,7 +201,7 @@ void ARangeWeaponItem::EndReload(bool bIsSuccess)
 
 EReticleType ARangeWeaponItem::GetReticleType() const
 {
-	return bIsAiming?AimReticleType:Super::GetReticleType();
+	return bIsAiming ? AimReticleType:Super::GetReticleType();
 }
 
 void ARangeWeaponItem::ChangeFireMode()
