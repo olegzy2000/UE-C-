@@ -37,9 +37,8 @@ bool ULedgeDetectorComponent::DetectLedge(OUT FLedgeDescription& LedgeDescriptio
 #endif
 	float DrawTime = 2.0f;
 	float BotoomZOffset = 2.0f;
-	//FVector CharacterBottom = CachedCharacterOwner->GetActorLocation() - (CapsuleComponent->GetScaledCapsuleHalfHeight()- BotoomZOffset) * FVector::UpVector;
 	float ForwardCheckCapsuleRadius = CapsuleComponent->GetScaledCapsuleRadius();
-	FVector CharacterBottom;//= CachedCharacterOwner->GetActorLocation() - (CachedCharacterOwner->GetDefaultHalfHeight()- BotoomZOffset) * FVector::UpVector;
+	FVector CharacterBottom;
 	if (CachedCharacterOwner->GetCharacterMovement()->IsSwimming()) {
 		CharacterBottom= CachedCharacterOwner->GetActorLocation() - (CachedCharacterOwner->GetDefaultHalfHeight() - BotoomZOffset) * FVector::UpVector;
 	}
@@ -60,7 +59,7 @@ bool ULedgeDetectorComponent::DetectLedge(OUT FLedgeDescription& LedgeDescriptio
 
 	//2.Downwarrd check
 	FHitResult DownwardCheckHitResult;
-	float DownwardSphereCheckRadius= CapsuleComponent->GetScaledCapsuleRadius();
+	float DownwardSphereCheckRadius = CapsuleComponent->GetScaledCapsuleRadius();
 	
 	float DownwardCheckDepthOffset = 10.0f;
 	FVector DownwardStartLocation = ForwardCheckHitResult.ImpactPoint - ForwardCheckHitResult.ImpactNormal * DownwardCheckDepthOffset;
@@ -72,8 +71,7 @@ bool ULedgeDetectorComponent::DetectLedge(OUT FLedgeDescription& LedgeDescriptio
 	}
 	//3.Overlap check
 	float OverlapCapsuleRadius = CapsuleComponent->GetScaledCapsuleRadius();
-	//float OverlapCapsuleHalfHeight = CapsuleComponent->GetScaledCapsuleHalfHeight();//CachedCharacterOwner->GetDefaultHalfHeight();
-	float OverlapCapsuleHalfHeight;//= CachedCharacterOwner->GetDefaultHalfHeight();//CachedCharacterOwner->GetDefaultHalfHeight();
+	float OverlapCapsuleHalfHeight;
 	if (CachedCharacterOwner->GetCharacterMovement()->IsSwimming()) {
 		OverlapCapsuleHalfHeight = CachedCharacterOwner->GetDefaultHalfHeight();
 	}
@@ -89,11 +87,12 @@ bool ULedgeDetectorComponent::DetectLedge(OUT FLedgeDescription& LedgeDescriptio
 		return false;
 	}
 	LedgeDescription.Location = OverlapLocation;
-	LedgeDescription.Rotation = (ForwardCheckHitResult.ImpactNormal*FVector(-1.0f,-1.0f,0)).ToOrientationRotator();
+	LedgeDescription.Rotation = (ForwardCheckHitResult.ImpactNormal * FVector(-1.0f,-1.0f,0)).ToOrientationRotator();
 	LedgeDescription.LedgeNormal = ForwardCheckHitResult.ImpactNormal;
-	//if (DownwardCheckHitResult.Actor->IsA<ABasePlatform>())
-		LedgeDescription.HitObject = StaticCast<ABasePlatform*>(DownwardCheckHitResult.GetActor());
-	//else
-		LedgeDescription.HitObject = NULL;
+	if (!IsValid(DownwardCheckHitResult.GetComponent())) {
+		LedgeDescription.LedgeComponent = NULL;
+		return false;
+	} 
+	LedgeDescription.LedgeComponent = DownwardCheckHitResult.GetComponent();
 	return true;
 }

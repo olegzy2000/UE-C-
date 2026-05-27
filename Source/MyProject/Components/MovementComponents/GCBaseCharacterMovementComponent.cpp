@@ -453,32 +453,75 @@ void UGCBaseCharacterMovementComponent::PhysCustom(float DeltaTime, int32 Iterat
 		break;
 	}
 	default:
+		Super::PhysCustom(DeltaTime, Iterations);
 		break;
 	}
-	Super::PhysCustom(DeltaTime, Iterations);
 }
 
-void UGCBaseCharacterMovementComponent::PhysMantling(float DeltaTime, int32 Iterations) {
-	if (CurrentMantlingParameters.MantlingCurve != nullptr) {
-		float ElapseTime = GetWorld()->GetTimerManager().GetTimerElapsed(MantlingTimer) + CurrentMantlingParameters.StartTime;
-		FVector MantlingCurveValue = CurrentMantlingParameters.MantlingCurve->GetVectorValue(ElapseTime);
-		float PositionAlpha = MantlingCurveValue.X;
-		float XYCorrectionAlpha = MantlingCurveValue.Y;
-		float ZCorrectionAlpha = MantlingCurveValue.Z;
-		FVector CorrectedInitialLocation = FMath::Lerp(CurrentMantlingParameters.InitialLocation, CurrentMantlingParameters.InitialAnimationLocation, XYCorrectionAlpha);
-		CorrectedInitialLocation.Z = FMath::Lerp(CurrentMantlingParameters.InitialLocation.Z, CurrentMantlingParameters.InitialAnimationLocation.Z, ZCorrectionAlpha);
-		FVector NewLocation = FMath::Lerp(CorrectedInitialLocation, CurrentMantlingParameters.TargetLocation, PositionAlpha);
-
-		FRotator NewRotation = FMath::Lerp(CurrentMantlingParameters.InitialRotation, CurrentMantlingParameters.TargetRotation, PositionAlpha);
-		FVector Delta = NewLocation - GetActorLocation();
-		if (CurrentMantlingParameters.HitObject != NULL) {
-			//	Delta -= CurrentMantlingParameters.HitObject->GetPlatformMesh()->GetComponentLocation();
-		}
-		//Velocity = Delta / DeltaTime;
-		//GetOwner()->AttachToComponent(CurrentMantlingParameters.HitObject->GetPlatformMesh(), FAttachmentTransformRules::KeepWorldTransform);
-		FHitResult Hit;
-		SafeMoveUpdatedComponent(Delta, NewRotation, false, Hit);
+void UGCBaseCharacterMovementComponent::PhysMantling(float DeltaTime, int32 Iterations)
+{
+	if (!IsValid(CurrentMantlingParameters.MantlingCurve))
+	{
+		EndMantle();
+		return;
 	}
+
+	if (DeltaTime < MIN_TICK_TIME)
+	{
+		return;
+	}
+
+	const float ElapsedTime =
+		GetWorld()->GetTimerManager().GetTimerElapsed(MantlingTimer)
+		+ CurrentMantlingParameters.StartTime;
+
+	const FVector MantlingCurveValue =
+		CurrentMantlingParameters.MantlingCurve->GetVectorValue(ElapsedTime);
+
+	const float PositionAlpha = MantlingCurveValue.X;
+	const float XYCorrectionAlpha = MantlingCurveValue.Y;
+	const float ZCorrectionAlpha = MantlingCurveValue.Z;
+
+	const FVector TargetLocation = GetCurrentMantlingTargetLocation();
+	const FVector InitialAnimationLocation = GetCurrentMantlingInitialAnimationLocation();
+	const FVector MovingTargetOffset = GetCurrentMantlingTargetOffset();
+
+	const FVector InitialLocation =
+		CurrentMantlingParameters.InitialLocation + MovingTargetOffset;
+
+	FVector CorrectedInitialLocation = FMath::Lerp(
+		InitialLocation,
+		InitialAnimationLocation,
+		XYCorrectionAlpha
+	);
+
+	CorrectedInitialLocation.Z = FMath::Lerp(
+		InitialLocation.Z,
+		InitialAnimationLocation.Z,
+		ZCorrectionAlpha
+	);
+
+	const FVector NewLocation = FMath::Lerp(
+		CorrectedInitialLocation,
+		TargetLocation,
+		PositionAlpha
+	);
+
+	const FQuat NewRotation = FQuat::Slerp(
+		CurrentMantlingParameters.InitialRotation.Quaternion(),
+		CurrentMantlingParameters.TargetRotation.Quaternion(),
+		PositionAlpha
+	);
+
+	const FVector Delta = NewLocation - UpdatedComponent->GetComponentLocation();
+
+	FHitResult Hit;
+	SafeMoveUpdatedComponent(
+		Delta,
+		NewRotation,
+		false,
+		Hit
+	);
 }
 
 void UGCBaseCharacterMovementComponent::PhysRunWall(float DeltaTime, int32 Iterations) {
@@ -528,16 +571,63 @@ void UGCBaseCharacterMovementComponent::PhysLadder(float DeltaTime, int32 Iterat
 	}
 	FVector NewPos = GetActorLocation() + Delta;
 	float NewPosProjection = GetActorToCurrentLadderProjection(NewPos);
+	const FVector LadderUpVector = CurrentLadder->GetActorUpVector();
+	const float MovementDirection = FVector::DotProduct(LadderUpVector, Velocity);
+	const bool bMovingUp = MovementDirection > 0.0f;
+	const bool bMovingDown = MovementDirection < 0.0f;
 	if (NewPosProjection < MinLadderBottomOffset) {
-		DetachFromLadder(EDetachFromLadderMethod::ReachingTheBottom);
-		return;
+		if (bMovingDown){
+			DetachFromLadder(EDetachFromLadderMethod::ReachingTheBottom);
+			return;
+		}
 	}
 	else if (NewPosProjection > (CurrentLadder->GetLadderHeight() - MaxLadderTopOffset)) {
-		DetachFromLadder(EDetachFromLadderMethod::ReachingTheTop);
-		return;
+		if (bMovingUp){
+			DetachFromLadder(EDetachFromLadderMethod::ReachingTheTop);
+			return;
+		}
 	}
 	FHitResult Hit;
 	SafeMoveUpdatedComponent(Delta,GetOwner()->GetActorRotation() , true, Hit);
+}
+
+FVector UGCBaseCharacterMovementComponent::GetCurrentMantlingTargetLocation() const
+{
+	if (CurrentMantlingParameters.bHasMovingTarget && IsValid(CurrentMantlingParameters.TargetComponent))
+	{
+		return CurrentMantlingParameters.TargetComponent
+			->GetComponentTransform()
+			.TransformPosition(CurrentMantlingParameters.LocalTargetLocation);
+	}
+
+	return CurrentMantlingParameters.TargetLocation;
+}
+
+FVector UGCBaseCharacterMovementComponent::GetCurrentMantlingInitialAnimationLocation() const
+{
+	if (CurrentMantlingParameters.bHasMovingTarget && IsValid(CurrentMantlingParameters.TargetComponent))
+	{
+		return CurrentMantlingParameters.TargetComponent->GetComponentTransform()
+			.TransformPosition(CurrentMantlingParameters.LocalInitialAnimationLocation);
+	}
+
+	return CurrentMantlingParameters.InitialAnimationLocation;
+}
+
+FVector UGCBaseCharacterMovementComponent::GetCurrentMantlingTargetOffset() const
+{
+	if (!CurrentMantlingParameters.bHasMovingTarget || !IsValid(CurrentMantlingParameters.TargetComponent))
+	{
+		return FVector::ZeroVector;
+	}
+
+	const FVector StartLocation =
+		CurrentMantlingParameters.TargetComponentStartTransform.GetLocation();
+
+	const FVector CurrentLocation =
+		CurrentMantlingParameters.TargetComponent->GetComponentLocation();
+
+	return CurrentLocation - StartLocation;
 }
 
 void FSavedMove_GC::Clear()

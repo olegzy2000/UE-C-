@@ -13,18 +13,12 @@ struct FLedgeDescription
 {
 	GENERATED_BODY()
 
-		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ledge description")
-		FVector Location;
+	FVector Location = FVector::ZeroVector;
+	FRotator Rotation = FRotator::ZeroRotator;
+	FVector LedgeNormal = FVector::ZeroVector;
 
-	    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ledge description")
-		FVector LedgeNormal;
-
-
-	    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ledge description")
-		FRotator Rotation;
-		UPROPERTY()
-		ABasePlatform* HitObject;
-	    
+	UPROPERTY()
+	UPrimitiveComponent* LedgeComponent = nullptr;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )

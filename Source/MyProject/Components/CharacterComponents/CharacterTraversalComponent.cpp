@@ -78,21 +78,21 @@ void UCharacterTraversalComponent::Mantle(bool bForce)
 	if (LedgeDetectorComponent->DetectLedge(LedgeDescription) && !MovementComponent->IsMantling()) {
 		FMantlingMovementParameters MantlingParameters;
 
-		if (LedgeDescription.HitObject != nullptr) {
-			MantlingParameters.HitObject = LedgeDescription.HitObject;
+		if (LedgeDescription.LedgeComponent != nullptr) {
+			MantlingParameters.TargetComponent = LedgeDescription.LedgeComponent;
 			if (GEngine) {
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("Some debug message!"));
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("Target component was found"));
 			}
 		}
 		else {
-			MantlingParameters.HitObject = nullptr;
+			MantlingParameters.TargetComponent = nullptr;
 		}
 
 		MantlingParameters.InitialLocation = BaseCharacter->GetActorLocation();
 		MantlingParameters.InitialRotation = BaseCharacter->GetActorRotation();
+		MantlingParameters.TargetComponent = LedgeDescription.LedgeComponent;
 		MantlingParameters.TargetLocation = LedgeDescription.Location;
 		MantlingParameters.TargetRotation = LedgeDescription.Rotation;
-
 		const float MantlingHeight = (MantlingParameters.TargetLocation - MantlingParameters.InitialLocation).Z;
 		const FMantlingSettings& MantlingSettings = BaseCharacter->GetMantlingSettings(MantlingHeight);
 
@@ -113,6 +113,37 @@ void UCharacterTraversalComponent::Mantle(bool bForce)
 		MantlingParameters.InitialAnimationLocation = MantlingParameters.TargetLocation
 			- MantlingSettings.AnimationCorrectionZ * FVector::UpVector
 			+ MantlingSettings.AnimationCorrectionXY * LedgeDescription.LedgeNormal;
+
+		if (IsValid(MantlingParameters.TargetComponent))
+		{
+			const FTransform TargetComponentTransform =
+				MantlingParameters.TargetComponent->GetComponentTransform();
+
+			MantlingParameters.LocalTargetLocation =
+				TargetComponentTransform.InverseTransformPosition(MantlingParameters.TargetLocation);
+
+			MantlingParameters.LocalInitialAnimationLocation =
+				TargetComponentTransform.InverseTransformPosition(MantlingParameters.InitialAnimationLocation);
+
+			MantlingParameters.TargetComponentStartTransform = TargetComponentTransform;
+
+			MantlingParameters.bHasMovingTarget = true;
+
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					5.0f,
+					FColor::Green,
+					TEXT("Mantle moving target initialized")
+				);
+			}
+		}
+		else
+		{
+			MantlingParameters.bHasMovingTarget = false;
+		}
+
 
 		MovementComponent->StartMantle(MantlingParameters);
 

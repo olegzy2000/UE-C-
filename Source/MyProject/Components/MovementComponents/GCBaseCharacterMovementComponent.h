@@ -12,20 +12,34 @@
 #include "../../Platforms/BasePlatform.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GCBaseCharacterMovementComponent.generated.h"
+
 USTRUCT()
 struct FMantlingMovementParameters {
 	GENERATED_BODY()
 
 	FVector InitialLocation = FVector::ZeroVector;
 	FRotator InitialRotation = FRotator::ZeroRotator;
+
 	FVector TargetLocation = FVector::ZeroVector;
 	FRotator TargetRotation = FRotator::ZeroRotator;
+
 	FVector InitialAnimationLocation = FVector::ZeroVector;
+
 	float Duration = 1.0f;
 	float StartTime = 0.0f;
-	UCurveVector* MantlingCurve;
+
 	UPROPERTY()
-	ABasePlatform* HitObject;
+	UCurveVector* MantlingCurve = nullptr;
+
+	UPROPERTY()
+	UPrimitiveComponent* TargetComponent = nullptr;
+
+	FVector LocalTargetLocation = FVector::ZeroVector;
+	FVector LocalInitialAnimationLocation = FVector::ZeroVector;
+
+	FTransform TargetComponentStartTransform = FTransform::Identity;
+
+	bool bHasMovingTarget = false;
 
 };
 UENUM(BlueprintType)
@@ -148,6 +162,10 @@ private:
 	AZipline* CurrentZipline = nullptr;
 	FRotator ForceTargetRotation = FRotator::ZeroRotator;
 	bool bForceRotation = false;
+
+	FVector GetCurrentMantlingTargetLocation() const;
+	FVector GetCurrentMantlingInitialAnimationLocation() const;
+	FVector GetCurrentMantlingTargetOffset() const;
 };
 class FSavedMove_GC : public FSavedMove_Character
 {
