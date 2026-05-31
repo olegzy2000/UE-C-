@@ -83,9 +83,7 @@ bool ULedgeDetectorComponent::DetectLedge(OUT FLedgeDescription& LedgeDescriptio
 	if (GCTraceUtils::OverlapCapsuleBlockingByProfile(GetWorld(), OverlapLocation, OverlapCapsuleRadius,OverlapCapsuleHalfHeight, FQuat::Identity, CollisionProfilePawn, QueryParams, bIsDebugEnable, DrawTime)) {
 	  return false;
 	}
-	if (CachedCharacterOwner->GetActorLocation().X - OverlapLocation.X == 0 && CachedCharacterOwner->GetActorLocation().Y - OverlapLocation.Y == 0) {
-		return false;
-	}
+	
 	LedgeDescription.Location = OverlapLocation;
 	LedgeDescription.Rotation = (ForwardCheckHitResult.ImpactNormal * FVector(-1.0f,-1.0f,0)).ToOrientationRotator();
 	LedgeDescription.LedgeNormal = ForwardCheckHitResult.ImpactNormal;

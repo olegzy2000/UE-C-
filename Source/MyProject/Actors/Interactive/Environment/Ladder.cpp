@@ -84,6 +84,11 @@ float ALadder::GetLadderHeight()const
 	return LadderHeight;
 }
 
+float ALadder::GetLadderWidth() const
+{
+	return LadderWidth;
+}
+
 
 UBoxComponent* ALadder::GetLadderInteractionBox() const
 {

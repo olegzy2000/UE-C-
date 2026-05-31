@@ -19,9 +19,11 @@ public:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay()override;
 	float GetLadderHeight() const;
+	float GetLadderWidth() const;
 	bool GetIsOnTop() const;
 	UAnimMontage* GetAttachFromTopAnimMontage() const;
 	FVector GetAnimMontageStartingLocation() const;
+	UBoxComponent* GetLadderInteractionBox() const;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ladder parameters")
 		float LadderHeight = 100.0f;
@@ -41,7 +43,6 @@ protected:
 		UStaticMeshComponent* LeftRailMeshComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		UInstancedStaticMeshComponent* StepsMeshComponent;
-	UBoxComponent* GetLadderInteractionBox() const;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UBoxComponent* TopInteractionVolume;
 	virtual void OnInterationVolumeOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

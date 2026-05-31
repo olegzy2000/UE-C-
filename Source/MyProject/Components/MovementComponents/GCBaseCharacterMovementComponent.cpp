@@ -165,8 +165,6 @@ bool UGCBaseCharacterMovementComponent::IsRunningOnWall()
 	return UpdatedComponent && MovementMode == EMovementMode::MOVE_Custom && CustomMovementMode == (uint8)ECustomMovementMode::CMOVE_RunWall;
 }
 
-
-
 void UGCBaseCharacterMovementComponent::AttachToLadder(const ALadder* Ladder)
 {
 	CurrentLadder = Ladder;
@@ -177,6 +175,7 @@ void UGCBaseCharacterMovementComponent::AttachToLadder(const ALadder* Ladder)
 	float ActorToLadderProjection = GetActorToCurrentLadderProjection(GetActorLocation());
 
 	FVector NewCharacterLocation = CurrentLadder->GetActorLocation() + ActorToLadderProjection * LadderUpVector + LadderToCharacterOffset * LadderForwardVector;
+
 	if (CurrentLadder->GetIsOnTop()) {
 		NewCharacterLocation = CurrentLadder->GetAnimMontageStartingLocation();
 	}
