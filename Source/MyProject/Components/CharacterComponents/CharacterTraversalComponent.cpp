@@ -80,9 +80,6 @@ void UCharacterTraversalComponent::Mantle(bool bForce)
 
 		if (LedgeDescription.LedgeComponent != nullptr) {
 			MantlingParameters.TargetComponent = LedgeDescription.LedgeComponent;
-			if (GEngine) {
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("Target component was found"));
-			}
 		}
 		else {
 			MantlingParameters.TargetComponent = nullptr;

@@ -168,23 +168,49 @@ bool UGCBaseCharacterMovementComponent::IsRunningOnWall()
 void UGCBaseCharacterMovementComponent::AttachToLadder(const ALadder* Ladder)
 {
 	CurrentLadder = Ladder;
-	FRotator TargetOrientationRotation = CurrentLadder->GetActorForwardVector().ToOrientationRotator();
+
+	FRotator TargetOrientationRotation =
+		CurrentLadder->GetActorForwardVector().ToOrientationRotator();
+
 	TargetOrientationRotation.Yaw += 180.0f;
+
 	FVector LadderUpVector = CurrentLadder->GetActorUpVector();
 	FVector LadderForwardVector = CurrentLadder->GetActorForwardVector();
-	float ActorToLadderProjection = GetActorToCurrentLadderProjection(GetActorLocation());
+	FVector LadderRightVector = CurrentLadder->GetActorRightVector();
 
-	FVector NewCharacterLocation = CurrentLadder->GetActorLocation() + ActorToLadderProjection * LadderUpVector + LadderToCharacterOffset * LadderForwardVector;
+	const FVector LadderLocation = CurrentLadder->GetActorLocation();
+	const FVector ActorLocationBefore = GetOwner()->GetActorLocation();
 
-	if (CurrentLadder->GetIsOnTop()) {
+	float ActorToLadderProjection =
+		GetActorToCurrentLadderProjection(GetActorLocation());
+
+	FVector NewCharacterLocation =
+		LadderLocation
+		+ ActorToLadderProjection * LadderUpVector
+		+ LadderToCharacterOffset * LadderForwardVector;
+
+	if (CurrentLadder->GetIsOnTop())
+	{
 		NewCharacterLocation = CurrentLadder->GetAnimMontageStartingLocation();
 	}
+	
 	GetOwner()->SetActorLocation(NewCharacterLocation);
 	GetOwner()->SetActorRotation(TargetOrientationRotation);
-	SetMovementMode(EMovementMode::MOVE_Custom,(uint8) ECustomMovementMode::CMOVE_Ladder);
+
+	Velocity = FVector::ZeroVector;
+	Acceleration = FVector::ZeroVector;
+	ConsumeInputVector();
+
+	if (CharacterOwner)
+	{
+		CharacterOwner->ConsumeMovementInputVector();
+	}
+
+	SetMovementMode(
+		EMovementMode::MOVE_Custom,
+		(uint8)ECustomMovementMode::CMOVE_Ladder
+	);
 }
-
-
 void UGCBaseCharacterMovementComponent::AttachToZipline(AZipline* Zipline)
 {
 	CurrentZipline = Zipline;
