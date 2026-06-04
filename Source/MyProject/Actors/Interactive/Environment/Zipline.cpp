@@ -24,40 +24,48 @@ AZipline::AZipline() {
 	ZiplineLedgeComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ZiplineLedge"));
 
 }
-
 void AZipline::OnConstruction(const FTransform& Transform)
 {
+	Super::OnConstruction(Transform);
+
+	if (!IsValid(RightRailMeshComponent) || !IsValid(LeftRailMeshComponent) ||
+		!IsValid(ZiplineMeshComponent) || !IsValid(ZiplineMeshComponent->GetStaticMesh()))
+	{
+		return;
+	}
+
 	FVector StartLocation = RightRailMeshComponent->GetSocketLocation(FName("AttachPoint"));
 	FVector EndLocation = LeftRailMeshComponent->GetSocketLocation(FName("AttachPoint"));
-	float Delta = sqrt(pow(StartLocation.X - EndLocation.X, 2) + pow(StartLocation.Y - EndLocation.Y, 2) + pow(StartLocation.Z - EndLocation.Z, 2));
-	float Length = sqrt(pow(StartLocation.X - EndLocation.X, 2) + pow(StartLocation.Y - EndLocation.Y, 2) + pow(StartLocation.Z - EndLocation.Z, 2));
-	if (IsValid(ZiplineMeshComponent) && IsValid(ZiplineMeshComponent->GetStaticMesh()) && IsValid(RightRailMeshComponent) && IsValid(LeftRailMeshComponent)) {
-		float MeshHeight = ZiplineMeshComponent->GetStaticMesh()->GetBoundingBox().GetSize().Z;
-		float X = (StartLocation.X + EndLocation.X) / 2;
-		float Y = (StartLocation.Y + EndLocation.Y) / 2;
-		float Z = (StartLocation.Z + EndLocation.Z) / 2;
-		float DeltaX = -StartLocation.X + EndLocation.X;
-		float DeltaY = -StartLocation.Y + EndLocation.Y;
-		float DeltaZ = -StartLocation.Z + EndLocation.Z;
-		FRotator CableRotation = ZiplineMeshComponent->GetRelativeRotation() ;
-		CableRotation = (FVector(DeltaX, DeltaY, DeltaZ).ToOrientationRotator());
-		CableRotation.Pitch -= 90;
-		ZiplineMeshComponent->SetRelativeRotation(CableRotation);
-		ZiplineMeshComponent->SetWorldLocation(FVector(X, Y, Z));
-		ZiplineMeshComponent->SetRelativeScale3D(FVector(1.0f, 1.0f, Length / MeshHeight));
-	}
-	if (IsValid(InteractionVolume)) {
-		GetZiplineInteractionCapsule()->SetCapsuleHalfHeight(Length/2);
-		InteractionVolume->SetWorldLocation(ZiplineMeshComponent->GetComponentLocation());
-		InteractionVolume->SetRelativeRotation(ZiplineMeshComponent->GetRelativeRotation());
+
+	float Distance = FVector::Dist(StartLocation, EndLocation);
+	FVector MidPoint = (StartLocation + EndLocation) * 0.5f;
+	FVector Direction = (EndLocation - StartLocation).GetSafeNormal();
+
+	FRotator CableRotation = Direction.Rotation();
+	CableRotation.Pitch -= 90.0f; 
+
+	float MeshHeight = ZiplineMeshComponent->GetStaticMesh()->GetBoundingBox().GetSize().Z;
+	float ScaleZ = (MeshHeight > 0.0f) ? (Distance / MeshHeight) : 1.0f;
+
+	ZiplineMeshComponent->SetWorldLocation(MidPoint);
+	ZiplineMeshComponent->SetWorldRotation(CableRotation);
+	ZiplineMeshComponent->SetRelativeScale3D(FVector(1.0f, 1.0f, ScaleZ));
+
+	if (IsValid(InteractionVolume))
+	{
+		UCapsuleComponent* Capsule = GetZiplineInteractionCapsule();
+		if (Capsule)
+		{
+			Capsule->SetCapsuleHalfHeight(Distance * 0.5f);
+			Capsule->SetWorldLocation(MidPoint);
+			Capsule->SetWorldRotation(CableRotation);
+		}
 	}
 }
 
 void AZipline::BeginPlay()
 {
 	Super::BeginPlay();
-	//InteractionVolume->OnComponentBeginOverlap.AddDynamic(this, &AZipline::OnInterationVolumeOverlapBegin);
-	//InteractionVolume->OnComponentEndOverlap.AddDynamic(this, &AZipline::OnInterationVolumeOverlapEnd);
 }
 
 float AZipline::GetZiplineLenght()const
@@ -96,7 +104,6 @@ UAnimMontage* AZipline::GetAttachFromTopAnimMontage() const
 
 FVector AZipline::GetAnimMontageStartingLocation() const
 {
-	// TO DO
 	return FVector::ZeroVector;
 }
 

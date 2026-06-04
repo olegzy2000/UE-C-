@@ -28,6 +28,8 @@ public:
 	UStaticMeshComponent* GetZiplineMeshComponent() const;
 	FVector GetEndLocationMove();
 	void SetEndLocationMove(FVector EndLocation);
+
+	FVector EndLocationMove;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Zipline parameters")
 		float ZiplineLength = 100.0f;
@@ -53,6 +55,5 @@ protected:
 
 	virtual void OnInterationVolumeOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 	virtual void OnInterationVolumeOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;	
-public:
-	FVector EndLocationMove;
+
 };
