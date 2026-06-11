@@ -45,7 +45,7 @@ namespace
 		return EInventorySlotSaveType::GenericItem;
 	}
 
-	bool ResolveSlotDescription(const FInventorySlot& Slot, FInventoryItemDescription& OutDescription)
+	bool ResolveInventorySlotDescription(const FInventorySlot& Slot, FInventoryItemDescription& OutDescription)
 	{
 		switch (Slot.GetItemType())
 		{
@@ -338,7 +338,7 @@ TArray<FText> UCharacterInventoryComponent::GetAllItemsNames() const
 	TArray<FText> Result;
 	for (const FInventorySlot& Slot : InventorySlots) {
 		FInventoryItemDescription Description;
-		if (ResolveSlotDescription(Slot, Description)) {
+		if (ResolveInventorySlotDescription(Slot, Description)) {
 			Result.Add(Description.Name);
 		}
 	}

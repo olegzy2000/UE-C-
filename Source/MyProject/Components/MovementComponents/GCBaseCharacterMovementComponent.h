@@ -74,6 +74,7 @@ class MYPROJECT_API UGCBaseCharacterMovementComponent : public UCharacterMovemen
 {
 	GENERATED_BODY()
 public:
+	void SetLadderInput(float Value);
 	FORCEINLINE bool IsSprinting();
 	void SetIsSprinting(bool flag);
 	virtual void UpdateFromCompressedFlags(uint8 Flags);
@@ -149,6 +150,7 @@ protected:
 	void PhysZipline(float DeltaTime, int32 Iterations);
 	void PhysLadder(float DeltaTime, int32 Iterations);
 private:
+	float LadderInput = 0.0f;
 	bool bIsSprinting=false;
 	bool bIsProning=false;
 	bool bIsCrouched = false;

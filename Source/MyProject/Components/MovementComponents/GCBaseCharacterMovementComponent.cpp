@@ -18,6 +18,11 @@ bool UGCBaseCharacterMovementComponent::IsCrouched()
 {
 	return bIsCrouched;
 }
+
+void UGCBaseCharacterMovementComponent::SetLadderInput(float Value)
+{
+	LadderInput = FMath::Clamp(Value, -1.0f, 1.0f);
+}
 bool UGCBaseCharacterMovementComponent::IsSprinting()
 {
 	return bIsSprinting;
@@ -586,34 +591,55 @@ void UGCBaseCharacterMovementComponent::PhysZipline(float DeltaTime, int32 Itera
 	FHitResult Hit;
 	SafeMoveUpdatedComponent(NewLocation, GetOwner()->GetActorRotation(), false, Hit);
 }
-void UGCBaseCharacterMovementComponent::PhysLadder(float DeltaTime, int32 Iterations) {
-	CalcVelocity(DeltaTime, 1.0f, false, ClimbingOnLadderBreakingDecelaration);
-	FVector Delta = Velocity * DeltaTime;
-	if (HasAnimRootMotion()) {
-		FHitResult Hit;
-		SafeMoveUpdatedComponent(Delta, GetOwner()->GetActorRotation(), false, Hit);
+
+void UGCBaseCharacterMovementComponent::PhysLadder(float DeltaTime, int32 Iterations)
+{
+	if (!IsValid(CurrentLadder))
+	{
+		SetMovementMode(MOVE_Falling);
 		return;
 	}
-	FVector NewPos = GetActorLocation() + Delta;
-	float NewPosProjection = GetActorToCurrentLadderProjection(NewPos);
+
 	const FVector LadderUpVector = CurrentLadder->GetActorUpVector();
-	const float MovementDirection = FVector::DotProduct(LadderUpVector, Velocity);
-	const bool bMovingUp = MovementDirection > 0.0f;
-	const bool bMovingDown = MovementDirection < 0.0f;
-	if (NewPosProjection < MinLadderBottomOffset) {
-		if (bMovingDown){
+
+	const float CurrentLadderInput = LadderInput;
+
+	Acceleration = FVector::ZeroVector;
+
+	Velocity = LadderUpVector * CurrentLadderInput * ClimbingOnLadderMaxSpeed;
+
+	const FVector Delta = Velocity * DeltaTime;
+
+	const FVector NewPos = GetActorLocation() + Delta;
+	const float NewPosProjection = GetActorToCurrentLadderProjection(NewPos);
+
+	const bool bMovingUp = CurrentLadderInput > 0.0f;
+	const bool bMovingDown = CurrentLadderInput < 0.0f;
+	FHitResult Hit;
+	if (NewPosProjection < MinLadderBottomOffset)
+	{
+		if (bMovingDown)
+		{
+			LadderInput = 0.0f;
+			Velocity = FVector::ZeroVector;
 			DetachFromLadder(EDetachFromLadderMethod::ReachingTheBottom);
 			return;
 		}
 	}
-	else if (NewPosProjection > (CurrentLadder->GetLadderHeight() - MaxLadderTopOffset)) {
-		if (bMovingUp){
+	else if (NewPosProjection > CurrentLadder->GetLadderHeight() - MaxLadderTopOffset)
+	{
+		if (bMovingUp)
+		{
+			LadderInput = 0.0f;
+			Velocity = FVector::ZeroVector;
 			DetachFromLadder(EDetachFromLadderMethod::ReachingTheTop);
 			return;
 		}
 	}
-	FHitResult Hit;
-	SafeMoveUpdatedComponent(Delta,GetOwner()->GetActorRotation() , true, Hit);
+
+	SafeMoveUpdatedComponent(Delta, GetOwner()->GetActorRotation(), true, Hit);
+
+	LadderInput = 0.0f;
 }
 
 FVector UGCBaseCharacterMovementComponent::GetCurrentMantlingTargetLocation() const

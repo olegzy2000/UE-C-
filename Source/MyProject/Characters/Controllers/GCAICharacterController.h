@@ -20,7 +20,10 @@ public:
 	virtual void SetPawn(APawn* InPawn)override;
 	virtual void ActorsPerceptionUpdated(const TArray<AActor*>& UpdatedActors) override;
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)override;
+	virtual void UpdateControlRotation(float DeltaTime, bool bUpdatePawn = true) override;
+	void ContinuePatrolAfterTraversal();
 private:
+	bool bWaitingPatrolRestartAfterTraversal = false;
 	void TryMoveNextTarget();
 	bool IsTargetReached(FVector TargetLocation);
 	TWeakObjectPtr<AGCAICharacter> CachedAICharacter;

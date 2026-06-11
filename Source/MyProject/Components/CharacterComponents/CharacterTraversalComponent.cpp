@@ -125,16 +125,6 @@ void UCharacterTraversalComponent::Mantle(bool bForce)
 			MantlingParameters.TargetComponentStartTransform = TargetComponentTransform;
 
 			MantlingParameters.bHasMovingTarget = true;
-
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(
-					-1,
-					5.0f,
-					FColor::Green,
-					TEXT("Mantle moving target initialized")
-				);
-			}
 		}
 		else
 		{

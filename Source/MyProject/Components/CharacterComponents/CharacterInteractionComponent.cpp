@@ -68,15 +68,25 @@ void UCharacterInteractionComponent::Interact()
 
 void UCharacterInteractionComponent::ClimbLadderUp(float Value)
 {
-	if (!CachedBaseCharacter.IsValid()) {
+	if (!CachedBaseCharacter.IsValid())
+	{
 		return;
 	}
 
-	UGCBaseCharacterMovementComponent* MovementComponent = CachedBaseCharacterMovementComponent.Get();
-	if (IsValid(MovementComponent) && MovementComponent->IsOnLadder() && !FMath::IsNearlyZero(Value)) {
-		FVector LadderUpVector = MovementComponent->GetCurrentLadder()->GetActorUpVector();
-		CachedBaseCharacter->AddMovementInput(LadderUpVector, Value);
+	UGCBaseCharacterMovementComponent* MovementComponent =
+		CachedBaseCharacter->GetBaseCharacterMovementComponent();
+
+	if (!IsValid(MovementComponent))
+	{
+		return;
 	}
+
+	if (!MovementComponent->IsOnLadder())
+	{
+		return;
+	}
+
+	MovementComponent->SetLadderInput(Value);
 }
 
 void UCharacterInteractionComponent::InteractionWithLadder()
