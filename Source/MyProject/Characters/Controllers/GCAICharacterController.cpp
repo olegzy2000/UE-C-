@@ -155,7 +155,6 @@ void AGCAICharacterController::UpdateControlRotation(float DeltaTime, bool bUpda
 
 		if (IsValid(MovementComponent) && MovementComponent->IsOnLadder())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("AI UpdateControlRotation skipped: pawn is on ladder"));
 			return;
 		}
 	}

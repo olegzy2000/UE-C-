@@ -80,8 +80,9 @@ void ALadderNavLinkProxy::HandleSmartLinkReached(AActor* MovingActor, const FVec
 		DestinationPoint.Z);
 
 	PendingAICharacter = AICharacter;
-
-	MovementComponent->AttachToLadder(TargetLadder);
+	AICharacter->GetCharacterInteractionComponent()->RegisterInteractiveActor(TargetLadder);
+	AICharacter->InteractionWithLadder();
+	//MovementComponent->AttachToLadder(TargetLadder);
 
 }
 
@@ -126,6 +127,7 @@ void ALadderNavLinkProxy::FinishLadderTraversal()
 	if (IsValid(AICharacter))
 	{
 		ResumePathFollowing(AICharacter);
+		AICharacter->GetCharacterInteractionComponent()->UnRegisterInteractiveActor(TargetLadder);
 	}
 	if (AGCAICharacterController* AIController = Cast<AGCAICharacterController>(AICharacter->GetController()))
 	{

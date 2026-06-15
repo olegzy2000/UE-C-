@@ -14,7 +14,8 @@
 #include "GCBaseCharacterMovementComponent.generated.h"
 
 USTRUCT()
-struct FMantlingMovementParameters {
+struct FMantlingMovementParameters
+{
 	GENERATED_BODY()
 
 	FVector InitialLocation = FVector::ZeroVector;
@@ -40,11 +41,12 @@ struct FMantlingMovementParameters {
 	FTransform TargetComponentStartTransform = FTransform::Identity;
 
 	bool bHasMovingTarget = false;
-
 };
+
 UENUM(BlueprintType)
-enum class ECustomMovementMode :uint8 {
-	CMOVE_None=0 UMETA(DisplayName="None"),
+enum class ECustomMovementMode : uint8
+{
+	CMOVE_None = 0 UMETA(DisplayName = "None"),
 	CMOVE_Mantling UMETA(DisplayName = "Mantling"),
 	CMOVE_Ladder UMETA(DisplayName = "Ladder"),
 	CMOVE_Slide UMETA(DisplayName = "Slide"),
@@ -52,34 +54,109 @@ enum class ECustomMovementMode :uint8 {
 	CMOVE_RunWall UMETA(DisplayName = "RunWall"),
 	CMove_Max UMETA(hidden)
 };
+
 UENUM(BlueprintType)
-enum class EDetachFromLadderMethod :uint8 {
-	Fall=0,
+enum class EMovementBlockReason : uint8
+{
+	None = 0 UMETA(DisplayName = "None"),
+	LadderAttach UMETA(DisplayName = "Ladder Attach"),
+	Mantle UMETA(DisplayName = "Mantle"),
+	Interaction UMETA(DisplayName = "Interaction"),
+	Animation UMETA(DisplayName = "Animation"),
+	MovementBlockReason_Max UMETA(Hidden)
+};
+
+UENUM(BlueprintType)
+enum class EDetachFromLadderMethod : uint8
+{
+	Fall = 0,
 	ReachingTheTop,
 	ReachingTheBottom,
 	JumpOff
-
 };
+
 UENUM(BlueprintType)
-enum class EDetachFromRunWallMethod :uint8 {
+enum class EDetachFromRunWallMethod : uint8
+{
 	Fall = 0,
 	JumpOff
 };
-/**
- * 
- */
+
+USTRUCT()
+struct FLadderAttachMovementState
+{
+	GENERATED_BODY()
+
+	bool bInProgress = false;
+	bool bHorizontalMoveCompleted = false;
+
+	FVector StartLocation = FVector::ZeroVector;
+	FVector TargetLocation = FVector::ZeroVector;
+
+	FRotator StartRotation = FRotator::ZeroRotator;
+	FRotator TargetRotation = FRotator::ZeroRotator;
+
+	void Reset()
+	{
+		bInProgress = false;
+		bHorizontalMoveCompleted = false;
+
+		StartLocation = FVector::ZeroVector;
+		TargetLocation = FVector::ZeroVector;
+
+		StartRotation = FRotator::ZeroRotator;
+		TargetRotation = FRotator::ZeroRotator;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FLadderAttachMovementSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ladder|Attach", meta = (ClampMin = 0.0f, UIMin = 0.0f))
+	float TopAttachStartOffset = 55.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ladder|Attach", meta = (ClampMin = 0.0f, UIMin = 0.0f))
+	float HorizontalSpeed = 180.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ladder|Attach", meta = (ClampMin = 0.0f, UIMin = 0.0f))
+	float VerticalSpeed = 220.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ladder|Attach", meta = (ClampMin = 0.0f, UIMin = 0.0f))
+	float PhaseTolerance = 3.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ladder|Attach", meta = (ClampMin = 0.0f, UIMin = 0.0f))
+	float RotationInterpSpeed = 8.0f;
+};
+
 class AGCBaseCharacter;
+
 UCLASS()
 class MYPROJECT_API UGCBaseCharacterMovementComponent : public UCharacterMovementComponent
 {
 	GENERATED_BODY()
+
 public:
+	UGCBaseCharacterMovementComponent();
+
+	void FinishLadderAttach();
+	bool IsLadderAttachInProgress() const;
+
+	void BlockMovement(EMovementBlockReason Reason);
+	void UnblockMovement(EMovementBlockReason Reason);
+	bool IsMovementBlocked() const;
+	bool IsMovementBlockedBy(EMovementBlockReason Reason) const;
+
+	void SetCanMoveOnLadder(bool bCanMove);
+	bool CanMoveOnLadder() const { return bCanMoveOnLadder; }
 	void SetLadderInput(float Value);
+
 	FORCEINLINE bool IsSprinting();
 	void SetIsSprinting(bool flag);
 	virtual void UpdateFromCompressedFlags(uint8 Flags);
 	virtual FNetworkPredictionData_Client* GetPredictionData_Client() const override;
-	UGCBaseCharacterMovementComponent();
+
 	FORCEINLINE bool IsProning();
 	FORCEINLINE bool IsCrouched();
 	bool IsSlide();
@@ -100,48 +177,64 @@ public:
 	bool IsRunningOnWall();
 	void EndRunningOnWall(EDetachFromRunWallMethod DetachType);
 	void AttachToLadder(const ALadder* Ladder);
-	void AttachToZipline( AZipline* Zipline);
+	void AttachToZipline(AZipline* Zipline);
 	float GetActorToCurrentLadderProjection(const FVector& Location);
 	void DetachFromLadder(EDetachFromLadderMethod DetachFromLadderMethod);
 	void DetachFromZipline(EDetachFromLadderMethod DetachFromLadderMethod);
-	bool IsOnLadder()const;
+	bool IsOnLadder() const;
 	bool IsOnZipline() const;
 	const ALadder* GetCurrentLadder();
 	const AZipline* GetCurrentZipline();
 	virtual void PhysicsRotation(float DeltaTime) override;
 	float GetLadderSpeedRation() const;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: sprint", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-		float SprintSpeed = 1200.0f;
+	float SprintSpeed = 1200.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: swimming", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-		float SwimmingCapsuleRadius = 60.0f;
+	float SwimmingCapsuleRadius = 60.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: swimming", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-		float SwimmingCapsuleHalfSize = 60.0f;
+	float SwimmingCapsuleHalfSize = 60.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Ladder", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-		float ClimbingOnLadderMaxSpeed = 200.0f;
+	float ClimbingOnLadderMaxSpeed = 200.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Ladder", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-		float ClimbingOnLadderBreakingDecelaration = 2048.0f;
+	float ClimbingOnLadderBreakingDecelaration = 2048.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Ladder", meta = (ClampMin = 0.0f, UIMin = 0.0f))
 	float LadderToCharacterOffset = 60.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Ladder", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-		float MaxLadderTopOffset = 90.0f;
+	float MaxLadderTopOffset = 90.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Ladder", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-		float MinLadderBottomOffset = 90.0f;
+	float MinLadderBottomOffset = 90.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Ladder", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-		float JumpOffFromLadderSpeed = 500.0f;
+	float JumpOffFromLadderSpeed = 500.0f;
+
 	AGCBaseCharacter* GetBaseCharacterOwner() const;
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Zipline")
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Zipline")
 	float ZiplineSpeed = 1000.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: RunWall", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-		float JumpOffFromRunWall = 500.0f;
+	float JumpOffFromRunWall = 500.0f;
+
 	UPROPERTY(Category = "Character Movement: Slide", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
-		float SlideSpeed = 1100.0f;
+	float SlideSpeed = 1100.0f;
+
 	UPROPERTY(Category = "Character Movement: Slide", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
-		float SlideCaspsuleHalfHeight = 60.0f;
+	float SlideCaspsuleHalfHeight = 60.0f;
+
 	UPROPERTY(Category = "Character Movement: Slide", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
-		float SlideMaxTime = 2.0f;
+	float SlideMaxTime = 2.0f;
+
 	float ZiplineOffset = 110.0f;
+
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
 	virtual void PhysCustom(float DeltaTime, int32 Iterations) override;
 	void PhysMantling(float DeltaTime, int32 Iterations);
@@ -149,41 +242,65 @@ protected:
 	void PhysSlide(float DeltaTime, int32 Iterations);
 	void PhysZipline(float DeltaTime, int32 Iterations);
 	void PhysLadder(float DeltaTime, int32 Iterations);
+
 private:
+	bool bCanMoveOnLadder = false;
 	float LadderInput = 0.0f;
-	bool bIsSprinting=false;
-	bool bIsProning=false;
+	bool bIsSprinting = false;
+	bool bIsProning = false;
 	bool bIsCrouched = false;
-	bool bIsRunningOnWall=false;
-	URunWallDetectorComponent* RunWallDetectorComponent;
+	bool bIsRunningOnWall = false;
+
+	URunWallDetectorComponent* RunWallDetectorComponent = nullptr;
 	FRunWallDescription RunWallDescription;
 	FMantlingMovementParameters CurrentMantlingParameters;
 	FTimerHandle MantlingTimer;
 	FTimerHandle RunWallTimer;
+
 	const ALadder* CurrentLadder = nullptr;
 	AZipline* CurrentZipline = nullptr;
+
 	FRotator ForceTargetRotation = FRotator::ZeroRotator;
 	bool bForceRotation = false;
 
 	FVector GetCurrentMantlingTargetLocation() const;
 	FVector GetCurrentMantlingInitialAnimationLocation() const;
 	FVector GetCurrentMantlingTargetOffset() const;
+
+	EMovementBlockReason MovementBlockReason = EMovementBlockReason::None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ladder|Attach", meta = (AllowPrivateAccess = "true"))
+	FLadderAttachMovementSettings LadderAttachSettings;
+
+	FLadderAttachMovementState LadderAttachState;
+
+	FRotator GetLadderTargetRotation() const;
+	FVector GetLadderAlignedLocation(float LadderProjection) const;
+	void StartLadderAttachFromTop();
+	void ResetLadderAttach();
+	void UpdateLadderAttach(float DeltaTime);
+	void PhysLadderMovement(float DeltaTime);
 };
+
 class FSavedMove_GC : public FSavedMove_Character
 {
 	typedef FSavedMove_Character Super;
+
 private:
 	uint8 bSavedIsSprinting : 1;
+
 public:
 	virtual void Clear() override;
 	virtual uint8 GetCompressedFlags() const override;
 	virtual bool CanCombineWith(const FSavedMovePtr& NewMovePtr, ACharacter* InCharacter, float MaxDelta) const override;
-	virtual void SetMoveFor(ACharacter * Character,float InDeltaTimeFVector,FVector const& NewAccel,class FNetworkPredictionData_Client_Character & ClientDataCharacter) override;
+	virtual void SetMoveFor(ACharacter* Character, float InDeltaTime, FVector const& NewAccel, class FNetworkPredictionData_Client_Character& ClientDataCharacter) override;
 	virtual void PrepMoveFor(ACharacter* Character);
 };
 
-class FNetworkPredictionData_Client_Character_GC : public FNetworkPredictionData_Client_Character {
+class FNetworkPredictionData_Client_Character_GC : public FNetworkPredictionData_Client_Character
+{
 	typedef FNetworkPredictionData_Client_Character Super;
+
 public:
 	FNetworkPredictionData_Client_Character_GC(const UCharacterMovementComponent& ClientMovement);
 	virtual FSavedMovePtr AllocateNewMove() override;
