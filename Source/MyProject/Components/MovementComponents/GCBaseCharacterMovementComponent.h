@@ -82,55 +82,9 @@ enum class EDetachFromRunWallMethod : uint8
 	JumpOff
 };
 
-USTRUCT()
-struct FLadderAttachMovementState
-{
-	GENERATED_BODY()
-
-	bool bInProgress = false;
-	bool bHorizontalMoveCompleted = false;
-
-	FVector StartLocation = FVector::ZeroVector;
-	FVector TargetLocation = FVector::ZeroVector;
-
-	FRotator StartRotation = FRotator::ZeroRotator;
-	FRotator TargetRotation = FRotator::ZeroRotator;
-
-	void Reset()
-	{
-		bInProgress = false;
-		bHorizontalMoveCompleted = false;
-
-		StartLocation = FVector::ZeroVector;
-		TargetLocation = FVector::ZeroVector;
-
-		StartRotation = FRotator::ZeroRotator;
-		TargetRotation = FRotator::ZeroRotator;
-	}
-};
-
-USTRUCT(BlueprintType)
-struct FLadderAttachMovementSettings
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ladder|Attach", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-	float TopAttachStartOffset = 55.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ladder|Attach", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-	float HorizontalSpeed = 180.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ladder|Attach", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-	float VerticalSpeed = 220.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ladder|Attach", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-	float PhaseTolerance = 3.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ladder|Attach", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-	float RotationInterpSpeed = 8.0f;
-};
 
 class AGCBaseCharacter;
+class ULadderTraversalComponent;
 
 UCLASS()
 class MYPROJECT_API UGCBaseCharacterMovementComponent : public UCharacterMovementComponent
@@ -139,6 +93,8 @@ class MYPROJECT_API UGCBaseCharacterMovementComponent : public UCharacterMovemen
 
 public:
 	UGCBaseCharacterMovementComponent();
+
+	ULadderTraversalComponent* GetLadderTraversalComponent() const { return LadderTraversalComponent; }
 
 	void FinishLadderAttach();
 	bool IsLadderAttachInProgress() const;
@@ -198,24 +154,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: swimming", meta = (ClampMin = 0.0f, UIMin = 0.0f))
 	float SwimmingCapsuleHalfSize = 60.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Ladder", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-	float ClimbingOnLadderMaxSpeed = 200.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Ladder", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-	float ClimbingOnLadderBreakingDecelaration = 2048.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Ladder", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-	float LadderToCharacterOffset = 60.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Ladder", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-	float MaxLadderTopOffset = 90.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Ladder", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-	float MinLadderBottomOffset = 90.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Ladder", meta = (ClampMin = 0.0f, UIMin = 0.0f))
-	float JumpOffFromLadderSpeed = 500.0f;
-
 	AGCBaseCharacter* GetBaseCharacterOwner() const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character movement: Zipline")
@@ -257,7 +195,6 @@ private:
 	FTimerHandle MantlingTimer;
 	FTimerHandle RunWallTimer;
 
-	const ALadder* CurrentLadder = nullptr;
 	AZipline* CurrentZipline = nullptr;
 
 	FRotator ForceTargetRotation = FRotator::ZeroRotator;
@@ -269,17 +206,9 @@ private:
 
 	EMovementBlockReason MovementBlockReason = EMovementBlockReason::None;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ladder|Attach", meta = (AllowPrivateAccess = "true"))
-	FLadderAttachMovementSettings LadderAttachSettings;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	ULadderTraversalComponent* LadderTraversalComponent = nullptr;
 
-	FLadderAttachMovementState LadderAttachState;
-
-	FRotator GetLadderTargetRotation() const;
-	FVector GetLadderAlignedLocation(float LadderProjection) const;
-	void StartLadderAttachFromTop();
-	void ResetLadderAttach();
-	void UpdateLadderAttach(float DeltaTime);
-	void PhysLadderMovement(float DeltaTime);
 };
 
 class FSavedMove_GC : public FSavedMove_Character

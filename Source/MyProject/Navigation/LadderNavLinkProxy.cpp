@@ -82,8 +82,6 @@ void ALadderNavLinkProxy::HandleSmartLinkReached(AActor* MovingActor, const FVec
 	PendingAICharacter = AICharacter;
 	AICharacter->GetCharacterInteractionComponent()->RegisterInteractiveActor(TargetLadder);
 	AICharacter->InteractionWithLadder();
-	//MovementComponent->AttachToLadder(TargetLadder);
-
 }
 
 void ALadderNavLinkProxy::ClimbTick(float DeltaTime)
