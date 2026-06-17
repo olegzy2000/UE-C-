@@ -12,30 +12,29 @@ class ALadder;
 UCLASS()
 class MYPROJECT_API ALadderNavLinkProxy : public ANavLinkProxy
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
 public:
-    ALadderNavLinkProxy();
+	ALadderNavLinkProxy();
 
 protected:
-    virtual void BeginPlay() override;
-    virtual void Tick(float DeltaTime) override;
-    UFUNCTION()
-    void HandleSmartLinkReached(AActor* MovingActor, const FVector& DestinationPoint);
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 
-    void ClimbTick(float DeltaTime);
-    void FinishLadderTraversal();
+	UFUNCTION()
+	void HandleSmartLinkReached(AActor* MovingActor, const FVector& DestinationPoint);
 
-    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Ladder")
-    ALadder* TargetLadder = nullptr;
+	void ClimbTick(float DeltaTime);
+	void StartClimbTick();
+	void StopClimbTick();
+	void FinishLadderTraversal();
 
-    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Ladder")
-    bool bClimbUp = true;
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Ladder")
+	ALadder* TargetLadder = nullptr;
 
-    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Ladder")
-    float ClimbTickInterval = 0.02f;
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Ladder")
+	bool bClimbUp = true;
 
 private:
-    TWeakObjectPtr<AGCAICharacter> PendingAICharacter;
-
+	TWeakObjectPtr<AGCAICharacter> PendingAICharacter;
 };

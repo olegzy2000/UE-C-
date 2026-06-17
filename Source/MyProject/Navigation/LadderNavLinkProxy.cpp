@@ -11,6 +11,8 @@
 ALadderNavLinkProxy::ALadderNavLinkProxy()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = false;
+
 	bSmartLinkIsRelevant = true;
 }
 
@@ -20,8 +22,16 @@ void ALadderNavLinkProxy::BeginPlay()
 
 	bSmartLinkIsRelevant = true;
 	SetSmartLinkEnabled(true);
-	OnSmartLinkReached.RemoveDynamic(this, &ALadderNavLinkProxy::HandleSmartLinkReached);
-	OnSmartLinkReached.AddDynamic(this, &ALadderNavLinkProxy::HandleSmartLinkReached);
+
+	OnSmartLinkReached.RemoveDynamic(
+		this,
+		&ALadderNavLinkProxy::HandleSmartLinkReached
+	);
+
+	OnSmartLinkReached.AddDynamic(
+		this,
+		&ALadderNavLinkProxy::HandleSmartLinkReached
+	);
 }
 
 void ALadderNavLinkProxy::Tick(float DeltaTime)
@@ -32,12 +42,23 @@ void ALadderNavLinkProxy::Tick(float DeltaTime)
 	{
 		ClimbTick(DeltaTime);
 	}
+	else
+	{
+		StopClimbTick();
+	}
 }
-void ALadderNavLinkProxy::HandleSmartLinkReached(AActor* MovingActor, const FVector& DestinationPoint)
+
+void ALadderNavLinkProxy::HandleSmartLinkReached(
+	AActor* MovingActor,
+	const FVector& DestinationPoint
+)
 {
-	UE_LOG(LogTemp, Warning, TEXT("LadderNavLink reached by: %s Destination=%s"),
+	UE_LOG(LogTemp, Warning, TEXT(
+		"LadderNavLink reached by: %s Destination=%s"
+	),
 		*GetNameSafe(MovingActor),
-		*DestinationPoint.ToString());
+		*DestinationPoint.ToString()
+	);
 
 	AGCAICharacter* AICharacter = Cast<AGCAICharacter>(MovingActor);
 	if (!IsValid(AICharacter))
@@ -48,13 +69,18 @@ void ALadderNavLinkProxy::HandleSmartLinkReached(AActor* MovingActor, const FVec
 
 	if (PendingAICharacter.Get() == AICharacter)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("LadderNavLink duplicate call for same AI ignored"));
+		UE_LOG(LogTemp, Warning, TEXT(
+			"LadderNavLink duplicate call for same AI ignored"
+		));
 		return;
 	}
 
 	if (!IsValid(TargetLadder))
 	{
-		UE_LOG(LogTemp, Error, TEXT("LadderNavLink failed: TargetLadder is not set"));
+		UE_LOG(LogTemp, Error, TEXT(
+			"LadderNavLink failed: TargetLadder is not set"
+		));
+
 		ResumePathFollowing(MovingActor);
 		return;
 	}
@@ -64,7 +90,10 @@ void ALadderNavLinkProxy::HandleSmartLinkReached(AActor* MovingActor, const FVec
 
 	if (!IsValid(MovementComponent))
 	{
-		UE_LOG(LogTemp, Error, TEXT("LadderNavLink failed: MovementComponent is invalid"));
+		UE_LOG(LogTemp, Error, TEXT(
+			"LadderNavLink failed: MovementComponent is invalid"
+		));
+
 		ResumePathFollowing(MovingActor);
 		return;
 	}
@@ -74,14 +103,31 @@ void ALadderNavLinkProxy::HandleSmartLinkReached(AActor* MovingActor, const FVec
 
 	bClimbUp = DestinationPoint.Z > AICharacter->GetActorLocation().Z;
 
-	UE_LOG(LogTemp, Warning, TEXT("LadderNavLink climb direction: %s CurrentZ=%.2f DestinationZ=%.2f"),
+	UE_LOG(LogTemp, Warning, TEXT(
+		"LadderNavLink climb direction: %s CurrentZ=%.2f DestinationZ=%.2f"
+	),
 		bClimbUp ? TEXT("Up") : TEXT("Down"),
 		AICharacter->GetActorLocation().Z,
-		DestinationPoint.Z);
+		DestinationPoint.Z
+	);
 
 	PendingAICharacter = AICharacter;
+
 	AICharacter->GetCharacterInteractionComponent()->RegisterInteractiveActor(TargetLadder);
+
 	AICharacter->InteractionWithLadder();
+
+	StartClimbTick();
+}
+
+void ALadderNavLinkProxy::StartClimbTick()
+{
+	SetActorTickEnabled(true);
+}
+
+void ALadderNavLinkProxy::StopClimbTick()
+{
+	SetActorTickEnabled(false);
 }
 
 void ALadderNavLinkProxy::ClimbTick(float DeltaTime)
@@ -99,6 +145,11 @@ void ALadderNavLinkProxy::ClimbTick(float DeltaTime)
 	if (!IsValid(MovementComponent))
 	{
 		FinishLadderTraversal();
+		return;
+	}
+
+	if (MovementComponent->IsLadderAttachInProgress())
+	{
 		return;
 	}
 
@@ -120,14 +171,24 @@ void ALadderNavLinkProxy::ClimbTick(float DeltaTime)
 void ALadderNavLinkProxy::FinishLadderTraversal()
 {
 	AGCAICharacter* AICharacter = PendingAICharacter.Get();
+
 	PendingAICharacter.Reset();
 
-	if (IsValid(AICharacter))
+	StopClimbTick();
+
+	if (!IsValid(AICharacter))
 	{
-		ResumePathFollowing(AICharacter);
-		AICharacter->GetCharacterInteractionComponent()->UnRegisterInteractiveActor(TargetLadder);
+		return;
 	}
-	if (AGCAICharacterController* AIController = Cast<AGCAICharacterController>(AICharacter->GetController()))
+
+	AICharacter
+		->GetCharacterInteractionComponent()
+		->UnRegisterInteractiveActor(TargetLadder);
+
+	ResumePathFollowing(AICharacter);
+
+	if (AGCAICharacterController* AIController =
+		Cast<AGCAICharacterController>(AICharacter->GetController()))
 	{
 		AIController->ContinuePatrolAfterTraversal();
 	}
