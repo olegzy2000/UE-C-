@@ -2,6 +2,8 @@
 
 
 #include "Components/Weapon/MeleeHitRegistrator.h"
+#include "MyProject.h"
+#include "Engine/GameInstance.h"
 #include <GameCodeTypes.h>
 #include "Subsystems/DebugSubsystem.h"
 #include "Kismet/GameplayStatics.h"
@@ -10,7 +12,7 @@
 
 void UMeleeHitRegistrator::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	Super::TickComponent(DeltaTime,TickType,ThisTickFunction);
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	if (bIsHitRegistrationEnabled) {
 		ProcessHitRegistration();
 	}
@@ -19,20 +21,36 @@ void UMeleeHitRegistrator::TickComponent(float DeltaTime, enum ELevelTick TickTy
 
 void UMeleeHitRegistrator::ProcessHitRegistration()
 {
+	if (!IsValid(GetWorld()))
+	{
+		return;
+	}
+
 	FVector CurrentLocation = GetComponentLocation();
 	FHitResult HitResult;
 	FCollisionQueryParams QueryParams;
 	QueryParams.bTraceComplex = true;
-	QueryParams.AddIgnoredActor(GetOwner()->GetOwner());
+
+	AActor* OwnerActor = GetOwner();
+	if (IsValid(OwnerActor))
+	{
+		QueryParams.AddIgnoredActor(OwnerActor);
+		if (IsValid(OwnerActor->GetOwner()))
+		{
+			QueryParams.AddIgnoredActor(OwnerActor->GetOwner());
+		}
+	}
+
 #if ENABLE_DRAW_DEBUG
-	UDebugSubsystem* DebugSubSystem = UGameplayStatics::GetGameInstance(GetWorld())->GetSubsystem<UDebugSubsystem>();
-	bool bIsDebugEnable = DebugSubSystem->IsCategoryEnable(DebugCategoryMelee);
+	UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld());
+	UDebugSubsystem* DebugSubSystem = IsValid(GameInstance) ? GameInstance->GetSubsystem<UDebugSubsystem>() : nullptr;
+	bool bIsDebugEnable = IsValid(DebugSubSystem) && DebugSubSystem->IsCategoryEnable(DebugCategoryMelee);
 #else
 	bool bIsDebugEnable = false;
 #endif
 	bool bHasHit = GCTraceUtils::SweepSphereSingleByChanel(
-	    GetWorld(),
-	    HitResult,
+		GetWorld(),
+		HitResult,
 		PreviousComponentLocation,
 		CurrentLocation,
 		GetRelativeRotation().Quaternion(),
@@ -46,7 +64,7 @@ void UMeleeHitRegistrator::ProcessHitRegistration()
 	if (bHasHit) {
 		FVector Direction = (CurrentLocation - PreviousComponentLocation).GetSafeNormal();
 		if (OnMeleeHitRegistred.IsBound()) {
-			OnMeleeHitRegistred.Broadcast(HitResult,Direction);
+			OnMeleeHitRegistred.Broadcast(HitResult, Direction);
 		}
 	}
 }

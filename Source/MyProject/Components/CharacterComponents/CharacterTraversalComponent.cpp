@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "CharacterTraversalComponent.h"
+#include "MyProject.h"
 #include "Characters/GCBaseCharacter.h"
 #include "Components/MovementComponents/GCBaseCharacterMovementComponent.h"
 #include "Components/MovementComponents/LedgeDetectorComponent.h"
@@ -20,7 +21,7 @@ void UCharacterTraversalComponent::BeginPlay()
 
 	if (!CachedBaseCharacter.IsValid())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UCharacterTraversalComponent::BeginPlay failed: owner is not AGCBaseCharacter"));
+		UE_LOG(LogCharacter, Warning, TEXT("UCharacterTraversalComponent::BeginPlay failed: owner is not AGCBaseCharacter"));
 		return;
 	}
 
@@ -28,20 +29,20 @@ void UCharacterTraversalComponent::BeginPlay()
 
 	if (!CachedBaseCharacterMovementComponent.IsValid())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UCharacterTraversalComponent::BeginPlay failed: movement component is not valid"));
+		UE_LOG(LogCharacter, Warning, TEXT("UCharacterTraversalComponent::BeginPlay failed: movement component is not valid"));
 	}
 
 	CachedLedgeDetectorComponent = CachedBaseCharacter->GetLedgeDetectorComponent();
 	if (!CachedLedgeDetectorComponent.IsValid())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UCharacterTraversalComponent::BeginPlay failed: ledge detector component is not valid"));
+		UE_LOG(LogCharacter, Warning, TEXT("UCharacterTraversalComponent::BeginPlay failed: ledge detector component is not valid"));
 	}
 }
 
 
 bool UCharacterTraversalComponent::CanMantle() const
 {
-	
+
 	if (!CachedBaseCharacterMovementComponent.IsValid())
 	{
 		return false;
@@ -55,7 +56,7 @@ bool UCharacterTraversalComponent::CanMantle() const
 
 void UCharacterTraversalComponent::Mantle(bool bForce)
 {
-	
+
 	if (!CanMantle() && !bForce) {
 		return;
 	}

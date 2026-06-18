@@ -1,5 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "GCBaseCharacter.h"
+#include "MyProject.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include <MyProject/GameCodeTypes.h>
 #include "Components/CharacterComponents/CharacterEquipmentComponent.h"
@@ -32,15 +33,25 @@ AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
 void AGCBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	if (GCBaseCharacterMovementComponent == nullptr) {
-		GCBaseCharacterMovementComponent = StaticCast<UGCBaseCharacterMovementComponent*>(GetCharacterMovement());
+	if (!IsValid(GCBaseCharacterMovementComponent)) {
+		GCBaseCharacterMovementComponent = Cast<UGCBaseCharacterMovementComponent>(GetCharacterMovement());
+	}
+	if (IsValid(GCBaseCharacterMovementComponent)) {
 		GCBaseCharacterMovementComponent->RotationRate.Pitch = 540.0f;
+	}
+	else {
+		UE_LOG(LogCharacter, Error, TEXT("%s has invalid GCBaseCharacterMovementComponent"), *GetNameSafe(this));
 	}
 	if (IsValid(GetMesh())) {
 		InitialMeshRalativeLocation = GetMesh()->GetRelativeTransform().GetLocation();
 	}
 	InitializeHealthProgress();
-	CharacterAttributesComponent->OnDeathEvent.AddUObject(this, &AGCBaseCharacter::OnDeath);
+	if (IsValid(CharacterAttributesComponent)) {
+		CharacterAttributesComponent->OnDeathEvent.AddUObject(this, &AGCBaseCharacter::OnDeath);
+	}
+	else {
+		UE_LOG(LogCharacter, Error, TEXT("%s has invalid CharacterAttributesComponent"), *GetNameSafe(this));
+	}
 	if (IsValid(CharacterInteractionComponent)) {
 		CharacterInteractionComponent->OnInteractableObjectFound.BindLambda([this](FName ActionName) {
 			OnInteractableObjectFound.ExecuteIfBound(ActionName);
@@ -56,21 +67,28 @@ void AGCBaseCharacter::EndPlay(const EEndPlayReason::Type Reason)
 }
 void AGCBaseCharacter::ChangeCrouchState()
 {
-	if (CanCrouch()) {
-		GetBaseCharacterMovementComponent()->ChangeCrouchState();
+	UGCBaseCharacterMovementComponent* MovementComponent = GetBaseCharacterMovementComponent();
+	if (IsValid(MovementComponent) && CanCrouch()) {
+		MovementComponent->ChangeCrouchState();
 		OnChangeCrouchState();
 	}
 }
 
 void AGCBaseCharacter::OnChangeCrouchState()
 {
-	if (GetBaseCharacterMovementComponent()->IsProning()) {
-		GetBaseCharacterMovementComponent()->ChangeProneState();
+	UGCBaseCharacterMovementComponent* MovementComponent = GetBaseCharacterMovementComponent();
+	if (!IsValid(MovementComponent)) {
+		UE_LOG(LogCharacter, Warning, TEXT("OnChangeCrouchState skipped: movement component is invalid for %s"), *GetNameSafe(this));
+		return;
+	}
+
+	if (MovementComponent->IsProning()) {
+		MovementComponent->ChangeProneState();
 		ChangeCapsuleParamFromProneToCrouched();
 		ChangeMaxSpeedOfPlayer(300.0f);
 	}
 	else {
-		if (GetBaseCharacterMovementComponent()->IsCrouched()) {
+		if (MovementComponent->IsCrouched()) {
 			ChangeCapsuleParamFromIdleWalkStateToCrouch();
 			ChangeMaxSpeedOfPlayer(300.0f);
 		}
@@ -80,18 +98,41 @@ void AGCBaseCharacter::OnChangeCrouchState()
 		}
 	}
 }
+bool AGCBaseCharacter::CanCrouch() const {
+	UGCBaseCharacterMovementComponent* MovementComponent = GetBaseCharacterMovementComponent();
+	const UCapsuleComponent* CharacterCapsuleComponent = GetCapsuleComponent();
 
-bool AGCBaseCharacter::CanCrouch() const
-{
-	TArray<AActor*>ActorsToIgnore;
+	if (!IsValid(MovementComponent) || !IsValid(CharacterCapsuleComponent))
+	{
+		return false;
+	}
+
+	TArray<AActor*> ActorsToIgnore;
 	FHitResult TraceHit;
-	bool bIsHit = UKismetSystemLibrary::SphereTraceSingle(this, GetCapsuleComponent()->GetRelativeLocation(),
-		GetCapsuleComponent()->GetRelativeLocation() + FVector(0.0f, 0.0f, GetDefaultCapsuleHeight() + 45), 10, ETraceTypeQuery::TraceTypeQuery1, false, ActorsToIgnore, EDrawDebugTrace::None, TraceHit, true);
-	return !bIsHit && !GetBaseCharacterMovementComponent()->IsFalling()
-		&& !GetBaseCharacterMovementComponent()->IsSwimming()
-		&& !GetBaseCharacterMovementComponent()->IsSlide()
-		&& !GetBaseCharacterMovementComponent()->IsSprinting();
+
+	const FVector TraceStart = CharacterCapsuleComponent->GetRelativeLocation();
+	const FVector TraceEnd = TraceStart + FVector(0.0f, 0.0f, GetDefaultCapsuleHeight() + 45.0f);
+
+	const bool bIsHit = UKismetSystemLibrary::SphereTraceSingle(
+		this,
+		TraceStart,
+		TraceEnd,
+		10.0f,
+		ETraceTypeQuery::TraceTypeQuery1,
+		false,
+		ActorsToIgnore,
+		EDrawDebugTrace::None,
+		TraceHit,
+		true
+	);
+
+	return !bIsHit
+		&& !MovementComponent->IsFalling()
+		&& !MovementComponent->IsSwimming()
+		&& !MovementComponent->IsSlide()
+		&& !MovementComponent->IsSprinting();
 }
+
 
 void AGCBaseCharacter::PossessedBy(AController* NewController)
 {
@@ -104,9 +145,10 @@ void AGCBaseCharacter::PossessedBy(AController* NewController)
 }
 void AGCBaseCharacter::StartSprint()
 {
-	if (!GetBaseCharacterMovementComponent()->IsFalling() && !GetBaseCharacterMovementComponent()->IsSlide()) {
+	UGCBaseCharacterMovementComponent* MovementComponent = GetBaseCharacterMovementComponent();
+	if (IsValid(MovementComponent) && !MovementComponent->IsFalling() && !MovementComponent->IsSlide()) {
 		bIsSprintRequested = true;
-		if (GetBaseCharacterMovementComponent()->IsCrouched()) {
+		if (MovementComponent->IsCrouched()) {
 			ChangeCrouchState();
 		}
 	}
@@ -119,7 +161,9 @@ void AGCBaseCharacter::StopSprint()
 
 void AGCBaseCharacter::Slide()
 {
-	GetBaseCharacterMovementComponent()->TryToSlide();
+	if (IsValid(GetBaseCharacterMovementComponent())) {
+		GetBaseCharacterMovementComponent()->TryToSlide();
+	}
 }
 
 void AGCBaseCharacter::StartFire()
@@ -134,7 +178,9 @@ bool AGCBaseCharacter::CanStartFire() {
 }
 void AGCBaseCharacter::ChangeMaxSpeedOfPlayer(float speed)
 {
-	GetBaseCharacterMovementComponent()->MaxWalkSpeed = speed;
+	if (IsValid(GetBaseCharacterMovementComponent())) {
+		GetBaseCharacterMovementComponent()->MaxWalkSpeed = speed;
+	}
 }
 void AGCBaseCharacter::StopFire()
 {
@@ -178,56 +224,72 @@ float AGCBaseCharacter::GetAimingMovementSpeed() const
 }
 void AGCBaseCharacter::ChangeProneState()
 {
-	if (!GetBaseCharacterMovementComponent()->IsFalling() && !GetBaseCharacterMovementComponent()->IsSwimming()) {
-		if (GetBaseCharacterMovementComponent()->IsSprinting()) {
-			StopSprint();
-		}
-		if (GetBaseCharacterMovementComponent()->IsProning()) {
-			if (CanCrouch()) {
-				float Height = GetDefaultCapsuleHeight();
-				float Radius = GetDefaultCapsuleRadius();
-				ChangeCapsuleParamOutProneState(Radius, Height);
-				ChangeMaxSpeedOfPlayer(600.0f);
-				GetBaseCharacterMovementComponent()->ChangeProneState();
-			}
-		}
-		else {
-			float Height = GetProneCapsuleHeight();
-			float Radius = GetProneCapsuleRadius();
-			if (GetBaseCharacterMovementComponent()->IsCrouched()) {
-				GetBaseCharacterMovementComponent()->ChangeCrouchState();
-				ChangeCapsuleParamOnProneStateFromCrouch(Radius, Height);
-			}
-			else
-			{
-				ChangeCapsuleParamOnProneState(Radius, Height);
-			}
-			ChangeMaxSpeedOfPlayer(100.0f);
-			GetBaseCharacterMovementComponent()->ChangeProneState();
-		}
+	UGCBaseCharacterMovementComponent* MovementComponent = GetBaseCharacterMovementComponent();
+	if (!IsValid(MovementComponent) || MovementComponent->IsFalling() || MovementComponent->IsSwimming()) {
+		return;
 	}
+
+	if (MovementComponent->IsSprinting()) {
+		StopSprint();
+	}
+
+	if (MovementComponent->IsProning()) {
+		if (CanCrouch()) {
+			float Height = GetDefaultCapsuleHeight();
+			float Radius = GetDefaultCapsuleRadius();
+			ChangeCapsuleParamOutProneState(Radius, Height);
+			ChangeMaxSpeedOfPlayer(600.0f);
+			MovementComponent->ChangeProneState();
+		}
+		return;
+	}
+
+	float Height = GetProneCapsuleHeight();
+	float Radius = GetProneCapsuleRadius();
+	if (MovementComponent->IsCrouched()) {
+		MovementComponent->ChangeCrouchState();
+		ChangeCapsuleParamOnProneStateFromCrouch(Radius, Height);
+	}
+	else
+	{
+		ChangeCapsuleParamOnProneState(Radius, Height);
+	}
+	ChangeMaxSpeedOfPlayer(100.0f);
+	MovementComponent->ChangeProneState();
 }
 void AGCBaseCharacter::ChangeCapsuleParamOnProneState(float CapsuleRadius, float ProneCapsuleHalfHeight)
 {
+	if (!IsValid(GetCapsuleComponent())) {
+		UE_LOG(LogCharacter, Warning, TEXT("ChangeCapsuleParamOnProneState skipped: capsule is invalid for %s"), *GetNameSafe(this));
+		return;
+	}
 	GetCapsuleComponent()->SetCapsuleSize(CapsuleRadius, ProneCapsuleHalfHeight);
 	GetCapsuleComponent()->MoveComponent(FVector(0.f, 0.f, -(GetDefaultCapsuleHeight() - ProneCapsuleHalfHeight) / 2), GetCapsuleComponent()->GetComponentQuat()
 		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
 	ChangeSkeletalMeshPosition(InitialMeshRalativeLocation + FVector(0.f, 0.f, fabs(ProneCapsuleHalfHeight)));
-	SpringArmComponent->MoveComponent(FVector(0.f, 0.f, (SpringArmComponent->GetRelativeLocation().Z + ProneCapsuleHalfHeight + 8)), GetCapsuleComponent()->GetComponentQuat()
-		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
+	if (IsValid(SpringArmComponent)) {
+		SpringArmComponent->MoveComponent(FVector(0.f, 0.f, (SpringArmComponent->GetRelativeLocation().Z + ProneCapsuleHalfHeight + 8)), GetCapsuleComponent()->GetComponentQuat()
+			, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
+	}
 }
 void AGCBaseCharacter::ChangeCapsuleParamOutProneState(float CapsuleRadius, float ProneCapsuleHalfHeight)
 {
+	if (!IsValid(GetCapsuleComponent())) {
+		UE_LOG(LogCharacter, Warning, TEXT("ChangeCapsuleParamOutProneState skipped: capsule is invalid for %s"), *GetNameSafe(this));
+		return;
+	}
 	GetCapsuleComponent()->SetCapsuleSize(CapsuleRadius, ProneCapsuleHalfHeight);
 	GetCapsuleComponent()->MoveComponent(FVector(0.0f, 0.0f, (GetDefaultCapsuleHeight() - GetProneCapsuleHeight())), GetCapsuleComponent()->GetComponentQuat()
 		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
 	ChangeSkeletalMeshPosition(InitialMeshRalativeLocation);
-	SpringArmComponent->SetRelativeLocation(SpringArmComponent->GetRelativeLocation() - FVector(0, 0, (GetProneCapsuleHeight() + 8)));
+	if (IsValid(SpringArmComponent)) {
+		SpringArmComponent->SetRelativeLocation(SpringArmComponent->GetRelativeLocation() - FVector(0, 0, (GetProneCapsuleHeight() + 8)));
+	}
 }
 bool AGCBaseCharacter::PickupItem(TWeakObjectPtr<UInventoryItem> ItemToPickup)
 {
 	bool Result = false;
-	if (CharacterInventoryComponent->HasFreeSlot()) {
+	if (IsValid(CharacterInventoryComponent) && CharacterInventoryComponent->HasFreeSlot()) {
 		Result = CharacterInventoryComponent->AddItem(ItemToPickup, 1);
 	}
 	return Result;
@@ -235,27 +297,39 @@ bool AGCBaseCharacter::PickupItem(TWeakObjectPtr<UInventoryItem> ItemToPickup)
 }
 void AGCBaseCharacter::ChangeCapsuleParamOnProneStateFromCrouch(float Radius, float ProneCapsuleHalfHeight)
 {
+	if (!IsValid(GetCapsuleComponent())) {
+		UE_LOG(LogCharacter, Warning, TEXT("ChangeCapsuleParamOnProneStateFromCrouch skipped: capsule is invalid for %s"), *GetNameSafe(this));
+		return;
+	}
 	GetCapsuleComponent()->SetCapsuleSize(Radius, ProneCapsuleHalfHeight);
 	GetCapsuleComponent()->MoveComponent(FVector(0.f, 0.f, -(GetCrouchCapsuleHeight() - ProneCapsuleHalfHeight) / 2), GetCapsuleComponent()->GetComponentQuat()
 		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
 	ChangeSkeletalMeshPosition(InitialMeshRalativeLocation + FVector(0.f, 0.f, fabs(ProneCapsuleHalfHeight)));
-	SpringArmComponent->MoveComponent(FVector(0.f, 0.f, SpringArmComponent->GetRelativeLocation().Z - ProneCapsuleHalfHeight + 12), GetCapsuleComponent()->GetComponentQuat()
-		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
+	if (IsValid(SpringArmComponent)) {
+		SpringArmComponent->MoveComponent(FVector(0.f, 0.f, SpringArmComponent->GetRelativeLocation().Z - ProneCapsuleHalfHeight + 12), GetCapsuleComponent()->GetComponentQuat()
+			, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
+	}
 }
 void AGCBaseCharacter::ChangeCapsuleParamFromProneStateToCrouch(float Radius, float ProneCapsuleHalfHeight)
 {
+	if (!IsValid(GetCapsuleComponent()) || !IsValid(GetBaseCharacterMovementComponent())) {
+		UE_LOG(LogCharacter, Warning, TEXT("ChangeCapsuleParamFromProneStateToCrouch skipped: capsule or movement is invalid for %s"), *GetNameSafe(this));
+		return;
+	}
 	GetCapsuleComponent()->SetCapsuleSize(Radius, ProneCapsuleHalfHeight);
 	GetCapsuleComponent()->MoveComponent(FVector(0.f, 0.f, -(GetCapsuleComponent()->GetRelativeLocation().Z - ProneCapsuleHalfHeight) / 2), GetCapsuleComponent()->GetComponentQuat()
 		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
 	ChangeSkeletalMeshPosition(InitialMeshRalativeLocation + FVector(0.f, 0.f, fabs(ProneCapsuleHalfHeight)));
-	SpringArmComponent->MoveComponent(FVector(0.f, 0.f, GetBaseCharacterMovementComponent()->GetCrouchedHalfHeight() - ProneCapsuleHalfHeight), GetCapsuleComponent()->GetComponentQuat()
-		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
+	if (IsValid(SpringArmComponent)) {
+		SpringArmComponent->MoveComponent(FVector(0.f, 0.f, GetBaseCharacterMovementComponent()->GetCrouchedHalfHeight() - ProneCapsuleHalfHeight), GetCapsuleComponent()->GetComponentQuat()
+			, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
+	}
 }
 
 void AGCBaseCharacter::AddHealth(float Health)
 {
 	//CharacterAttributesComponent->AddHealth(Health);
-	if (CharacterAttributesComponent->OnHealthChangedEvent.IsBound()) {
+	if (IsValid(CharacterAttributesComponent) && CharacterAttributesComponent->OnHealthChangedEvent.IsBound() && CharacterAttributesComponent->GetMaxHealth() > 0.0f) {
 		CharacterAttributesComponent->OnHealthChangedEvent.Broadcast(Health / CharacterAttributesComponent->GetMaxHealth());
 	}
 }
@@ -335,10 +409,14 @@ void AGCBaseCharacter::TryToRunWall()
 }
 void AGCBaseCharacter::OnDeath()
 {
-	GetBaseCharacterMovementComponent()->DisableMovement();
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (IsValid(GetBaseCharacterMovementComponent())) {
+		GetBaseCharacterMovementComponent()->DisableMovement();
+	}
+	if (IsValid(GetCapsuleComponent())) {
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 	//GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	float Duration = PlayAnimMontage(OnDeathAnimMontage);
+	float Duration = IsValid(OnDeathAnimMontage) ? PlayAnimMontage(OnDeathAnimMontage) : 0.0f;
 	if (Duration == 0.0f) {
 		EnableRagdoll();
 	}
@@ -357,50 +435,72 @@ void AGCBaseCharacter::OnDeath()
 }*/
 void AGCBaseCharacter::ShowLoseText()
 {
-	if (GEngine) {
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("You lose((("), true, FVector2D(10, 10));
-	}
+	UE_LOG(LogCharacter, Log, TEXT("Lose state requested for %s"), *GetNameSafe(this));
 }
 void AGCBaseCharacter::restartCurrentLevel()
 {
-	float realtimeSeconds = GetWorld()->GetTimeSeconds();
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Time in game %f seconds"), realtimeSeconds));
-	UGameplayStatics::OpenLevel(this, FName("LocamotionLevel"), true);
+	if (IsValid(GetWorld())) {
+		UE_LOG(LogCharacter, Log, TEXT("Restart current level requested after %.2f seconds"), GetWorld()->GetTimeSeconds());
+	}
+	if (!RestartLevelName.IsNone()) {
+		UGameplayStatics::OpenLevel(this, RestartLevelName, true);
+	}
+	else {
+		UE_LOG(LogCharacter, Warning, TEXT("Restart skipped for %s: RestartLevelName is not set"), *GetNameSafe(this));
+	}
 }
 void AGCBaseCharacter::EnableRagdoll()
 {
-	GetMesh()->SetSimulatePhysics(true);
-	GetMesh()->SetCollisionProfileName(CollisionProfileRagdoll);
+	if (IsValid(GetMesh())) {
+		GetMesh()->SetSimulatePhysics(true);
+		GetMesh()->SetCollisionProfileName(CollisionProfileRagdoll);
+	}
 }
 
 void AGCBaseCharacter::ChangeCapsuleParamFromIdleWalkStateToCrouch()
 {
+	if (!IsValid(GetCapsuleComponent())) {
+		UE_LOG(LogCharacter, Warning, TEXT("ChangeCapsuleParamFromIdleWalkStateToCrouch skipped: capsule is invalid for %s"), *GetNameSafe(this));
+		return;
+	}
 	GetCapsuleComponent()->SetCapsuleSize(GetDefaultCapsuleRadius(), GetCrouchCapsuleHeight());
 	GetCapsuleComponent()->MoveComponent(FVector(0.f, 0.f, -(GetDefaultCapsuleHeight() - GetCrouchCapsuleHeight()) / 2), GetCapsuleComponent()->GetComponentQuat()
 		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
 	ChangeSkeletalMeshPosition(InitialMeshRalativeLocation + FVector(0.f, 0.f, (GetCrouchCapsuleHeight() / 2) + 7));
-	SpringArmComponent->MoveComponent(FVector(0.f, 0.f, ((GetDefaultCapsuleHeight() - GetCrouchCapsuleHeight()) / 2) + 19), GetCapsuleComponent()->GetComponentQuat()
-		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
+	if (IsValid(SpringArmComponent)) {
+		SpringArmComponent->MoveComponent(FVector(0.f, 0.f, ((GetDefaultCapsuleHeight() - GetCrouchCapsuleHeight()) / 2) + 19), GetCapsuleComponent()->GetComponentQuat()
+			, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
+	}
 }
 
 void AGCBaseCharacter::ChangeCapsuleParamFromCrouchedToIdleWalk()
 {
+	if (!IsValid(GetCapsuleComponent())) {
+		UE_LOG(LogCharacter, Warning, TEXT("ChangeCapsuleParamFromCrouchedToIdleWalk skipped: capsule is invalid for %s"), *GetNameSafe(this));
+		return;
+	}
 	GetCapsuleComponent()->SetCapsuleSize(GetDefaultCapsuleRadius(), GetDefaultCapsuleHeight());
 	GetCapsuleComponent()->MoveComponent(FVector(0.f, 0.f, (GetDefaultCapsuleHeight()) / 2), GetCapsuleComponent()->GetComponentQuat()
 		, true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
 	ChangeSkeletalMeshPosition(InitialMeshRalativeLocation);
-	SpringArmComponent->MoveComponent(FVector(0.f, 0.f, (-((GetDefaultCapsuleHeight() - GetCrouchCapsuleHeight()) / 2) - 19)), GetCapsuleComponent()->GetComponentQuat()
-		, false, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
+	if (IsValid(SpringArmComponent)) {
+		SpringArmComponent->MoveComponent(FVector(0.f, 0.f, (-((GetDefaultCapsuleHeight() - GetCrouchCapsuleHeight()) / 2) - 19)), GetCapsuleComponent()->GetComponentQuat()
+			, false, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
+	}
 }
 
 void AGCBaseCharacter::ChangeSkeletalMeshPosition(FVector Position)
 {
-	GetMesh()->SetRelativeLocation(Position);
+	if (IsValid(GetMesh())) {
+		GetMesh()->SetRelativeLocation(Position);
+	}
 }
 
 void AGCBaseCharacter::Falling()
 {
-	GetBaseCharacterMovementComponent()->bNotifyApex = true;
+	if (IsValid(GetBaseCharacterMovementComponent())) {
+		GetBaseCharacterMovementComponent()->bNotifyApex = true;
+	}
 }
 
 void AGCBaseCharacter::NotifyJumpApex()
@@ -551,8 +651,7 @@ void AGCBaseCharacter::Reload()
 }
 
 void AGCBaseCharacter::OnLevelDeserialized_Implementation()
-{
-}
+{}
 
 UCharacterAttributeComponent* AGCBaseCharacter::GetCharacterAttributesComponent() const
 {
@@ -568,12 +667,12 @@ void AGCBaseCharacter::ChangeFireMode()
 
 void AGCBaseCharacter::OnSprintStart_Implementation()
 {
-	UE_LOG(LogTemp, Log, TEXT("AGCBaseCharacter::OnSprintStart_Implementation"));
+	UE_LOG(LogCharacter, Verbose, TEXT("AGCBaseCharacter::OnSprintStart_Implementation"));
 }
 
 void AGCBaseCharacter::OnSprintEnd_Implementation()
 {
-	UE_LOG(LogTemp, Log, TEXT("AGCBaseCharacter::OnSprintEnd_Implementation"));
+	UE_LOG(LogCharacter, Verbose, TEXT("AGCBaseCharacter::OnSprintEnd_Implementation"));
 }
 
 bool AGCBaseCharacter::CanMantle() const
@@ -583,20 +682,24 @@ bool AGCBaseCharacter::CanMantle() const
 
 void AGCBaseCharacter::TryChangeSprintState()
 {
-	if (GetBaseCharacterMovementComponent() != nullptr) {
-		if (bIsSprintRequested && !GetBaseCharacterMovementComponent()->IsSprinting() && CanSprint()) {
-			GetBaseCharacterMovementComponent()->StartSprint();
-			OnSprintStart();
-		}
-		if (!bIsSprintRequested && GetBaseCharacterMovementComponent()->IsSprinting()) {
-			GetBaseCharacterMovementComponent()->StopSprint();
-		}
+	UGCBaseCharacterMovementComponent* MovementComponent = GetBaseCharacterMovementComponent();
+	if (!IsValid(MovementComponent)) {
+		return;
+	}
+
+	if (bIsSprintRequested && !MovementComponent->IsSprinting() && CanSprint()) {
+		MovementComponent->StartSprint();
+		OnSprintStart();
+	}
+	if (!bIsSprintRequested && MovementComponent->IsSprinting()) {
+		MovementComponent->StopSprint();
 	}
 }
 
 const FMantlingSettings& AGCBaseCharacter::GetMantlingSettings(float LedgeHeight) const
 {
-	if (GetBaseCharacterMovementComponent()->IsSwimming() || GetBaseCharacterMovementComponent()->IsFlying()) {
+	const UGCBaseCharacterMovementComponent* MovementComponent = GetBaseCharacterMovementComponent();
+	if (IsValid(MovementComponent) && (MovementComponent->IsSwimming() || MovementComponent->IsFlying())) {
 		return LedgeHeight > LowMantleMaxHeight ? SwimmingMantleSettings : LowMantleSettings;
 	}
 	return LedgeHeight > LowMantleMaxHeight ? HighMantleSettings : LowMantleSettings;
@@ -614,6 +717,12 @@ void AGCBaseCharacter::ChangeCapsuleParamFromProneToCrouched()
 
 bool AGCBaseCharacter::CanJumpInternal_Implementation() const
 {
-	return(!GetBaseCharacterMovementComponent()->IsMantling() && !GetBaseCharacterMovementComponent()->IsSwimming() && !GetBaseCharacterMovementComponent()->IsOnLadder() && !GetBaseCharacterMovementComponent()->IsCrouched() && !GetBaseCharacterMovementComponent()->IsOnZipline());
-}
+	UGCBaseCharacterMovementComponent* MovementComponent = GetBaseCharacterMovementComponent();
 
+	return IsValid(MovementComponent)
+		&& !MovementComponent->IsMantling()
+		&& !MovementComponent->IsSwimming()
+		&& !MovementComponent->IsOnLadder()
+		&& !MovementComponent->IsCrouched()
+		&& !MovementComponent->IsOnZipline();
+}

@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "CharacterInteractionComponent.h"
+#include "MyProject.h"
 
 #include "Characters/GCBaseCharacter.h"
 #include "Components/MovementComponents/GCBaseCharacterMovementComponent.h"
@@ -20,13 +21,13 @@ void UCharacterInteractionComponent::BeginPlay()
 
 	CachedBaseCharacter = Cast<AGCBaseCharacter>(GetOwner());
 	if (!CachedBaseCharacter.IsValid()) {
-		UE_LOG(LogTemp, Warning, TEXT("UCharacterInteractionComponent::BeginPlay failed: owner is not AGCBaseCharacter"));
+		UE_LOG(LogCharacter, Warning, TEXT("UCharacterInteractionComponent::BeginPlay failed: owner is not AGCBaseCharacter"));
 		return;
 	}
 
 	CachedBaseCharacterMovementComponent = CachedBaseCharacter->GetBaseCharacterMovementComponent();
 	if (!CachedBaseCharacterMovementComponent.IsValid()) {
-		UE_LOG(LogTemp, Warning, TEXT("UCharacterInteractionComponent::BeginPlay failed: movement component is not valid"));
+		UE_LOG(LogCharacter, Warning, TEXT("UCharacterInteractionComponent::BeginPlay failed: movement component is not valid"));
 	}
 
 	CachedPlayerController = CachedBaseCharacter->GetController<APlayerController>();

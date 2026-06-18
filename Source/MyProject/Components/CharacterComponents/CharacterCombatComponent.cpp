@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "CharacterCombatComponent.h"
+#include "MyProject.h"
 #include "Characters/GCBaseCharacter.h"
 #include "CharacterEquipmentComponent.h"
 #include "Actors/Equipment/Weapons/RangeWeaponItem.h"
@@ -18,13 +19,13 @@ void UCharacterCombatComponent::BeginPlay()
 
 	CachedBaseCharacter = Cast<AGCBaseCharacter>(GetOwner());
 	if (!CachedBaseCharacter.IsValid()) {
-		UE_LOG(LogTemp, Warning, TEXT("UCharacterCombatComponent::BeginPlay failed: owner is not AGCBaseCharacter"));
+		UE_LOG(LogCharacter, Warning, TEXT("UCharacterCombatComponent::BeginPlay failed: owner is not AGCBaseCharacter"));
 		return;
 	}
 
 	CachedEquipmentComponent = CachedBaseCharacter->GetCharacterEquipmentComponent_Mutable();
 	if (!CachedEquipmentComponent.IsValid()) {
-		UE_LOG(LogTemp, Warning, TEXT("UCharacterCombatComponent::BeginPlay failed: equipment component is not valid"));
+		UE_LOG(LogCharacter, Warning, TEXT("UCharacterCombatComponent::BeginPlay failed: equipment component is not valid"));
 	}
 }
 

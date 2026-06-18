@@ -2,6 +2,7 @@
 
 
 #include "Components/CharacterComponents/CharacterEquipmentComponent.h"
+#include "MyProject.h"
 #include "CharacterInventoryComponent.h"
 #include "../../Inventory/Items/Ammo/UInventoryAmmoItem.h"
 #include "../../Inventory/InventoryItem.h"
@@ -11,20 +12,34 @@
 bool UCharacterEquipmentComponent::AddEquipmentItemToSlot(const TSubclassOf<AEquipableItem> EquipableItemClass, int32 SlotIndex, int32 StartedAmmo)
 {
 	if (!ItemsArray.IsValidIndex(SlotIndex) || !IsValid(EquipableItemClass)) {
+		UE_LOG(LogEquipment, Warning, TEXT("AddEquipmentItemToSlot failed. Invalid slot %d or item class in %s"), SlotIndex, *GetNameSafe(GetOwner()));
 		return false;
 	}
+
 	AEquipableItem* EquipableItem = EquipableItemClass->GetDefaultObject<AEquipableItem>();
 	if (!IsValid(EquipableItem)) {
+		UE_LOG(LogEquipment, Warning, TEXT("AddEquipmentItemToSlot failed. Invalid default object for slot %d in %s"), SlotIndex, *GetNameSafe(GetOwner()));
 		return false;
 	}
+
 	if (!EquipableItem->IsSlotCompatable((EEquipmentSlots)SlotIndex)) {
+		UE_LOG(LogEquipment, Warning, TEXT("AddEquipmentItemToSlot failed. Item %s is not compatible with slot %d"), *GetNameSafe(EquipableItem), SlotIndex);
 		return false;
 	}
+
 	if (!IsValid(ItemsArray[SlotIndex])) {
-		AEquipableItem* Item = GetWorld()->SpawnActor<AEquipableItem>(EquipableItemClass);
-		if (!IsValid(Item) || !CachedBaseCharacter.IsValid() || !IsValid(CachedBaseCharacter->GetMesh())) {
+		UWorld* World = GetWorld();
+		if (!IsValid(World) || !CachedBaseCharacter.IsValid() || !IsValid(CachedBaseCharacter->GetMesh())) {
+			UE_LOG(LogEquipment, Warning, TEXT("AddEquipmentItemToSlot failed. Invalid world/character/mesh in %s"), *GetNameSafe(GetOwner()));
 			return false;
 		}
+
+		AEquipableItem* Item = World->SpawnActor<AEquipableItem>(EquipableItemClass);
+		if (!IsValid(Item)) {
+			UE_LOG(LogEquipment, Warning, TEXT("AddEquipmentItemToSlot failed. Could not spawn %s"), *GetNameSafe(EquipableItemClass.Get()));
+			return false;
+		}
+
 		Item->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, Item->GetUnEquippedSocketName());
 		Item->SetOwner(CachedBaseCharacter.Get());
 		Item->SetAmmo(StartedAmmo);
@@ -33,19 +48,31 @@ bool UCharacterEquipmentComponent::AddEquipmentItemToSlot(const TSubclassOf<AEqu
 	}
 	else if (EquipableItem->IsA<ARangeWeaponItem>()) {
 		ARangeWeaponItem* RangeWeaponObject = StaticCast<ARangeWeaponItem*>(EquipableItem);
-		UCharacterInventoryComponent* InventoryComponent = CachedBaseCharacter->GetCharacterInventoryComponent();
-		if (IsValid(InventoryComponent)) {
-			InventoryComponent->AddAmmo(RangeWeaponObject->GetAmmoType(), RangeWeaponObject->GetMaxAmmo());
+		if (CachedBaseCharacter.IsValid()) {
+			UCharacterInventoryComponent* InventoryComponent = CachedBaseCharacter->GetCharacterInventoryComponent();
+			if (IsValid(InventoryComponent)) {
+				InventoryComponent->AddAmmo(RangeWeaponObject->GetAmmoType(), RangeWeaponObject->GetMaxAmmo());
+			}
 		}
 	}
 	return true;
 }
 void UCharacterEquipmentComponent::RemoveItemFromSlot(int32 SlotIndex)
 {
-	if ((uint32)CurrentEquippedSlot == SlotIndex) {
+	if (!ItemsArray.IsValidIndex(SlotIndex)) {
+		UE_LOG(LogEquipment, Warning, TEXT("RemoveItemFromSlot failed. Invalid slot %d in %s"), SlotIndex, *GetNameSafe(GetOwner()));
+		return;
+	}
+
+	if (!IsValid(ItemsArray[SlotIndex])) {
+		return;
+	}
+
+	if ((int32)CurrentEquippedSlot == SlotIndex) {
 		UnEquipCurrentItem();
 	}
-	UE_LOG(LogTemp, Log, TEXT("UCharacterEquipmentComponent::RemoveItemFromSlot %i"), SlotIndex);
+
+	UE_LOG(LogEquipment, Log, TEXT("UCharacterEquipmentComponent::RemoveItemFromSlot %i"), SlotIndex);
 	ItemsArray[SlotIndex]->RemoveFromRoot();
 	ItemsArray[SlotIndex]->Destroy();
 	ItemsArray[SlotIndex] = nullptr;
@@ -57,8 +84,15 @@ const TArray<AEquipableItem*> UCharacterEquipmentComponent::GetItems() const
 void UCharacterEquipmentComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	checkf(GetOwner()->IsA<AGCBaseCharacter>(), TEXT("UCharacterEquipmentComponent::BeginPlay() UCharacterEquipmentComponent can be used only with AGCBaseCharacter"))
-		CachedBaseCharacter = StaticCast<AGCBaseCharacter*>(GetOwner());
+
+	AGCBaseCharacter* OwnerCharacter = Cast<AGCBaseCharacter>(GetOwner());
+	if (!IsValid(OwnerCharacter)) {
+		UE_LOG(LogEquipment, Error, TEXT("UCharacterEquipmentComponent can be used only with AGCBaseCharacter. Owner: %s"), *GetNameSafe(GetOwner()));
+		SetComponentTickEnabled(false);
+		return;
+	}
+
+	CachedBaseCharacter = OwnerCharacter;
 	CreateLoadout();
 	AutoEquip();
 }
@@ -85,12 +119,25 @@ uint32 UCharacterEquipmentComponent::PreviousItemsArraySlotIndex(uint32 CurrentS
 }
 int32 UCharacterEquipmentComponent::GetAvailableAmunitionForCurrentWeapon()
 {
-	check(IsValid(GetCurrentRangeWeaponItem()))
-		UCharacterInventoryComponent* InventoryComponent = CachedBaseCharacter->GetCharacterInventoryComponent();
-	return IsValid(InventoryComponent) ? InventoryComponent->GetAmmoAmount(GetCurrentRangeWeaponItem()->GetAmmoType()) : 0;
+	ARangeWeaponItem* CurrentRangeWeapon = GetCurrentRangeWeaponItem();
+	if (!IsValid(CurrentRangeWeapon)) {
+		return 0;
+	}
+
+	if (!CachedBaseCharacter.IsValid()) {
+		return 0;
+	}
+
+	UCharacterInventoryComponent* InventoryComponent = CachedBaseCharacter->GetCharacterInventoryComponent();
+	return IsValid(InventoryComponent) ? InventoryComponent->GetAmmoAmount(CurrentRangeWeapon->GetAmmoType()) : 0;
 }
 void UCharacterEquipmentComponent::CreateLoadout()
 {
+	if (!CachedBaseCharacter.IsValid()) {
+		UE_LOG(LogEquipment, Warning, TEXT("CreateLoadout skipped. CachedBaseCharacter is invalid in %s"), *GetNameSafe(GetOwner()));
+		return;
+	}
+
 	UCharacterInventoryComponent* InventoryComponent = CachedBaseCharacter->GetCharacterInventoryComponent();
 	for (const TPair<EAmunitionType, int32>& AmmoPair : MaxAmunitionAmount) {
 		int32 LoadoutValue = FMath::Max(AmmoPair.Value, 0);
@@ -99,6 +146,7 @@ void UCharacterEquipmentComponent::CreateLoadout()
 		}
 	}
 
+	ItemsArray.Empty();
 	ItemsArray.AddZeroed((uint32)EEquipmentSlots::MAX);
 	for (const TPair <EEquipmentSlots, TSubclassOf<AEquipableItem>>& ItemPair : ItemsLodout) {
 		if (!IsValid(ItemPair.Value)) {
@@ -109,7 +157,7 @@ void UCharacterEquipmentComponent::CreateLoadout()
 }
 void UCharacterEquipmentComponent::OnLevelDeserialized_Implementation()
 {
-	
+
 	RebuildRuntimeEquipmentFromSaveData();
 
 	if (CurrentEquippedSlot == EEquipmentSlots::None || !ItemsArray.IsValidIndex((int32)CurrentEquippedSlot)) {
@@ -127,16 +175,29 @@ void UCharacterEquipmentComponent::OnCurrentWeaponChanged(int32 Ammo)
 void UCharacterEquipmentComponent::OnCurrentItemChanged(int32 Ammo)
 {
 	if (OnCurrentWeaponAmmoChanged.IsBound()) {
-		OnCurrentWeaponAmmoChanged.Broadcast(Ammo, CurrentEquippedItem->GetMaxAmmo());
+		const int32 MaxAmmo = IsValid(CurrentEquippedItem) ? CurrentEquippedItem->GetMaxAmmo() : 0;
+		OnCurrentWeaponAmmoChanged.Broadcast(Ammo, MaxAmmo);
 	}
 }
 
 void UCharacterEquipmentComponent::OnWeaponReloadComplete()
 {
-	ReloadAmmoInCurrentWeapon();
+	if (IsValid(CurrentEquippedWeapon)) {
+		ReloadAmmoInCurrentWeapon();
+	}
 }
 void UCharacterEquipmentComponent::ReloadAmmoInCurrentWeapon(int32 NumberOfAmmo, bool bCheckIsFull)
 {
+	if (!IsValid(CurrentEquippedWeapon)) {
+		UE_LOG(LogEquipment, Warning, TEXT("ReloadAmmoInCurrentWeapon skipped. CurrentEquippedWeapon is invalid in %s"), *GetNameSafe(GetOwner()));
+		return;
+	}
+
+	if (!CachedBaseCharacter.IsValid()) {
+		UE_LOG(LogEquipment, Warning, TEXT("ReloadAmmoInCurrentWeapon skipped. CachedBaseCharacter is invalid in %s"), *GetNameSafe(GetOwner()));
+		return;
+	}
+
 	int32 AvailableAmunition = GetAvailableAmunitionForCurrentWeapon();
 	int32 CurrentAmmo = CurrentEquippedWeapon->GetCurrentAmmo();
 	int32 AmmoToReload = CurrentEquippedWeapon->GetMaxAmmo() - CurrentAmmo;
@@ -265,7 +326,7 @@ void UCharacterEquipmentComponent::RebuildRuntimeEquipmentFromSaveData()
 	for (const FEquipmentSlotSaveData& SlotSaveData : EquipmentSaveData) {
 		const int32 SlotIndex = (int32)SlotSaveData.Slot;
 		if (!ItemsArray.IsValidIndex(SlotIndex)) {
-			UE_LOG(LogTemp, Warning, TEXT("UCharacterEquipmentComponent::RebuildRuntimeEquipmentFromSaveData skipped invalid slot %d"), SlotIndex);
+			UE_LOG(LogEquipment, Warning, TEXT("UCharacterEquipmentComponent::RebuildRuntimeEquipmentFromSaveData skipped invalid slot %d"), SlotIndex);
 			continue;
 		}
 
@@ -275,7 +336,7 @@ void UCharacterEquipmentComponent::RebuildRuntimeEquipmentFromSaveData()
 
 		const TSubclassOf<AEquipableItem> ResolvedItemClass = ResolveSavedEquipmentClass(SlotSaveData);
 		if (!IsValid(ResolvedItemClass)) {
-			UE_LOG(LogTemp, Warning, TEXT("UCharacterEquipmentComponent::RebuildRuntimeEquipmentFromSaveData failed to resolve item class for ItemId %s"), *SlotSaveData.ItemId.ToString());
+			UE_LOG(LogEquipment, Warning, TEXT("UCharacterEquipmentComponent::RebuildRuntimeEquipmentFromSaveData failed to resolve item class for ItemId %s"), *SlotSaveData.ItemId.ToString());
 			continue;
 		}
 
@@ -310,7 +371,11 @@ ARangeWeaponItem* UCharacterEquipmentComponent::GetCurrentRangeWeaponItem() cons
 
 void UCharacterEquipmentComponent::ReloadCurrentWeapon()
 {
-	check(IsValid(CurrentEquippedWeapon));
+	if (!IsValid(CurrentEquippedWeapon)) {
+		UE_LOG(LogEquipment, Warning, TEXT("ReloadCurrentWeapon skipped. CurrentEquippedWeapon is invalid in %s"), *GetNameSafe(GetOwner()));
+		return;
+	}
+
 	int32 AvailableAmunition = GetAvailableAmunitionForCurrentWeapon();
 	if (AvailableAmunition <= 0) {
 		return;
@@ -320,24 +385,39 @@ void UCharacterEquipmentComponent::ReloadCurrentWeapon()
 
 void UCharacterEquipmentComponent::EquipItemInSlot(EEquipmentSlots Slot)
 {
-	//if (!IsValid(ItemsArray[(uint32)Slot])) {
-	//	return;
-	//}
+	const int32 SlotIndex = (int32)Slot;
+	if (!ItemsArray.IsValidIndex(SlotIndex)) {
+		UE_LOG(LogEquipment, Warning, TEXT("EquipItemInSlot failed. Invalid slot %d in %s"), SlotIndex, *GetNameSafe(GetOwner()));
+		return;
+	}
+
 	if (bIsEquipping) {
 		return;
 	}
+
+	if (!CachedBaseCharacter.IsValid() || !IsValid(CachedBaseCharacter->GetMesh())) {
+		UE_LOG(LogEquipment, Warning, TEXT("EquipItemInSlot failed. Invalid character/mesh in %s"), *GetNameSafe(GetOwner()));
+		return;
+	}
+
 	UnEquipCurrentItem();
-	CurrentEquippedItem = ItemsArray[(uint32)Slot];
+	CurrentEquippedItem = ItemsArray[SlotIndex];
 	CurrentEquippedWeapon = Cast<ARangeWeaponItem>(CurrentEquippedItem);
 	CurrentThowableItem = Cast<AThrowableItem>(CurrentEquippedItem);
 	CurrentMeleeeWeaponItem = Cast<AMeleeWeaponItem>(CurrentEquippedItem);
 	if (IsValid(CurrentEquippedItem)) {
 		UAnimMontage* EquipMontage = CurrentEquippedItem->GetCharacterEquipAnimMontage();
 		if (IsValid(EquipMontage)) {
-			bIsEquipping = true;
-			UAnimInstance* CharacterAnimInstnce = CachedBaseCharacter->GetMesh()->GetAnimInstance();
-			float EquipDuration = CharacterAnimInstnce->Montage_Play(EquipMontage);
-			GetWorld()->GetTimerManager().SetTimer(EquipTimer, this, &UCharacterEquipmentComponent::EquipAnimationFinished, EquipDuration, false);
+			UAnimInstance* CharacterAnimInstance = CachedBaseCharacter->GetMesh()->GetAnimInstance();
+			UWorld* World = GetWorld();
+			if (IsValid(CharacterAnimInstance) && IsValid(World)) {
+				bIsEquipping = true;
+				float EquipDuration = CharacterAnimInstance->Montage_Play(EquipMontage);
+				World->GetTimerManager().SetTimer(EquipTimer, this, &UCharacterEquipmentComponent::EquipAnimationFinished, EquipDuration, false);
+			}
+			else {
+				AttachCurrentItemToEquippedSocket();
+			}
 		}
 		else {
 			AttachCurrentItemToEquippedSocket();
@@ -360,20 +440,36 @@ void UCharacterEquipmentComponent::EquipItemInSlot(EEquipmentSlots Slot)
 
 void UCharacterEquipmentComponent::StartLaunching(UAnimMontage* EquipMontage)
 {
-	if (IsValid(CurrentThowableItem)) {
-		if (CurrentThowableItem->GetMaxAmmo() > 0) {
-			bIsEquipping = true;
-			UAnimInstance* CharacterAnimInstnce = CachedBaseCharacter->GetMesh()->GetAnimInstance();
-			float EquipDuration = CharacterAnimInstnce->Montage_Play(EquipMontage);
-			GetWorld()->GetTimerManager().SetTimer(EquipTimer, this, &UCharacterEquipmentComponent::EquipAnimationFinished, EquipDuration, false);
-		}
+	if (!IsValid(CurrentThowableItem) || !IsValid(EquipMontage)) {
+		return;
 	}
+
+	if (CurrentThowableItem->GetMaxAmmo() <= 0) {
+		return;
+	}
+
+	if (!CachedBaseCharacter.IsValid() || !IsValid(CachedBaseCharacter->GetMesh())) {
+		UE_LOG(LogEquipment, Warning, TEXT("StartLaunching skipped. Invalid character/mesh in %s"), *GetNameSafe(GetOwner()));
+		return;
+	}
+
+	UAnimInstance* CharacterAnimInstance = CachedBaseCharacter->GetMesh()->GetAnimInstance();
+	UWorld* World = GetWorld();
+	if (!IsValid(CharacterAnimInstance) || !IsValid(World)) {
+		UE_LOG(LogEquipment, Warning, TEXT("StartLaunching skipped. Invalid anim instance/world in %s"), *GetNameSafe(GetOwner()));
+		return;
+	}
+
+	bIsEquipping = true;
+	float EquipDuration = CharacterAnimInstance->Montage_Play(EquipMontage);
+	World->GetTimerManager().SetTimer(EquipTimer, this, &UCharacterEquipmentComponent::EquipAnimationFinished, EquipDuration, false);
 }
 
 void UCharacterEquipmentComponent::AttachCurrentItemToEquippedSocket()
 {
-	if (IsValid(CurrentEquippedItem))
+	if (IsValid(CurrentEquippedItem) && CachedBaseCharacter.IsValid() && IsValid(CachedBaseCharacter->GetMesh())) {
 		CurrentEquippedItem->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, CurrentEquippedItem->GetEquippedSocketName());
+	}
 }
 
 AMeleeWeaponItem* UCharacterEquipmentComponent::GetCurrentMeleeWeapon() const
@@ -387,7 +483,9 @@ AThrowableItem* UCharacterEquipmentComponent::GetCurrentThowableItem() const
 void UCharacterEquipmentComponent::UnEquipCurrentItem()
 {
 	if (IsValid(CurrentEquippedItem)) {
-		CurrentEquippedItem->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, CurrentEquippedItem->GetUnEquippedSocketName());
+		if (CachedBaseCharacter.IsValid() && IsValid(CachedBaseCharacter->GetMesh())) {
+			CurrentEquippedItem->AttachToComponent(CachedBaseCharacter->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, CurrentEquippedItem->GetUnEquippedSocketName());
+		}
 		CurrentEquippedItem->UnEquip();
 	}
 	if (IsValid(CurrentEquippedWeapon)) {
@@ -398,18 +496,27 @@ void UCharacterEquipmentComponent::UnEquipCurrentItem()
 	}
 	PreviosEquippedSlot = CurrentEquippedSlot;
 	CurrentEquippedSlot = EEquipmentSlots::None;
+	CurrentEquippedItem = nullptr;
+	CurrentEquippedWeapon = nullptr;
+	CurrentThowableItem = nullptr;
+	CurrentMeleeeWeaponItem = nullptr;
 }
 
 void UCharacterEquipmentComponent::EquipNextItem()
 {
-	uint32 CurrentSlotIndex = (uint32)CurrentEquippedSlot;
+	if (ItemsArray.Num() == 0) {
+		return;
+	}
+
+	uint32 CurrentSlotIndex = ItemsArray.IsValidIndex((int32)CurrentEquippedSlot) ? (uint32)CurrentEquippedSlot : 0;
 	uint32 NextSlotIndex = NextItemsArraySlotIndex(CurrentSlotIndex);
 	while (CurrentSlotIndex != NextSlotIndex
+		&& ItemsArray.IsValidIndex((int32)NextSlotIndex)
 		&& (IgnoreSlotsWhileSwitching.Contains((EEquipmentSlots)NextSlotIndex)
 			|| !IsValid(ItemsArray[NextSlotIndex]))) {
 		NextSlotIndex = NextItemsArraySlotIndex(NextSlotIndex);
 	}
-	if (CurrentSlotIndex != NextSlotIndex) {
+	if (CurrentSlotIndex != NextSlotIndex && ItemsArray.IsValidIndex((int32)NextSlotIndex)) {
 		EquipItemInSlot((EEquipmentSlots)NextSlotIndex);
 	}
 
@@ -417,14 +524,19 @@ void UCharacterEquipmentComponent::EquipNextItem()
 
 void UCharacterEquipmentComponent::EquipPreviousItem()
 {
-	uint32 CurrentSlotIndex = (uint32)CurrentEquippedSlot;
-	uint32  PreviousSlotIndex = PreviousItemsArraySlotIndex(CurrentSlotIndex);
+	if (ItemsArray.Num() == 0) {
+		return;
+	}
+
+	uint32 CurrentSlotIndex = ItemsArray.IsValidIndex((int32)CurrentEquippedSlot) ? (uint32)CurrentEquippedSlot : 0;
+	uint32 PreviousSlotIndex = PreviousItemsArraySlotIndex(CurrentSlotIndex);
 	while (CurrentSlotIndex != PreviousSlotIndex
+		&& ItemsArray.IsValidIndex((int32)PreviousSlotIndex)
 		&& (IgnoreSlotsWhileSwitching.Contains((EEquipmentSlots)PreviousSlotIndex)
 			|| !IsValid(ItemsArray[PreviousSlotIndex]))) {
 		PreviousSlotIndex = PreviousItemsArraySlotIndex(PreviousSlotIndex);
 	}
-	if (CurrentSlotIndex != PreviousSlotIndex) {
+	if (CurrentSlotIndex != PreviousSlotIndex && ItemsArray.IsValidIndex((int32)PreviousSlotIndex)) {
 		EquipItemInSlot((EEquipmentSlots)PreviousSlotIndex);
 	}
 }
@@ -437,10 +549,12 @@ bool UCharacterEquipmentComponent::IsEquipping() const
 void UCharacterEquipmentComponent::LaunchCurrentThrowableItem()
 {
 	if (IsValid(CurrentThowableItem)) {
-		if (CurrentThowableItem->GetMaxAmmo() == 0)
+		if (CurrentThowableItem->GetMaxAmmo() == 0) {
 			CurrentThowableItem->SetAmmo(0);
-		else
+		}
+		else {
 			CurrentThowableItem->SetMaxAmmo(CurrentThowableItem->GetMaxAmmo() - 1);
+		}
 
 		CurrentThowableItem->Throw();
 		bIsEquipping = false;
@@ -450,5 +564,3 @@ void UCharacterEquipmentComponent::LaunchCurrentThrowableItem()
 		//EquipItemInSlot(PreviosEquippedSlot);
 	}
 }
-
-

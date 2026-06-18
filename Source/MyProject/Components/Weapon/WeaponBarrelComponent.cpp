@@ -2,6 +2,7 @@
 
 
 #include "Components/Weapon/WeaponBarrelComponent.h"
+#include "MyProject.h"
 #include "GameCodeTypes.h"
 #include "Subsystems/DebugSubsystem.h"
 #include "../../Actors/Projectile/GCProjectile.h"
@@ -15,10 +16,17 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 
-void UWeaponBarrelComponent::Shot(FVector ShotStart, FVector ShotDirection, float SpreadAngle,bool IsAiming)
+void UWeaponBarrelComponent::Shot(FVector ShotStart, FVector ShotDirection, float SpreadAngle, bool IsAiming)
 {
+	if (!IsValid(GetWorld())) {
+		UE_LOG(LogWeapon, Warning, TEXT("Shot skipped: world is invalid for %s"), *GetNameSafe(this));
+		return;
+	}
+
 	FVector MuzzleLocation = GetComponentLocation();
-	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleFlashFX, MuzzleLocation, GetComponentRotation());
+	if (IsValid(MuzzleFlashFX)) {
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleFlashFX, MuzzleLocation, GetComponentRotation());
+	}
 	for (int i = 0; i < BulletsPerShot; i++) {
 		ShotDirection += GetBulletSpreadOffset(FMath::RandRange(0.0f, SpreadAngle), ShotDirection.ToOrientationRotator());
 		FVector ShotEnd = ShotStart + FiringRange * ShotDirection;
@@ -31,8 +39,8 @@ void UWeaponBarrelComponent::Shot(FVector ShotStart, FVector ShotDirection, floa
 		switch (HitRegistration)
 		{
 		case EHitRegistrationType::HitScan: {
-			
-			bool bHasHit=HitScan(ShotStart, ShotEnd, ShotDirection);
+
+			bool bHasHit = HitScan(ShotStart, ShotEnd, ShotDirection);
 			if (bIsDebugEnable && bHasHit) {
 				DrawDebugSphere(GetWorld(), ShotEnd, 10.0f, 24, FColor::Blue, false, 1.0f);
 				DrawDebugLine(GetWorld(), ShotStart, ShotEnd, FColor::Red, false, 1.0f, 0, 3.0f);
@@ -46,11 +54,11 @@ void UWeaponBarrelComponent::Shot(FVector ShotStart, FVector ShotDirection, floa
 				ShotEnd = ShotResult.ImpactPoint;
 			}
 			FVector CurrentStartLocation = MuzzleLocation;
-			if (CachedRangeWeaponItem->GetReticleType() == EReticleType::SniperRifle && IsAiming)
+			if (IsValid(CachedRangeWeaponItem) && CachedRangeWeaponItem->GetReticleType() == EReticleType::SniperRifle && IsAiming)
 				CurrentStartLocation = ShotStart;
 			FVector ShotDirectionProjectile = ShotEnd - CurrentStartLocation;
 
-			
+
 			if (bIsDebugEnable && bHasHit) {
 				DrawDebugLine(GetWorld(), CurrentStartLocation, ShotEnd, FColor::Red, false, 1.0f, 0, 3.0f);
 			}
@@ -83,7 +91,7 @@ void UWeaponBarrelComponent::ChangeUseRifleGrenate() {
 		OldHitRegistration = HitRegistration;
 		HitRegistration = EHitRegistrationType::Projectile;
 	}
-	else{
+	else {
 		HitRegistration = OldHitRegistration;
 	}
 
@@ -105,9 +113,9 @@ bool UWeaponBarrelComponent::HitScan(FVector ShotStart, OUT FVector& ShotEnd, FV
 	bool bHasHit = GetWorld()->LineTraceSingleByChannel(ShotResult, ShotStart, ShotEnd, ECC_Bullet);
 	if (bHasHit) {
 		ShotEnd = ShotResult.ImpactPoint;
-		ProcessHit(ShotResult,ShotDirection);
+		ProcessHit(ShotResult, ShotDirection);
 	}
-	UNiagaraComponent* TraceFxComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TraceFX, GetComponentLocation(), GetComponentRotation());
+	UNiagaraComponent* TraceFxComponent = IsValid(TraceFX) ? UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TraceFX, GetComponentLocation(), GetComponentRotation()) : nullptr;
 	if (IsValid(TraceFxComponent)) {
 		TraceFxComponent->SetVectorParameter(FXParamTraceEnd, ShotEnd);
 	}
@@ -115,6 +123,10 @@ bool UWeaponBarrelComponent::HitScan(FVector ShotStart, OUT FVector& ShotEnd, FV
 }
 void UWeaponBarrelComponent::LaunchProjectile(const FVector& LaunchStart, FVector LaunchDirection)
 {
+	if (!IsValid(GetWorld()) || !IsValid(CurrentProjectileClass)) {
+		UE_LOG(LogWeapon, Warning, TEXT("LaunchProjectile skipped: invalid world or projectile class for %s"), *GetNameSafe(this));
+		return;
+	}
 	AGCProjectile* Projectile = GetWorld()->SpawnActor<AGCProjectile>(CurrentProjectileClass, LaunchStart, LaunchDirection.ToOrientationRotator());
 	if (IsValid(Projectile)) {
 		Projectile->SetOwner(GetOwningPawn());
@@ -131,11 +143,11 @@ void UWeaponBarrelComponent::ProcessHit(const FHitResult& HitResult, const FVect
 	}
 }
 void UWeaponBarrelComponent::HitByRifleGrenete() {
-	
+
 }
 void UWeaponBarrelComponent::HitByDefaultBullet(const FHitResult& HitResult, const FVector& Direction) {
 	AActor* HitActor = HitResult.GetActor();
-	if (IsValid(HitActor) && FalloffDiagram!=nullptr && IsValid(FalloffDiagram)) {
+	if (IsValid(HitActor) && FalloffDiagram != nullptr && IsValid(FalloffDiagram)) {
 		float DamageCoef = FalloffDiagram->GetFloatValue(HitResult.Distance);//Distance
 		FPointDamageEvent DamageEvent;
 		DamageEvent.HitInfo = HitResult;
@@ -151,7 +163,7 @@ void UWeaponBarrelComponent::HitByDefaultBullet(const FHitResult& HitResult, con
 		}
 	}
 	else {
-		UE_LOG(LogTemp, Log, TEXT("UWeaponBarrelComponent::Shot Decal material not found"));
+		UE_LOG(LogWeapon, Verbose, TEXT("UWeaponBarrelComponent::Shot Decal material not found"));
 	}
 }
 
@@ -166,9 +178,11 @@ void UWeaponBarrelComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	InitFalloffDiagram();
-    ChangeCurrentProjectileClass();
-	if(GetOwner()->IsA<ARangeWeaponItem>())
+	ChangeCurrentProjectileClass();
 	CachedRangeWeaponItem = Cast<ARangeWeaponItem>(GetOwner());
+	if (!IsValid(CachedRangeWeaponItem)) {
+		UE_LOG(LogWeapon, Verbose, TEXT("%s owner is not ARangeWeaponItem"), *GetNameSafe(this));
+	}
 }
 FVector UWeaponBarrelComponent::GetBulletSpreadOffset(float Angle, FRotator ShotRotation) const
 {

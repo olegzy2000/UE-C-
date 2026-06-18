@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "CharacterAttributeComponent.h"
+#include "MyProject.h"
+#include "Engine/GameInstance.h"
 
 #include "../../Characters/GCBaseCharacter.h"
 #include "../../GameCodeTypes.h"
@@ -16,9 +18,14 @@ void UCharacterAttributeComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	checkf(GetOwner()->IsA<AGCBaseCharacter>(), TEXT("UCharacterAttributeComponent::BeginPlay UCharacterAttributeComponent can be used only with AGCBaseCharacter"));
+	AGCBaseCharacter* OwnerCharacter = Cast<AGCBaseCharacter>(GetOwner());
+	if (!IsValid(OwnerCharacter))
+	{
+		UE_LOG(LogCharacter, Warning, TEXT("UCharacterAttributeComponent::BeginPlay failed: owner is not AGCBaseCharacter | Owner=%s"), *GetNameSafe(GetOwner()));
+		return;
+	}
 
-	CachedBaseCharacterOwner = StaticCast<AGCBaseCharacter*>(GetOwner());
+	CachedBaseCharacterOwner = OwnerCharacter;
 
 	Health = MaxHealth;
 	Stamina = MaxStamina;
@@ -147,13 +154,15 @@ void UCharacterAttributeComponent::BroadcastAllAttributesChanged()
 #if UE_BUILD_DEBUG || UE_BUILD_DEVELOPMENT
 void UCharacterAttributeComponent::DebugDrawAttributes()
 {
-	UDebugSubsystem* DebugSubsystem = UGameplayStatics::GetGameInstance(GetWorld())->GetSubsystem<UDebugSubsystem>();
-	if (DebugSubsystem->IsCategoryEnable(DebugCategoryCharacterAttributes))
+	UWorld* World = GetWorld();
+	UGameInstance* GameInstance = IsValid(World) ? UGameplayStatics::GetGameInstance(World) : nullptr;
+	UDebugSubsystem* DebugSubsystem = IsValid(GameInstance) ? GameInstance->GetSubsystem<UDebugSubsystem>() : nullptr;
+	if (!IsValid(DebugSubsystem) || !DebugSubsystem->IsCategoryEnable(DebugCategoryCharacterAttributes))
 	{
 		return;
 	}
 
-	if (!CachedBaseCharacterOwner.IsValid())
+	if (!CachedBaseCharacterOwner.IsValid() || !IsValid(CachedBaseCharacterOwner->GetCapsuleComponent()))
 	{
 		return;
 	}

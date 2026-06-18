@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "GCBaseCharacterMovementComponent.h"
+#include "MyProject.h"
 #include "LadderTraversalComponent.h"
 #include "../../Characters/GCBaseCharacter.h"
 #include "../../Utils/GCTraceUtils.h"
 #include "GameFramework/Character.h"
 #include "Components/CapsuleComponent.h"
 
-DEFINE_LOG_CATEGORY_STATIC(LogLadderAttach, Log, All);
 
 UGCBaseCharacterMovementComponent::UGCBaseCharacterMovementComponent()
 {
@@ -251,6 +251,18 @@ void UGCBaseCharacterMovementComponent::AttachToLadder(const ALadder* Ladder)
 }
 void UGCBaseCharacterMovementComponent::AttachToZipline(AZipline* Zipline)
 {
+	if (!IsValid(Zipline) || !IsValid(GetBaseCharacterOwner()))
+	{
+		UE_LOG(LogTraversal, Warning, TEXT("AttachToZipline skipped: invalid zipline or character owner | Owner=%s | Zipline=%s"), *GetNameSafe(GetOwner()), *GetNameSafe(Zipline));
+		return;
+	}
+
+	if (!IsValid(Zipline->GetLeftRailMeshComponent()) || !IsValid(Zipline->GetRightRailMeshComponent()))
+	{
+		UE_LOG(LogTraversal, Warning, TEXT("AttachToZipline skipped: zipline rail mesh is invalid | Zipline=%s"), *GetNameSafe(Zipline));
+		return;
+	}
+
 	CurrentZipline = Zipline;
 	FRotator TargetOrientationRotation = CurrentZipline->GetActorForwardVector().ToOrientationRotator();
 	TargetOrientationRotation.Yaw += 180.0f;
@@ -276,7 +288,12 @@ void UGCBaseCharacterMovementComponent::AttachToZipline(AZipline* Zipline)
 }
 float UGCBaseCharacterMovementComponent::GetActorToCurrentLadderProjection(const FVector& Location)
 {
-	checkf(LadderTraversalComponent && LadderTraversalComponent->HasValidLadder(), TEXT("UGCBaseCharacterMovementComponent::GetActorToCurrentLadderProjection() cannot be invoked when ladder is null"));
+	if (!LadderTraversalComponent || !LadderTraversalComponent->HasValidLadder())
+	{
+		UE_LOG(LogTraversal, Verbose, TEXT("GetActorToCurrentLadderProjection skipped: ladder is invalid | Owner=%s"), *GetNameSafe(GetOwner()));
+		return 0.0f;
+	}
+
 	return LadderTraversalComponent->GetProjection(Location);
 }
 void UGCBaseCharacterMovementComponent::DetachFromLadder(EDetachFromLadderMethod DetachFromLadderMethod)
@@ -458,7 +475,12 @@ void UGCBaseCharacterMovementComponent::PhysicsRotation(float DeltaTime)
 
 float UGCBaseCharacterMovementComponent::GetLadderSpeedRation() const
 {
-	checkf(LadderTraversalComponent && LadderTraversalComponent->HasValidLadder(), TEXT("UGCBaseCharacterMovementComponent::GetLadderSpeedRation() cannot be invoked when ladder is null"));
+	if (!LadderTraversalComponent || !LadderTraversalComponent->HasValidLadder())
+	{
+		UE_LOG(LogTraversal, Verbose, TEXT("GetLadderSpeedRation skipped: ladder is invalid | Owner=%s"), *GetNameSafe(GetOwner()));
+		return 0.0f;
+	}
+
 	return LadderTraversalComponent->GetSpeedRatio(Velocity);
 }
 
@@ -878,17 +900,34 @@ bool FSavedMove_GC::CanCombineWith(const FSavedMovePtr& NewMovePtr, ACharacter* 
 void FSavedMove_GC::SetMoveFor(ACharacter* Character, float InDeltaTime, FVector const& NewAccel, FNetworkPredictionData_Client_Character& ClientDataCharacter)
 {
 	Super::SetMoveFor(Character, InDeltaTime, NewAccel, ClientDataCharacter);
-	checkf(Character->GetCharacterMovement()->IsA<UGCBaseCharacterMovementComponent>(), TEXT("FSavedMove_GC::SetMoveFor CharacterMovement is not UGCBaseCharacterMovementComponent"));
-	UGCBaseCharacterMovementComponent* MovementComponent = StaticCast<UGCBaseCharacterMovementComponent*>(Character->GetCharacterMovement());
-	bSavedIsSprinting = MovementComponent->IsSprinting();
 
+	UGCBaseCharacterMovementComponent* MovementComponent = IsValid(Character)
+		? Cast<UGCBaseCharacterMovementComponent>(Character->GetCharacterMovement())
+		: nullptr;
+
+	if (!IsValid(MovementComponent))
+	{
+		bSavedIsSprinting = false;
+		UE_LOG(LogTraversal, Warning, TEXT("FSavedMove_GC::SetMoveFor skipped: CharacterMovement is not UGCBaseCharacterMovementComponent | Character=%s"), *GetNameSafe(Character));
+		return;
+	}
+
+	bSavedIsSprinting = MovementComponent->IsSprinting();
 }
 void FSavedMove_GC::PrepMoveFor(ACharacter* Character) {
 	Super::PrepMoveFor(Character);
-	checkf(Character->GetCharacterMovement()->IsA<UGCBaseCharacterMovementComponent>(), TEXT("FSavedMove_GC::PrepMoveFor CharacterMovement is not UGCBaseCharacterMovementComponent"));
-	UGCBaseCharacterMovementComponent* MovementComponent = StaticCast<UGCBaseCharacterMovementComponent*>(Character->GetMovementComponent());
-	MovementComponent->SetIsSprinting(bSavedIsSprinting);
 
+	UGCBaseCharacterMovementComponent* MovementComponent = IsValid(Character)
+		? Cast<UGCBaseCharacterMovementComponent>(Character->GetMovementComponent())
+		: nullptr;
+
+	if (!IsValid(MovementComponent))
+	{
+		UE_LOG(LogTraversal, Warning, TEXT("FSavedMove_GC::PrepMoveFor skipped: CharacterMovement is not UGCBaseCharacterMovementComponent | Character=%s"), *GetNameSafe(Character));
+		return;
+	}
+
+	MovementComponent->SetIsSprinting(bSavedIsSprinting);
 }
 
 FNetworkPredictionData_Client_Character_GC::FNetworkPredictionData_Client_Character_GC(const UCharacterMovementComponent& ClientMovement)

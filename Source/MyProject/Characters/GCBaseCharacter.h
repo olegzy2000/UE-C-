@@ -256,6 +256,8 @@ protected:
 private:
 	void ShowLoseText();
 	FTimerHandle MyTimerHandle;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character | Level", meta = (AllowPrivateAccess = "true"))
+	FName RestartLevelName;
 	void ChangeCapsuleParamFromIdleWalkStateToCrouch();
 	void ChangeSkeletalMeshPosition(FVector Position);
 	void EnableRagdoll();

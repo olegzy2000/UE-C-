@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "LadderTraversalComponent.h"
+#include "MyProject.h"
 #include "../../Actors/Interactive/Environment/Ladder.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogLadderTraversal, Log, All);
@@ -85,7 +86,12 @@ bool ULadderTraversalComponent::AttachToLadder(
 
 void ULadderTraversalComponent::StartAttachFromTop(const FVector& CurrentLocation, const FRotator& CurrentRotation)
 {
-	checkf(IsValid(CurrentLadder), TEXT("ULadderTraversalComponent::StartAttachFromTop() cannot be invoked when ladder is null"));
+	if (!IsValid(CurrentLadder))
+	{
+		UE_LOG(LogLadderTraversal, Warning, TEXT("StartAttachFromTop skipped: CurrentLadder is invalid | Owner=%s"), *GetNameSafe(MovementComponent ? MovementComponent->GetOwner() : GetOwner()));
+		ResetAttach();
+		return;
+	}
 
 	AttachState.StartLocation = CurrentLocation;
 	AttachState.StartRotation = CurrentRotation;
@@ -146,7 +152,11 @@ bool ULadderTraversalComponent::IsAttachInProgress() const
 
 float ULadderTraversalComponent::GetProjection(const FVector& Location) const
 {
-	checkf(IsValid(CurrentLadder), TEXT("ULadderTraversalComponent::GetProjection() cannot be invoked when ladder is null"));
+	if (!IsValid(CurrentLadder))
+	{
+		UE_LOG(LogLadderTraversal, Verbose, TEXT("GetProjection skipped: CurrentLadder is invalid | Owner=%s"), *GetNameSafe(MovementComponent ? MovementComponent->GetOwner() : GetOwner()));
+		return 0.0f;
+	}
 
 	const FVector LadderUpVector = CurrentLadder->GetActorUpVector();
 	const FVector LadderToCharacterDistance = Location - CurrentLadder->GetActorLocation();
@@ -156,7 +166,11 @@ float ULadderTraversalComponent::GetProjection(const FVector& Location) const
 
 FVector ULadderTraversalComponent::GetAlignedLocation(float LadderProjection) const
 {
-	checkf(IsValid(CurrentLadder), TEXT("ULadderTraversalComponent::GetAlignedLocation() cannot be invoked when ladder is null"));
+	if (!IsValid(CurrentLadder))
+	{
+		UE_LOG(LogLadderTraversal, Verbose, TEXT("GetAlignedLocation skipped: CurrentLadder is invalid | Owner=%s"), *GetNameSafe(MovementComponent ? MovementComponent->GetOwner() : GetOwner()));
+		return FVector::ZeroVector;
+	}
 
 	return CurrentLadder->GetActorLocation()
 		+ LadderProjection * CurrentLadder->GetActorUpVector()
@@ -182,7 +196,11 @@ FRotator ULadderTraversalComponent::GetTargetRotation() const
 
 float ULadderTraversalComponent::GetSpeedRatio(const FVector& Velocity) const
 {
-	checkf(IsValid(CurrentLadder), TEXT("ULadderTraversalComponent::GetSpeedRatio() cannot be invoked when ladder is null"));
+	if (!IsValid(CurrentLadder))
+	{
+		UE_LOG(LogLadderTraversal, Verbose, TEXT("GetSpeedRatio skipped: CurrentLadder is invalid | Owner=%s"), *GetNameSafe(MovementComponent ? MovementComponent->GetOwner() : GetOwner()));
+		return 0.0f;
+	}
 
 	const FVector LadderUpVector = CurrentLadder->GetActorUpVector();
 	return ClimbingSpeed > 0.0f

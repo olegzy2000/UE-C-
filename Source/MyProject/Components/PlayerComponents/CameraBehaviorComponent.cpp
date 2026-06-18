@@ -1,4 +1,5 @@
 #include "CameraBehaviorComponent.h"
+#include "MyProject.h"
 #include "../../Characters/PlayerCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
@@ -31,17 +32,15 @@ void UCameraBehaviorComponent::CacheOwnerAndValidate()
 		CachedOwner = Cast<APlayerCharacter>(Owner);
 		if (!CachedOwner)
 		{
-			UE_LOG(LogTemp, Error, TEXT("UCameraBehaviorComponent can only be attached to APlayerCharacter!"));
+			UE_LOG(LogCharacter, Error, TEXT("UCameraBehaviorComponent can only be attached to APlayerCharacter!"));
 		}
 	}
 }
 
 void UCameraBehaviorComponent::InitializeCurves()
 {
-	// Создаем дефолтные кривые (будут использоваться если не заданы в Blueprint)
 	CreateDefaultCurves();
 
-	// Настраиваем Timeline для спринта
 	UCurveFloat* SprintCurve = GetSprintCurve();
 	if (SprintCurve)
 	{
@@ -50,11 +49,10 @@ void UCameraBehaviorComponent::InitializeCurves()
 		SpringArmTimeline.AddInterpFloat(SprintCurve, Callback);
 		SpringArmTimeline.SetLooping(false);
 
-		UE_LOG(LogTemp, Log, TEXT("Sprint camera curve initialized: %s"),
+		UE_LOG(LogCharacter, Log, TEXT("Sprint camera curve initialized: %s"),
 			SprintCurve == DefaultSprintCurve ? TEXT("Default") : TEXT("From Blueprint"));
 	}
 
-	// Настраиваем Timeline для FOV
 	UCurveFloat* FOVCurve = GetFOVCurve();
 	if (FOVCurve)
 	{
@@ -63,14 +61,13 @@ void UCameraBehaviorComponent::InitializeCurves()
 		FOVTimeline.AddInterpFloat(FOVCurve, Callback);
 		FOVTimeline.SetLooping(false);
 
-		UE_LOG(LogTemp, Log, TEXT("Aim FOV curve initialized: %s"),
+		UE_LOG(LogCharacter, Log, TEXT("Aim FOV curve initialized: %s"),
 			FOVCurve == DefaultFOVCurve ? TEXT("Default") : TEXT("From Blueprint"));
 	}
 }
 
 void UCameraBehaviorComponent::CreateDefaultCurves()
 {
-	// Дефолтная линейная кривая для спринта
 	DefaultSprintCurve = NewObject<UCurveFloat>(this, TEXT("DefaultSprintCurve"));
 	if (DefaultSprintCurve)
 	{
@@ -80,7 +77,6 @@ void UCameraBehaviorComponent::CreateDefaultCurves()
 		DefaultSprintCurve->FloatCurve.SetKeyInterpMode(Handle1, RCIM_Linear);
 	}
 
-	// Дефолтная линейная кривая для FOV
 	DefaultFOVCurve = NewObject<UCurveFloat>(this, TEXT("DefaultFOVCurve"));
 	if (DefaultFOVCurve)
 	{
@@ -102,7 +98,6 @@ UCurveFloat* UCameraBehaviorComponent::GetSprintCurve() const
 
 UCurveFloat* UCameraBehaviorComponent::GetFOVCurve() const
 {
-	// Приоритет: кривая из Blueprint > дефолтная кривая
 	if (AimFOVCurve && IsValid(AimFOVCurve))
 	{
 		return AimFOVCurve;
@@ -136,7 +131,6 @@ void UCameraBehaviorComponent::Initialize(USpringArmComponent* InSpringArm, UCam
 
 	if (CachedSpringArm)
 	{
-		// Сохраняем ОРИГИНАЛЬНУЮ длину (дефолтную)
 		OriginalSpringArmLength = CachedSpringArm->TargetArmLength;
 		StartSpringArmLength = OriginalSpringArmLength;
 		TargetSpringArmLength = OriginalSpringArmLength;
@@ -144,22 +138,19 @@ void UCameraBehaviorComponent::Initialize(USpringArmComponent* InSpringArm, UCam
 
 	if (CachedCamera)
 	{
-		// Сохраняем базовый FOV (без прицела)
 		BaseFOV = CachedCamera->FieldOfView;
 		StartFOV = BaseFOV;
 		TargetFOV = BaseFOV;
 		CurrentFOV = BaseFOV;
 
 
-		// Сохраняем исходную позицию камеры
 		OriginalCameraOffset = CachedCamera->GetRelativeLocation();
 
-		
+
 		if (OriginalCameraOffset.Y < 0)
 		{
-			// Если камера изначально слева, меняем флаг и нормализуем OriginalCameraOffset
 			bIsRightShoulder = false;
-			OriginalCameraOffset.Y = -OriginalCameraOffset.Y; // Делаем значение положительным для базы
+			OriginalCameraOffset.Y = -OriginalCameraOffset.Y; 
 		}
 		else
 		{
@@ -203,29 +194,24 @@ void UCameraBehaviorComponent::SwitchShoulderPosition()
 {
 	if (!CachedCamera) return;
 
-	// Сохраняем текущую позицию как стартовую
+	
 	StartShoulderOffset = CachedCamera->GetRelativeLocation();
 
 	float AbsoluteY = FMath::Abs(StartShoulderOffset.Y);
 
-	// Вычисляем новую целевую позицию на основе ОРИГИНАЛЬНОГО смещения
 	if (bIsRightShoulder)
 	{
-		// Переключаемся на левую позицию (отрицательный Y)
 		TargetShoulderOffset = FVector(OriginalCameraOffset.X, -AbsoluteY, OriginalCameraOffset.Z);
 		bIsRightShoulder = false;
 	}
 	else
 	{
-		// Переключаемся на правую позицию (положительный Y)
 		TargetShoulderOffset = FVector(OriginalCameraOffset.X, AbsoluteY, OriginalCameraOffset.Z);
 		bIsRightShoulder = true;
 	}
 
-	// Создаем и настраиваем кривую для интерполяции
 	if (!ShoulderTimeline.IsPlaying())
 	{
-		// Используем простую линейную кривую для плавного перехода
 		UCurveFloat* LinearCurve = NewObject<UCurveFloat>(this);
 		if (LinearCurve)
 		{
@@ -245,7 +231,7 @@ void UCameraBehaviorComponent::SwitchShoulderPosition()
 
 	ShoulderTimeline.PlayFromStart();
 
-	UE_LOG(LogTemp, Log, TEXT("Switching shoulder position to: %s (Y: %.1f -> %.1f)"),
+	UE_LOG(LogCharacter, Log, TEXT("Switching shoulder position to: %s (Y: %.1f -> %.1f)"),
 		bIsRightShoulder ? TEXT("Right") : TEXT("Left"),
 		StartShoulderOffset.Y, TargetShoulderOffset.Y);
 }
@@ -253,9 +239,9 @@ void UCameraBehaviorComponent::SwitchShoulderPosition()
 
 void UCameraBehaviorComponent::StartSprintCameraTransition(float SprintLength)
 {
-	if (!CachedSpringArm) return;
+	if (!CachedSpringArm) 
+		return;
 
-	// Сохраняем текущую длину как СТАРТОВУЮ
 	StartSpringArmLength = CachedSpringArm->TargetArmLength;
 	TargetSpringArmLength = SprintLength;
 
@@ -268,12 +254,11 @@ void UCameraBehaviorComponent::StartSprintCameraTransition(float SprintLength)
 
 void UCameraBehaviorComponent::StopSprintCameraTransition()
 {
-	if (!CachedSpringArm) return;
+	if (!CachedSpringArm) 
+		return;
 
-	// Сохраняем текущую длину как СТАРТОВУЮ
 	StartSpringArmLength = CachedSpringArm->TargetArmLength;
 
-	// Возвращаемся к ОРИГИНАЛЬНОЙ длине
 	TargetSpringArmLength = OriginalSpringArmLength;
 
 	if (SpringArmTimeline.IsPlaying())
@@ -287,7 +272,6 @@ void UCameraBehaviorComponent::UpdateDefaultSpringArmLength(float NewDefaultLeng
 {
 	OriginalSpringArmLength = NewDefaultLength;
 
-	// Если сейчас не в спринте, сразу применяем новую длину
 	if (!IsSprintTransitioning() && CachedSpringArm)
 	{
 		CachedSpringArm->TargetArmLength = OriginalSpringArmLength;
@@ -295,14 +279,13 @@ void UCameraBehaviorComponent::UpdateDefaultSpringArmLength(float NewDefaultLeng
 		TargetSpringArmLength = OriginalSpringArmLength;
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("Default SpringArm length updated to: %.1f"), OriginalSpringArmLength);
+	UE_LOG(LogCharacter, Log, TEXT("Default SpringArm length updated to: %.1f"), OriginalSpringArmLength);
 }
 
 void UCameraBehaviorComponent::StartAimFOVTransition(float InTargetFOV)
 {
 	if (!CachedCamera) return;
 
-	// Сохраняем текущий FOV как стартовый для интерполяции
 	StartFOV = CachedCamera->FieldOfView;
 	TargetFOV = InTargetFOV;
 
@@ -315,19 +298,18 @@ void UCameraBehaviorComponent::StartAimFOVTransition(float InTargetFOV)
 	FOVTimeline.SetPlayRate(1.0f);
 	FOVTimeline.PlayFromStart();
 
-	UE_LOG(LogTemp, Verbose, TEXT("Start Aim FOV transition: %.1f -> %.1f over %.2f seconds"),
+	UE_LOG(LogCharacter, Verbose, TEXT("Start Aim FOV transition: %.1f -> %.1f over %.2f seconds"),
 		StartFOV, TargetFOV, TimeToAim);
 }
 
 void UCameraBehaviorComponent::StopAimFOVTransition()
 {
-	if (!CachedCamera) return;
+	if (!CachedCamera) 
+		return;
 
-	// Возвращаемся к базовому FOV
 	StartFOV = CachedCamera->FieldOfView;
 	TargetFOV = BaseFOV;
 
-	// Если уже достигли целевого FOV, не начинаем интерполяцию
 	if (FMath::IsNearlyEqual(StartFOV, TargetFOV, 0.1f))
 	{
 		if (FOVTimeline.IsPlaying())
@@ -345,7 +327,7 @@ void UCameraBehaviorComponent::StopAimFOVTransition()
 
 	FOVTimeline.PlayFromStart();
 
-	UE_LOG(LogTemp, Verbose, TEXT("Stop Aim FOV transition: %.1f -> %.1f over %.2f seconds"),
+	UE_LOG(LogCharacter, Verbose, TEXT("Stop Aim FOV transition: %.1f -> %.1f over %.2f seconds"),
 		StartFOV, TargetFOV, TimeToAim);
 }
 
@@ -353,7 +335,6 @@ void UCameraBehaviorComponent::UpdateBaseFOV(float NewBaseFOV)
 {
 	BaseFOV = NewBaseFOV;
 
-	// Если сейчас не в прицеле, сразу применяем новый FOV
 	if (!bIsAiming && CachedCamera)
 	{
 		CachedCamera->SetFieldOfView(BaseFOV);
@@ -361,14 +342,13 @@ void UCameraBehaviorComponent::UpdateBaseFOV(float NewBaseFOV)
 		TargetFOV = BaseFOV;
 		CurrentFOV = BaseFOV;
 
-		// Останавливаем любую текущую интерполяцию
 		if (FOVTimeline.IsPlaying())
 		{
 			FOVTimeline.Stop();
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("Base FOV updated to: %.1f"), BaseFOV);
+	UE_LOG(LogCharacter, Log, TEXT("Base FOV updated to: %.1f"), BaseFOV);
 }
 
 float UCameraBehaviorComponent::getDefaultPositionOfCamera()
@@ -398,7 +378,6 @@ void UCameraBehaviorComponent::OnFOVUpdate(float Alpha)
 {
 	if (!CachedCamera) return;
 
-	// Линейная интерполяция между стартовым и целевым FOV
 	float NewFOV = FMath::Lerp(StartFOV, TargetFOV, Alpha);
 	ApplyFOV(NewFOV);
 }
@@ -409,10 +388,9 @@ void UCameraBehaviorComponent::ApplyFOV(float NewFOV)
 
 	CachedCamera->SetFieldOfView(NewFOV);
 
-	// Логируем только при значительных изменениях
 	if (FMath::Abs(NewFOV - CurrentFOV) > 1.0f)
 	{
 		CurrentFOV = NewFOV;
-		UE_LOG(LogTemp, Verbose, TEXT("FOV updated: %.1f"), CurrentFOV);
+		UE_LOG(LogCharacter, Verbose, TEXT("FOV updated: %.1f"), CurrentFOV);
 	}
 }

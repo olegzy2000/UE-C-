@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "CharacterFootIKComponent.h"
+#include "MyProject.h"
+#include "Engine/GameInstance.h"
 
 #include "Characters/GCBaseCharacter.h"
 #include "Components/MovementComponents/GCBaseCharacterMovementComponent.h"
@@ -31,13 +33,13 @@ void UCharacterFootIKComponent::CacheOwnerDependencies()
 {
 	CachedBaseCharacter = Cast<AGCBaseCharacter>(GetOwner());
 	if (!CachedBaseCharacter.IsValid()) {
-		UE_LOG(LogTemp, Warning, TEXT("UCharacterFootIKComponent::CacheOwnerDependencies failed: owner is not AGCBaseCharacter"));
+		UE_LOG(LogCharacter, Warning, TEXT("UCharacterFootIKComponent::CacheOwnerDependencies failed: owner is not AGCBaseCharacter"));
 		return;
 	}
 
 	CachedBaseCharacterMovementComponent = CachedBaseCharacter->GetBaseCharacterMovementComponent();
 	if (!CachedBaseCharacterMovementComponent.IsValid()) {
-		UE_LOG(LogTemp, Warning, TEXT("UCharacterFootIKComponent::CacheOwnerDependencies failed: movement component is not valid"));
+		UE_LOG(LogCharacter, Warning, TEXT("UCharacterFootIKComponent::CacheOwnerDependencies failed: movement component is not valid"));
 	}
 }
 
@@ -49,7 +51,7 @@ void UCharacterFootIKComponent::CacheFootBoneRelativeLocations()
 
 	USkeletalMeshComponent* CharacterMesh = CachedBaseCharacter->GetMesh();
 	if (!IsValid(CharacterMesh) || !IsValid(CharacterMesh->GetSkeletalMeshAsset())) {
-		UE_LOG(LogTemp, Warning, TEXT("UCharacterFootIKComponent::CacheFootBoneRelativeLocations failed: character mesh is not valid"));
+		UE_LOG(LogCharacter, Warning, TEXT("UCharacterFootIKComponent::CacheFootBoneRelativeLocations failed: character mesh is not valid"));
 		return;
 	}
 
@@ -70,7 +72,7 @@ void UCharacterFootIKComponent::EnsureDefaultTimelineCurve()
 
 	TimelineCurveForIKFoot = NewObject<UCurveFloat>(this, UCurveFloat::StaticClass(), TEXT("DefaultFootIKTimelineCurve"));
 	if (!IsValid(TimelineCurveForIKFoot)) {
-		UE_LOG(LogTemp, Warning, TEXT("UCharacterFootIKComponent::EnsureDefaultTimelineCurve failed to create default curve"));
+		UE_LOG(LogCharacter, Warning, TEXT("UCharacterFootIKComponent::EnsureDefaultTimelineCurve failed to create default curve"));
 		return;
 	}
 
@@ -79,7 +81,7 @@ void UCharacterFootIKComponent::EnsureDefaultTimelineCurve()
 	FloatCurve.AddKey(0.0f, 0.0f);
 	FloatCurve.AddKey(1.0f, 1.0f);
 
-	UE_LOG(LogTemp, Display, TEXT("UCharacterFootIKComponent: Blueprint IK curve is missing, using default linear curve."));
+	UE_LOG(LogCharacter, Display, TEXT("UCharacterFootIKComponent: Blueprint IK curve is missing, using default linear curve."));
 }
 
 void UCharacterFootIKComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -236,7 +238,7 @@ void UCharacterFootIKComponent::InitTimelines()
 	EnsureDefaultTimelineCurve();
 
 	if (!IsValid(TimelineCurveForIKFoot)) {
-		UE_LOG(LogTemp, Warning, TEXT("UCharacterFootIKComponent::InitTimelines failed: TimelineCurveForIKFoot is not valid"));
+		UE_LOG(LogCharacter, Warning, TEXT("UCharacterFootIKComponent::InitTimelines failed: TimelineCurveForIKFoot is not valid"));
 		return;
 	}
 

@@ -2,16 +2,26 @@
 
 
 #include "Components/SceneComponent/ExplosionComponent.h"
+#include "MyProject.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystem.h"
 void UExplosionComponent::Explode(AController* Controller) {
+	if (!IsValid(GetWorld()))
+	{
+		UE_LOG(LogWeapon, Warning, TEXT("Explosion skipped: world is invalid | Component=%s"), *GetNameSafe(this));
+		return;
+	}
+
 	TArray<AActor*>IgnoredActors;
-	IgnoredActors.Add(GetOwner());
+	if (IsValid(GetOwner()))
+	{
+		IgnoredActors.Add(GetOwner());
+	}
 	UGameplayStatics::ApplyRadialDamageWithFalloff(
-	GetWorld(),
-	MaxDamage,
-	MinDamage,
-	GetComponentLocation(),
+		GetWorld(),
+		MaxDamage,
+		MinDamage,
+		GetComponentLocation(),
 		InnerRadius,
 		OuterRadius,
 		DamageFalloff,
@@ -22,7 +32,7 @@ void UExplosionComponent::Explode(AController* Controller) {
 		ECC_Visibility
 	);
 	if (IsValid(ExplosionVFX)) {
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionVFX,GetComponentLocation());
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionVFX, GetComponentLocation());
 	}
 	if (OnExplosion.IsBound()) {
 		OnExplosion.Broadcast();

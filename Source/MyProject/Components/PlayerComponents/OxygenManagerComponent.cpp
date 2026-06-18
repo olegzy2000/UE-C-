@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "OxygenManagerComponent.h"
+#include "MyProject.h"
 
 #include "Components/CharacterComponents/CharacterAttributeComponent.h"
 
@@ -22,7 +23,7 @@ void UOxygenManagerComponent::BeginPlay()
 
 	if (!CharacterAttributesComponent)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UOxygenManagerComponent::BeginPlay - CharacterAttributeComponent not found on owner %s"), *GetNameSafe(GetOwner()));
+		UE_LOG(LogCharacter, Warning, TEXT("UOxygenManagerComponent::BeginPlay - CharacterAttributeComponent not found on owner %s"), *GetNameSafe(GetOwner()));
 		return;
 	}
 
@@ -57,7 +58,7 @@ void UOxygenManagerComponent::StartOxygenDrain()
 	}
 
 	bIsDrainingOxygen = true;
-	UE_LOG(LogTemp, Verbose, TEXT("StartOxygenDrain - Started draining oxygen"));
+	UE_LOG(LogCharacter, Verbose, TEXT("StartOxygenDrain - Started draining oxygen"));
 }
 
 void UOxygenManagerComponent::StopOxygenDrain()
@@ -92,7 +93,7 @@ void UOxygenManagerComponent::RestoreOxygen()
 	}
 
 	OnOxygenRestored.Broadcast();
-	UE_LOG(LogTemp, Verbose, TEXT("RestoreOxygen - Fully restored"));
+	UE_LOG(LogCharacter, Verbose, TEXT("RestoreOxygen - Fully restored"));
 }
 
 float UOxygenManagerComponent::GetCurrentOxygenPercent() const
@@ -125,7 +126,7 @@ void UOxygenManagerComponent::DrainOxygen(float DeltaTime)
 
 	CheckOxygenDepleted();
 
-	UE_LOG(LogTemp, Verbose, TEXT("DrainOxygen - Current: %f"), CharacterAttributesComponent->GetOxygen());
+	UE_LOG(LogCharacter, Verbose, TEXT("DrainOxygen - Current: %f"), CharacterAttributesComponent->GetOxygen());
 }
 
 void UOxygenManagerComponent::RestoreOxygenInternal(float DeltaTime)
@@ -144,7 +145,7 @@ void UOxygenManagerComponent::RestoreOxygenInternal(float DeltaTime)
 		bIsRestoringOxygen = false;
 		bIsOxygenDepleted = false;
 		OnOxygenRestored.Broadcast();
-		UE_LOG(LogTemp, Verbose, TEXT("RestoreOxygenInternal - Fully restored"));
+		UE_LOG(LogCharacter, Verbose, TEXT("RestoreOxygenInternal - Fully restored"));
 	}
 }
 
@@ -158,7 +159,7 @@ void UOxygenManagerComponent::StartOxygenRestoration()
 	if (!bIsDrainingOxygen && CharacterAttributesComponent->GetOxygen() < CharacterAttributesComponent->GetMaxOxygen() && !bIsOxygenDepleted)
 	{
 		bIsRestoringOxygen = true;
-		UE_LOG(LogTemp, Verbose, TEXT("StartOxygenRestoration - Restoration started, Current: %f"), CharacterAttributesComponent->GetOxygen());
+		UE_LOG(LogCharacter, Verbose, TEXT("StartOxygenRestoration - Restoration started, Current: %f"), CharacterAttributesComponent->GetOxygen());
 	}
 }
 
@@ -170,7 +171,7 @@ void UOxygenManagerComponent::CheckOxygenDepleted()
 		bIsDrainingOxygen = false;
 		bIsRestoringOxygen = false;
 		OnOxygenDepleted.Broadcast();
-		UE_LOG(LogTemp, Warning, TEXT("CheckOxygenDepleted - Oxygen depleted!"));
+		UE_LOG(LogCharacter, Warning, TEXT("CheckOxygenDepleted - Oxygen depleted!"));
 	}
 }
 

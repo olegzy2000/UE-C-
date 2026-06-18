@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "StaminaManagerComponent.h"
+#include "MyProject.h"
 
 #include "Components/CharacterComponents/CharacterAttributeComponent.h"
 
@@ -23,7 +24,7 @@ void UStaminaManagerComponent::BeginPlay()
 
 	if (!CharacterAttributesComponent)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UStaminaManagerComponent::BeginPlay - CharacterAttributeComponent not found on owner %s"), *GetNameSafe(GetOwner()));
+		UE_LOG(LogCharacter, Warning, TEXT("UStaminaManagerComponent::BeginPlay - CharacterAttributeComponent not found on owner %s"), *GetNameSafe(GetOwner()));
 		return;
 	}
 

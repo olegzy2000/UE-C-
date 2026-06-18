@@ -2,8 +2,9 @@
 
 
 #include "GCBasePawnMovementComponent.h"
+#include "MyProject.h"
 
-void UGCBasePawnMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) 
+void UGCBasePawnMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	if (ShouldSkipUpdate(DeltaTime))
 	{
@@ -18,6 +19,12 @@ void UGCBasePawnMovementComponent::TickComponent(float DeltaTime, ELevelTick Tic
 
 	if (bEnableGravity)
 	{
+		if (!IsValid(UpdatedComponent) || !IsValid(GetWorld()))
+		{
+			UE_LOG(LogTraversal, Verbose, TEXT("UGCBasePawnMovementComponent::TickComponent skipped gravity: invalid UpdatedComponent or World | Owner=%s"), *GetNameSafe(GetOwner()));
+			return;
+		}
+
 		FHitResult HitResult;
 		FVector StartPoint = UpdatedComponent->GetComponentLocation();
 		float TraceDepth = 10.0f;
